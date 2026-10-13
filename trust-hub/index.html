@@ -1,0 +1,819 @@
+<!doctype html>
+<html lang="es-MX">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Centro de confianza · DP SyS</title>
+        <meta
+            name="description"
+            content="Quiénes somos, qué vale tu constancia DC-3, cómo pagas y qué pasa si algo falla. Las respuestas de Desarrollo Profesional SyS, con sus documentos."
+        />
+        <meta name="theme-color" content="#1C0612" />
+        <!-- Receptor de eventos: route-generator, POST /hub/eventos. Cambiar al publicar. -->
+        <meta name="hub-endpoint" content="http://localhost:8000/hub/eventos" />
+        <!-- WhatsApp general de DP SyS: el del botón flotante del sitio. Se usa si el enlace no trae asesor. -->
+        <meta name="hub-whatsapp" content="528994980054" />
+
+        <meta
+            property="og:title"
+            content="¿Tienes dudas antes de inscribirte? · DP SyS"
+        />
+        <meta
+            property="og:description"
+            content="Quiénes somos, qué vale tu constancia DC-3, cómo pagas y qué pasa si algo falla. Cada respuesta con su documento."
+        />
+        <meta property="og:image" content="assets/fotos/sesion-8.jpg" />
+        <meta property="og:locale" content="es_MX" />
+
+        <link rel="icon" href="assets/favicon-32.png" sizes="32x32" />
+        <link rel="apple-touch-icon" href="assets/favicon-180.png" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Anton&family=Antonio:wght@600;700&family=Poppins:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="hub.css" />
+    </head>
+    <body>
+        <header class="bar">
+            <div class="wrap bar__in">
+                <a
+                    class="bar__brand"
+                    href="https://academy.dpsys.com.mx"
+                    data-track="marca"
+                    rel="noopener"
+                >
+                    <img
+                        src="assets/logo.svg"
+                        alt="Desarrollo Profesional SyS"
+                        width="120"
+                        height="36"
+                    />
+                </a>
+                <span class="bar__label">Centro de confianza</span>
+                <a
+                    class="btn btn--sm"
+                    href="#"
+                    data-wa
+                    data-track="whatsapp:barra"
+                    >Escribir por WhatsApp</a
+                >
+            </div>
+        </header>
+
+        <main>
+            <section class="hero" id="inicio" data-section>
+                <div class="wrap">
+                    <p class="eyebrow">Antes de inscribirte</p>
+                    <h1>Resuelve tus dudas.<br /><span>Con pruebas.</span></h1>
+                    <p class="hero__lead">
+                        Quiénes somos, qué vale tu constancia, cómo pagas y qué
+                        pasa si algo falla. Cada respuesta trae su documento,
+                        para que lo compruebes tú.
+                    </p>
+
+                    <ul class="stats">
+                        <li>
+                            <strong
+                                >5.0 <span aria-hidden="true">★</span></strong
+                            ><span>105 opiniones en Google</span>
+                        </li>
+                        <li>
+                            <strong>+80,000</strong
+                            ><span>ingenieros capacitados</span>
+                        </li>
+                        <li>
+                            <strong>+50</strong
+                            ><span>empresas capacitadas</span>
+                        </li>
+                        <li>
+                            <strong>2018</strong><span>capacitando desde</span>
+                        </li>
+                    </ul>
+
+                    <nav class="chips" aria-label="Ir a una duda">
+                        <a href="#quienes" data-track="nav:quienes"
+                            >¿Es real?</a
+                        >
+                        <a href="#constancia" data-track="nav:constancia"
+                            >¿Mi constancia vale?</a
+                        >
+                        <a href="#pago" data-track="nav:pago">¿Cómo pago?</a>
+                        <a href="#garantia" data-track="nav:garantia"
+                            >¿Y si algo falla?</a
+                        >
+                        <a href="#resenas" data-track="nav:resenas">Reseñas</a>
+                    </nav>
+                </div>
+            </section>
+
+            <!-- 1 · ¿Es real? -->
+            <section class="block" id="quienes" data-section>
+                <div class="wrap">
+                    <p class="num">01</p>
+                    <h2>¿Es real? <span>Sí, y lo puedes comprobar.</span></h2>
+                    <p class="lead">
+                        Desarrollo Profesional SyS nació en 2018 en Reynosa,
+                        Tamaulipas, capacitando ingenieros dentro de las
+                        plantas. Hoy enseñamos en línea y seguimos dando cursos
+                        presenciales en empresas.
+                    </p>
+
+                    <div class="founders">
+                        <article class="person">
+                            <img
+                                src="assets/equipo/rosbel.jpg"
+                                alt="Ing. Rosbel Salinas"
+                                width="96"
+                                height="96"
+                                loading="lazy"
+                            />
+                            <div>
+                                <h3>Ing. Rosbel Salinas</h3>
+                                <p class="person__role">
+                                    CEO y cofundador · Doctorante en Ingeniería
+                                </p>
+                                <p>
+                                    MBA, especialidad en Manufactura Esbelta e
+                                    Investigación de Operaciones.
+                                </p>
+                                <a
+                                    class="link"
+                                    href="https://www.linkedin.com/in/rosbelsalinas/"
+                                    target="_blank"
+                                    rel="noopener"
+                                    data-track="linkedin:rosbel"
+                                    >Ver su LinkedIn</a
+                                >
+                            </div>
+                        </article>
+                        <article class="person">
+                            <img
+                                src="assets/equipo/yussef.jpg"
+                                alt="Ing. Yussef Salomón"
+                                width="96"
+                                height="96"
+                                loading="lazy"
+                            />
+                            <div>
+                                <h3>Ing. Yussef Salomón</h3>
+                                <p class="person__role">CEO y cofundador</p>
+                                <p>MBA, delegado ante la ONU y el G20.</p>
+                                <a
+                                    class="link"
+                                    href="https://www.linkedin.com/in/yussef-salom%C3%B3n-quirarte-67374a154/"
+                                    target="_blank"
+                                    rel="noopener"
+                                    data-track="linkedin:yussef"
+                                    >Ver su LinkedIn</a
+                                >
+                            </div>
+                        </article>
+                    </div>
+
+                    <h3 class="sub">
+                        Empresas que han capacitado a su personal con nosotros
+                    </h3>
+                    <ul class="logos">
+                        <li>
+                            <img
+                                src="assets/empresas/pfizer.png"
+                                alt="Pfizer"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/caterpillar.png"
+                                alt="Caterpillar"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/panasonic.png"
+                                alt="Panasonic"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/lg.png"
+                                alt="LG"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/pemex.png"
+                                alt="Pemex"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/aptiv.png"
+                                alt="Aptiv"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/baxter.png"
+                                alt="Baxter"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/nidec.png"
+                                alt="Nidec"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/ametek.png"
+                                alt="Ametek"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/ienova.png"
+                                alt="IEnova"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/cd.png"
+                                alt="C&amp;D Technologies"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/trostel.png"
+                                alt="Trostel"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/index.png"
+                                alt="Index"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/santander.png"
+                                alt="Hospital Santander"
+                                loading="lazy"
+                            />
+                        </li>
+                        <li>
+                            <img
+                                src="assets/empresas/coparmex.png"
+                                alt="Coparmex"
+                                loading="lazy"
+                            />
+                        </li>
+                    </ul>
+
+                    <div class="photos">
+                        <figure>
+                            <img
+                                src="assets/fotos/sesion-8.jpg"
+                                alt=""
+                                loading="lazy"
+                            />
+                            <figcaption>TPS · Pfizer</figcaption>
+                        </figure>
+                        <figure>
+                            <img
+                                src="assets/fotos/sesion-1.jpg"
+                                alt=""
+                                loading="lazy"
+                            />
+                            <figcaption>
+                                Comunicación Efectiva · Sensata Technologies
+                            </figcaption>
+                        </figure>
+                        <figure>
+                            <img
+                                src="assets/fotos/sesion-7.jpg"
+                                alt=""
+                                loading="lazy"
+                            />
+                            <figcaption>Six Sigma · Clein México</figcaption>
+                        </figure>
+                        <figure>
+                            <img
+                                src="assets/fotos/sesion-2.jpg"
+                                alt=""
+                                loading="lazy"
+                            />
+                            <figcaption>
+                                Cultura Organizacional · Baxter
+                            </figcaption>
+                        </figure>
+                    </div>
+
+                    <p class="social">
+                        Búscanos:
+                        <a
+                            href="https://www.facebook.com/DesarrolloprofesionalSyS/"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="red:facebook"
+                            >Facebook</a
+                        >
+                        ·
+                        <a
+                            href="https://www.instagram.com/desarrolloprofesionalsys/"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="red:instagram"
+                            >Instagram</a
+                        >
+                        ·
+                        <a
+                            href="https://www.tiktok.com/@dp.sys"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="red:tiktok"
+                            >TikTok</a
+                        >
+                        ·
+                        <a
+                            href="https://www.youtube.com/@desarrolloprofesionalsys973"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="red:youtube"
+                            >YouTube</a
+                        >
+                        ·
+                        <a
+                            href="https://www.linkedin.com/company/desarrollo-profesional-sys"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="red:linkedin"
+                            >LinkedIn</a
+                        >
+                    </p>
+                </div>
+            </section>
+
+            <!-- 2 · ¿Mi constancia vale? -->
+            <section class="block--tint block" id="constancia" data-section>
+                <div class="wrap">
+                    <p class="num">02</p>
+                    <h2>
+                        ¿Mi constancia vale?
+                        <span>Cada curso emite su DC-3.</span>
+                    </h2>
+
+                    <div class="cards">
+                        <article class="card">
+                            <h3>Constancia DC-3</h3>
+                            <p>
+                                El formato oficial de la STPS con el que las
+                                empresas acreditan la capacitación de su
+                                personal. Se emite al terminar cada curso.
+                            </p>
+                        </article>
+                        <article class="card">
+                            <h3>Diploma con código único</h3>
+                            <p>
+                                Tu área de Recursos Humanos puede validarlo en
+                                línea con su código, sin llamarnos.
+                            </p>
+                            <a
+                                class="link"
+                                href="https://academy.dpsys.com.mx/egresados"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="verificador"
+                                >Validar una constancia</a
+                            >
+                        </article>
+                        <article class="card">
+                            <h3>Llega en 3 a 5 días hábiles</h3>
+                            <p>
+                                Por correo, cuando terminas el curso y entregas
+                                el proyecto final.
+                            </p>
+                        </article>
+                    </div>
+
+                    <h3 class="sub">
+                        Avales y alianzas
+                        <span>Abre cada documento y revísalo tú mismo.</span>
+                    </h3>
+                    <ul class="avales">
+                        <li>
+                            <img
+                                src="assets/acc/stps.png"
+                                alt="STPS"
+                                loading="lazy"
+                            /><span>Constancia DC-3</span
+                            ><a
+                                href="https://drive.google.com/file/d/17CtyOZM6QppFMm2-XHS0SrpnYcibtsKE/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:stps"
+                                >Ver documento</a
+                            >
+                        </li>
+                        <li>
+                            <img
+                                src="assets/acc/cssc.png"
+                                alt="Council for Six Sigma Certification"
+                                loading="lazy"
+                            /><span>Six Sigma</span
+                            ><a
+                                href="https://drive.google.com/file/d/1vVGfhmkZZ956hG8hbP6NE7D1jiU0rMBh/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:cssc"
+                                >Ver documento</a
+                            >
+                        </li>
+                        <li>
+                            <img
+                                src="assets/acc/certiprof.png"
+                                alt="CertiProf Authorized Partner"
+                                loading="lazy"
+                            /><span>Authorized Partner</span
+                            ><a
+                                href="https://drive.google.com/file/d/1kgaPm8OzcKeic5AMKPM183V918Y_wIVG/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:certiprof"
+                                >Ver documento</a
+                            >
+                        </li>
+                        <li>
+                            <img
+                                src="assets/acc/certicorp.png"
+                                alt="CertiCorp"
+                                loading="lazy"
+                            /><span>Aval académico</span
+                            ><a
+                                href="https://drive.google.com/file/d/1YJngGyoIHJR0s2KY65LAG3VK5Q5030BA/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:certicorp"
+                                >Ver documento</a
+                            >
+                        </li>
+                        <li>
+                            <img
+                                src="assets/acc/ias.png"
+                                alt="IAS Accredited"
+                                loading="lazy"
+                            /><span>Acreditación internacional</span
+                            ><a
+                                href="https://drive.google.com/file/d/1FNuLuJs7krqX1Et3p6S1JOxgm9Eb4z55/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:ias"
+                                >Ver documento</a
+                            >
+                        </li>
+                        <li>
+                            <img
+                                src="assets/acc/conocer.png"
+                                alt="Red CONOCER · SEP"
+                                loading="lazy"
+                            /><span>Estándar SEP</span
+                            ><a
+                                href="https://drive.google.com/file/d/1_qYubh3sin2r32sXsj4xbfCzKzUoYVYx/view"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="aval:conocer"
+                                >Ver documento</a
+                            >
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 3 · Pago y acceso -->
+            <section class="block" id="pago" data-section>
+                <div class="wrap">
+                    <p class="num">03</p>
+                    <h2>¿Cómo pago? <span>Y cuándo empiezo.</span></h2>
+
+                    <div class="split">
+                        <div>
+                            <h3 class="sub sub--first">Formas de pago</h3>
+                            <ul class="checks">
+                                <li>
+                                    <strong>Tarjeta de crédito o débito</strong
+                                    >, hasta 12 meses sin intereses.
+                                </li>
+                                <li><strong>PayPal.</strong></li>
+                                <li>
+                                    <strong>Mercado Pago:</strong> saldo,
+                                    efectivo en OXXO o transferencia con CLABE.
+                                </li>
+                                <li>
+                                    Precios en pesos mexicanos,
+                                    <strong>IVA incluido</strong>.
+                                </li>
+                                <li>
+                                    ¿Necesitas factura? Pregúntale a tu asesor
+                                    antes de pagar.
+                                </li>
+                            </ul>
+                            <p class="alert">
+                                <strong>Por tu seguridad:</strong> nunca te
+                                pediremos el número de tu tarjeta, tu NIP ni
+                                códigos de verificación por correo, teléfono o
+                                WhatsApp.
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="sub sub--first">Así empiezas</h3>
+                            <ol class="steps">
+                                <li>
+                                    <strong>Pagas</strong> en
+                                    academy.dpsys.com.mx.
+                                </li>
+                                <li>
+                                    <strong>Entras a Mi cuenta</strong> con tu
+                                    usuario y contraseña.
+                                </li>
+                                <li>
+                                    <strong>Estudias a tu ritmo</strong>, 24/7 y
+                                    desde cualquier dispositivo. Con 30 minutos
+                                    al día basta.
+                                </li>
+                                <li>
+                                    <strong>Resuelves dudas</strong> en el grupo
+                                    de cada curso, con los instructores.
+                                </li>
+                            </ol>
+                            <a
+                                class="link"
+                                href="https://academy.dpsys.com.mx/clase-demo"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="clase-demo"
+                                >Ver una clase de muestra de 9 minutos</a
+                            >
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4 · Garantía -->
+            <section class="block--tint block" id="garantia" data-section>
+                <div class="wrap">
+                    <p class="num">04</p>
+                    <h2>
+                        ¿Y si algo falla?
+                        <span
+                            >Si la falla es nuestra, te devolvemos el
+                            100%.</span
+                        >
+                    </h2>
+
+                    <div class="cards">
+                        <article class="card">
+                            <h3>Procede el reembolso si…</h3>
+                            <ul class="dots">
+                                <li>
+                                    No pudiste usar la plataforma y soporte no
+                                    lo resolvió en 5 días hábiles.
+                                </li>
+                                <li>Pagaste y nunca recibiste el acceso.</li>
+                                <li>
+                                    Un curso anunciado no existe, está
+                                    incompleto o no da la constancia prometida.
+                                </li>
+                                <li>
+                                    Hubo un cargo duplicado o no reconocido.
+                                </li>
+                            </ul>
+                        </article>
+                        <article class="card">
+                            <h3>Plazos para pedirlo</h3>
+                            <ul class="dots">
+                                <li>Membresía mensual: 7 días naturales.</li>
+                                <li>Membresía anual: 10 días naturales.</li>
+                                <li>Curso individual: 10 días naturales.</li>
+                            </ul>
+                            <p class="fine">
+                                Se cuentan desde el cargo. También puedes elegir
+                                el 100% como saldo a favor, sin vencimiento.
+                            </p>
+                        </article>
+                        <article class="card">
+                            <h3>Sin sorpresas</h3>
+                            <ul class="dots">
+                                <li>
+                                    La renovación automática se cancela desde tu
+                                    cuenta, cuando quieras.
+                                </li>
+                                <li>
+                                    No aplica por arrepentimiento, ni en pagos a
+                                    meses sin intereses o con promoción.
+                                </li>
+                            </ul>
+                            <a
+                                class="link"
+                                href="https://academy.dpsys.com.mx/politica-de-reembolso-de-desarrollo-profesional-sys"
+                                target="_blank"
+                                rel="noopener"
+                                data-track="politica-reembolso"
+                                >Leer la política completa</a
+                            >
+                        </article>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5 · Reseñas -->
+            <section class="block" id="resenas" data-section>
+                <div class="wrap">
+                    <p class="num">05</p>
+                    <h2>Lo que dicen <span>quienes ya estudiaron.</span></h2>
+                    <p class="rating">
+                        <strong>5.0</strong>
+                        <span class="stars" aria-hidden="true">★★★★★</span> 105
+                        opiniones en Google ·
+                        <a
+                            href="https://search.google.com/local/reviews?placeid=ChIJIWhargEPZYYRDwiavWmgP94"
+                            target="_blank"
+                            rel="noopener"
+                            data-track="google-resenas"
+                            >Leerlas todas</a
+                        >
+                    </p>
+
+                    <div class="quotes">
+                        <blockquote>
+                            <p>
+                                «El contenido de los cursos es actualizado, las
+                                clases son dinámicas y el acompañamiento durante
+                                el aprendizaje es excelente.»
+                            </p>
+                            <cite>Fernanda Sánchez</cite>
+                        </blockquote>
+                        <blockquote>
+                            <p>
+                                «Los instructores brindan información muy útil y
+                                práctica que me ha ayudado a ampliar mis
+                                conocimientos en Power BI, SQL y Excel.»
+                            </p>
+                            <cite>Iki Sama</cite>
+                        </blockquote>
+                        <blockquote>
+                            <p>
+                                «Me ayudó a comprender mejor las funciones de
+                                Excel que no son tan intuitivas y cómo se pueden
+                                aplicar en un caso laboral.»
+                            </p>
+                            <cite>Gemapao</cite>
+                        </blockquote>
+                        <blockquote>
+                            <p>
+                                «La formación sobre Entrevistas y Reclutamiento
+                                me dio la estructura para profesionalizar mis
+                                procesos.»
+                            </p>
+                            <cite>Darina Hernández</cite>
+                        </blockquote>
+                        <blockquote>
+                            <p>
+                                «Con los casos prácticos transformamos la
+                                información en acciones concretas.»
+                            </p>
+                            <cite>Armando Gómez</cite>
+                        </blockquote>
+                        <blockquote>
+                            <p>
+                                «La atención que te brindan es súper buena y la
+                                experiencia es excelente. Súper recomendado.»
+                            </p>
+                            <cite>Cinthia Castillo</cite>
+                        </blockquote>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6 · Preguntas -->
+            <section class="block--tint block" id="preguntas" data-section>
+                <div class="wrap wrap--narrow">
+                    <p class="num">06</p>
+                    <h2>Otras preguntas <span>que nos hacen seguido.</span></h2>
+
+                    <div class="faq">
+                        <details data-faq="previos">
+                            <summary>¿Necesito conocimientos previos?</summary>
+                            <p>No. Los cursos arrancan desde lo básico.</p>
+                        </details>
+                        <details data-faq="en-linea">
+                            <summary>¿Es 100% en línea?</summary>
+                            <p>
+                                Sí. Entras cuando quieras, 24/7, y cada curso
+                                tiene su grupo con instructores para resolver
+                                dudas.
+                            </p>
+                        </details>
+                        <details data-faq="constancia-tiempo">
+                            <summary>¿Cuánto tarda mi constancia?</summary>
+                            <p>
+                                De 3 a 5 días hábiles. Llega por correo cuando
+                                terminas el curso y entregas el proyecto final.
+                            </p>
+                        </details>
+                        <details data-faq="renovacion">
+                            <summary>
+                                ¿Puedo cancelar la renovación automática?
+                            </summary>
+                            <p>Sí, desde tu cuenta y en cualquier momento.</p>
+                        </details>
+                        <details data-faq="fraude">
+                            <summary>¿Cómo sé que no es un fraude?</summary>
+                            <p>
+                                Valida cualquier constancia en el
+                                <a
+                                    href="https://academy.dpsys.com.mx/egresados"
+                                    target="_blank"
+                                    rel="noopener"
+                                    data-track="verificador:faq"
+                                    >verificador de egresados</a
+                                >, abre los documentos de nuestros avales y lee
+                                las 105 opiniones en Google. Y recuerda: nunca
+                                te pediremos tu NIP ni códigos de verificación.
+                            </p>
+                        </details>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cierre -->
+            <section class="close" id="contacto" data-section>
+                <div class="wrap">
+                    <h2>¿Te queda alguna duda?</h2>
+                    <p>
+                        Pregúntale directo a
+                        <span data-advisor-name>tu asesor</span>. Te contesta
+                        por WhatsApp.
+                    </p>
+                    <a
+                        class="btn btn--lg"
+                        href="#"
+                        data-wa
+                        data-track="whatsapp:cierre"
+                        >Escribir por WhatsApp</a
+                    >
+                    <p class="close__meta">
+                        contacto@dpsys.com.mx · Reynosa, Tamaulipas, México
+                    </p>
+                </div>
+            </section>
+        </main>
+
+        <footer class="foot">
+            <div class="wrap foot__in">
+                <span>© Desarrollo Profesional SyS</span>
+                <a
+                    href="https://academy.dpsys.com.mx/aviso-de-privacidad"
+                    target="_blank"
+                    rel="noopener"
+                    >Aviso de privacidad</a
+                >
+                <a
+                    href="https://academy.dpsys.com.mx/politica-de-reembolso-de-desarrollo-profesional-sys"
+                    target="_blank"
+                    rel="noopener"
+                    >Política de reembolso</a
+                >
+            </div>
+        </footer>
+
+        <a
+            class="fab"
+            href="#"
+            data-wa
+            data-track="whatsapp:flotante"
+            aria-label="Escribir por WhatsApp"
+        >
+            <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true">
+                <path
+                    fill="currentColor"
+                    d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.5-.3Z"
+                />
+            </svg>
+        </a>
+
+        <script src="hub.js" defer></script>
+    </body>
+</html>
