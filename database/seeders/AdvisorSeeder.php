@@ -30,6 +30,9 @@ class AdvisorSeeder extends Seeder
             ['email' => config('identity.development_advisor')],
             [
                 'name' => 'Eje Cursos',
+                // Mientras no haya roles del anfitrión, la cuenta de desarrollo
+                // es también quien administra los KPIs.
+                'is_kpi_admin' => true,
                 // Sin número configurado no se pisa el que ya esté cargado: el
                 // perfil del asesor es del sistema anfitrión, y un seeder no
                 // tiene por qué vaciarlo cada vez que corre.

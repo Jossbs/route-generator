@@ -10,3 +10,4 @@
 require __DIR__.'/funnels.php';
 require __DIR__.'/learning-routes.php';
 require __DIR__.'/catalog.php';
+require __DIR__.'/kpis.php';
