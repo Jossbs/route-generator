@@ -38,8 +38,19 @@ return [
     */
 
     'guards' => [
+
+        /*
+         * El módulo no autentica: lo inserta un sistema que ya tiene su propio
+         * acceso, y una segunda pantalla de acceso le pediría a la misma persona
+         * que entre dos veces. El guard `advisor` resuelve quién actúa a través
+         * de App\Services\Identity\CurrentAdvisor, registrado en
+         * AppServiceProvider.
+         *
+         * Cuando el anfitrión traiga su propia sesión, esto vuelve a
+         * `'driver' => 'session'` y nada más cambia.
+         */
         'web' => [
-            'driver' => 'session',
+            'driver' => 'advisor',
             'provider' => 'users',
         ],
     ],

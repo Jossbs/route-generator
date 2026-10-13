@@ -4,7 +4,6 @@ import babel from '@rolldown/plugin-babel';
 import tailwindcss from '@tailwindcss/vite';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import laravel from 'laravel-vite-plugin';
-import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig, lazyPlugins } from 'vite-plus';
 
 export default defineConfig({
@@ -12,11 +11,6 @@ export default defineConfig({
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.tsx'],
             refresh: true,
-            fonts: [
-                bunny('Instrument Sans', {
-                    weights: [400, 500, 600],
-                }),
-            ],
         }),
         inertia(),
         react(),
@@ -62,6 +56,14 @@ export default defineConfig({
             'composer.json',
             'resources/js/components/ui/*',
             'resources/views/mail/*',
+            // Documentación y prototipos: se leen, no se compilan. El formateador
+            // reescribiría de arriba abajo los HTML de `design/`, que son la
+            // maqueta original contra la que se compara el documento, y dejaría
+            // los diffs de docs/ARQUITECTURA.md ilegibles.
+            '*.md',
+            'design/**',
+            'reportes/**',
+            'cursos.json',
         ],
         sortTailwindcss: {
             functions: ['clsx', 'cn', 'cva'],

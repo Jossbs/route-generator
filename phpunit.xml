@@ -23,11 +23,32 @@
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>
         <env name="CACHE_STORE" value="array"/>
-        <env name="DB_CONNECTION" value="sqlite"/>
-        <env name="DB_DATABASE" value=":memory:"/>
+        <!-- Contra PostgreSQL, no SQLite: el esquema usa JSONB y restricciones
+             check que SQLite no reproduce. Una suite verde sobre otro motor no
+             demostraría que el validador funciona en producción.
+             La base se crea una vez:
+             docker compose exec postgres psql -U route_generator -d postgres \
+               -c "CREATE DATABASE route_generator_test OWNER route_generator;"
+
+             DB_DATABASE va sin `force`, así que una variable de entorno ya
+             presente gana sobre este valor. Es lo que permite correr dos suites a
+             la vez sin que una le haga migrate:fresh a la base de la otra:
+
+               DB_DATABASE=route_generator_test_2 php artisan test
+
+             creando antes esa base con el mismo CREATE DATABASE de arriba. -->
+        <env name="DB_CONNECTION" value="pgsql"/>
+        <env name="DB_HOST" value="127.0.0.1"/>
+        <env name="DB_PORT" value="5433"/>
+        <env name="DB_DATABASE" value="route_generator_test" force="false"/>
+        <env name="DB_USERNAME" value="route_generator"/>
+        <env name="DB_PASSWORD" value="route_generator"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
+        <!-- El PDF lo hace un contenedor. La suite no depende de que esté
+             levantado: aquí el render solo cierra el ciclo de estados. -->
+        <env name="DOCUMENT_RENDERER" value="pagina"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

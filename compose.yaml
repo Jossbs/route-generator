@@ -1,24 +1,55 @@
 # Servicios de desarrollo local.
 # Producción corre en VPS/contenedor: ver sección 2 de docs/ARQUITECTURA.md.
 services:
-  postgres:
-    image: postgres:18-alpine
-    container_name: route_generator_pg
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: route_generator
-      POSTGRES_USER: route_generator
-      POSTGRES_PASSWORD: route_generator
-    ports:
-      # 5433 en el host: el 5432 lo ocupa el PostgreSQL nativo de la máquina.
-      - "5433:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U route_generator -d route_generator"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
+    postgres:
+        image: postgres:18-alpine
+        container_name: route_generator_pg
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: route_generator
+            POSTGRES_USER: route_generator
+            POSTGRES_PASSWORD: route_generator
+        ports:
+            # 5433 en el host: el 5432 lo ocupa el PostgreSQL nativo de la máquina.
+            - '5433:5432'
+        volumes:
+            - postgres_data:/var/lib/postgresql
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U route_generator -d route_generator',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    # Chromium headless como servicio, para el PDF de las rutas.
+    # Se le manda el HTML entero —fuentes e imágenes incrustadas— así que no
+    # necesita alcanzar a la aplicación ni salir a internet.
+    gotenberg:
+        image: gotenberg/gotenberg:8
+        container_name: route_generator_gotenberg
+        restart: unless-stopped
+        command:
+            - gotenberg
+            - --chromium-disable-javascript=true
+            - --chromium-allow-list=file:///tmp/.*
+        ports:
+            # 3001 en el host: el 3000 lo suelen ocupar otros servicios de desarrollo.
+            - '3001:3000'
+        healthcheck:
+            test:
+                [
+                    'CMD',
+                    'curl',
+                    '--silent',
+                    '--fail',
+                    'http://localhost:3000/health',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
 
 volumes:
-  postgres_data:
+    postgres_data:

@@ -2,16 +2,104 @@
 
 @import 'tw-animate-css';
 
+/* Las mismas fuentes locales que viajan dentro del PDF; el build no depende de un CDN. */
+@font-face {
+    font-family: 'Anton';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../../public/fonts/anton-400-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Antonio';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../../public/fonts/antonio-400-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Antonio';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../../public/fonts/antonio-600-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Antonio';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../../public/fonts/antonio-700-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url('../../public/fonts/poppins-400-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+    src: url('../../public/fonts/poppins-500-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+    src: url('../../public/fonts/poppins-600-latin.woff2') format('woff2');
+}
+
+@font-face {
+    font-family: 'Poppins';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url('../../public/fonts/poppins-700-latin.woff2') format('woff2');
+}
+
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * La identidad de Desarrollo Profesional SyS.
+ *
+ * Los valores salen de academy.dpsys.com.mx (`/nuevo/sys-site.css`), no de una
+ * aproximación: el asesor y el lead tienen que reconocer la misma marca en el
+ * sitio, en el sistema y en el documento. Los tres nombres de fuente y los seis
+ * colores de marca son el contrato; todo lo demás de este archivo se deriva de
+ * ellos, así que una vista nueva no vuelve a elegir color.
+ */
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+        'Poppins', 'Segoe UI', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji';
+    --font-display: 'Anton', 'Arial Narrow', sans-serif;
+    --font-subtitle: 'Antonio', 'Arial Narrow', sans-serif;
+
+    /* Marca. Estos seis no se tocan sin tocar el sitio. */
+    --color-sys-magenta: #800e64;
+    --color-sys-morado: #4b0055;
+    --color-sys-purpura: #7b1fa2;
+    --color-sys-rosa: #e91e63;
+    --color-sys-rosa-hover: #d81557;
+    --color-sys-vino: #880e4f;
+    --color-sys-naranja: #ff9800;
+
+    /* Tintas oscuras: header, hero, pie. */
+    --color-sys-ink-900: #160a12;
+    --color-sys-ink-700: #2a0820;
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -28,6 +116,17 @@
 
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-primary-hover: var(--primary-hover);
+
+    /*
+     * El rosa cuando es texto o trazo fino —antetítulos, el asterisco de
+     * obligatorio— y no relleno. En claro es el mismo rosa; en oscuro tiene que
+     * aclararse para leerse sin vibrar, y por eso no puede ser `sys-rosa`.
+     */
+    --color-rosa-texto: var(--rosa-texto);
+
+    /* La barra del sistema. Vino en claro, ciruela apagada en oscuro. */
+    --color-header: var(--header);
 
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
@@ -51,85 +150,152 @@
     --color-chart-4: var(--chart-4);
     --color-chart-5: var(--chart-5);
 
-    --color-sidebar: var(--sidebar);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-ring: var(--sidebar-ring);
+    /*
+     * El módulo de KPIs. `kpi-real` es lo que se lleva y `kpi-ritmo` lo esperado
+     * a hoy: dos tonos de la marca validados como par para daltonismo en los dos
+     * modos. `kpi-bien` y `kpi-cerca` son de estado y siempre van con icono y
+     * palabra; lo que va atrás no tiene color propio (se decidió no usar rojo).
+     */
+    --color-kpi-real: var(--kpi-real);
+    --color-kpi-ritmo: var(--kpi-ritmo);
+    --color-kpi-bien: var(--kpi-bien);
+    --color-kpi-bien-texto: var(--kpi-bien-texto);
+    --color-kpi-cerca: var(--kpi-cerca);
+
+    /*
+     * La altura del header, que es sticky. Todo lo que también se queda pegado
+     * —el panel del validador— y todo salto de ancla tienen que restarla, así
+     * que vive en una variable y no en un número repetido en tres archivos.
+     */
+    --header-h: 3.75rem;
+
+    --shadow-card:
+        0 1px 2px rgb(46 8 34 / 0.05), 0 4px 16px rgb(46 8 34 / 0.07);
+    --shadow-cta:
+        0 6px 18px rgb(233 30 99 / 0.35), 0 2px 6px rgb(233 30 99 / 0.22);
+    --shadow-pop:
+        0 24px 60px rgb(46 8 34 / 0.28), 0 8px 20px rgb(46 8 34 / 0.18);
 }
 
+/*
+ * El modo claro es el del sitio: superficie casi blanca con tinte rosa, texto
+ * carbón, y el rosa reservado para lo accionable. Que `--primary` sea el rosa de
+ * marca es lo que hace que un `<Button>` de shadcn salga ya con la identidad
+ * puesta, sin una clase extra en cada vista.
+ */
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    color-scheme: light;
+
+    --background: #fbf8fa;
+    --foreground: #1a1a1a;
+    --card: #ffffff;
+    --card-foreground: #1a1a1a;
+    --popover: #ffffff;
+    --popover-foreground: #1a1a1a;
+    --primary: #e91e63;
+    --primary-foreground: #ffffff;
+    --primary-hover: #d81557;
+    --rosa-texto: #e91e63;
+    --header: #2a0820;
+    --secondary: #f4ecf1;
+    --secondary-foreground: #800e64;
+    --muted: #f4ecf1;
+    --muted-foreground: #6b6b6b;
+    --accent: #fdedf3;
+    --accent-foreground: #800e64;
+    --destructive: #c62828;
+    --destructive-foreground: #c62828;
+    --border: #e8dee6;
+    --input: #e8dee6;
+    --ring: #e91e63;
+    --chart-1: #e91e63;
+    --chart-2: #800e64;
+    --chart-3: #4b0055;
+    --chart-4: #7b1fa2;
+    --chart-5: #ff9800;
+    --kpi-real: #e91e63;
+    --kpi-ritmo: #7b1fa2;
+    --kpi-bien: #0ca30c;
+    --kpi-bien-texto: #006300;
+    --kpi-cerca: #fab219;
+    --radius: 0.875rem;
 }
 
+/*
+ * El modo oscuro no es el claro invertido ni el vino del hero: aquel es un fondo
+ * para mirar unos segundos, y el asesor pasa aquí la jornada. Lo que sigue son
+ * las pautas de un tema oscuro que no cansa la vista, aplicadas a la marca:
+ *
+ * - Nada de negro puro ni de blanco puro. El fondo es un gris casi neutro con
+ *   un tinte ciruela y el texto un blanco roto: el contraste queda en 14:1, de
+ *   sobra para AAA sin el halo que deja 21:1 en pantallas brillantes.
+ * - Poca saturación en las superficies. Un vino intenso a pantalla completa
+ *   fatiga y tiñe todo lo que se pone encima; el tinte se queda en ~5 %.
+ * - La altura se lee por luminosidad, no por sombra: fondo < tarjeta < menú.
+ *   En oscuro una sombra apenas se ve, así que las tarjetas se aclaran.
+ * - El rosa se apaga para rellenar (#c43b6c con blanco, 5:1) y se aclara
+ *   para leerse como texto (#f283aa, 7.6:1). El #e91e63 de marca vibra sobre
+ *   fondo oscuro, y el resplandor rosa de los botones se va.
+ * - Los secundarios quedan por encima de 6:1: el texto gris es el que más se
+ *   lee en esta herramienta y no puede quedarse en el mínimo.
+ */
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    color-scheme: dark;
+
+    --background: #151217;
+    --foreground: #e6dfe8;
+    --card: #1d1920;
+    --card-foreground: #e6dfe8;
+    --popover: #231e26;
+    --popover-foreground: #e6dfe8;
+    --primary: #c43b6c;
+    --primary-foreground: #ffffff;
+    --primary-hover: #b0335f;
+    --rosa-texto: #f283aa;
+    --header: #1b1520;
+    --secondary: #26212a;
+    --secondary-foreground: #e6dfe8;
+    --muted: #26212a;
+    --muted-foreground: #a89fad;
+    --accent: #2e2431;
+    --accent-foreground: #f7c9da;
+    --destructive: #f28b82;
+    --destructive-foreground: #f28b82;
+    --border: #342d38;
+    --input: #3d3541;
+    --ring: #f283aa;
+    --chart-1: #f283aa;
+    --chart-2: #c9a0dc;
+    --chart-3: #9fb8e8;
+    --chart-4: #f5c27a;
+    --chart-5: #a89fad;
+    --kpi-real: #d9577f;
+    --kpi-ritmo: #a07ad6;
+    --kpi-bien: #0ca30c;
+    --kpi-bien-texto: #3fc43f;
+    --kpi-cerca: #fab219;
+
+    --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35);
+    --shadow-cta: none;
+    --shadow-pop: 0 24px 60px rgb(0 0 0 / 0.5), 0 8px 20px rgb(0 0 0 / 0.35);
+}
+
+/*
+ * Quien pidió más contraste en su sistema lo recibe aquí sin tener que buscar
+ * una opción: el gris secundario y los bordes suben un escalón.
+ */
+@media (prefers-contrast: more) {
+    .dark {
+        --foreground: #f4eff5;
+        --muted-foreground: #c8c0cc;
+        --border: #4a4250;
+        --input: #564d5c;
+    }
+
+    :root:not(.dark) {
+        --muted-foreground: #4f4f4f;
+        --border: #cdbfc9;
+    }
 }
 
 @layer base {
@@ -139,5 +305,127 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    /*
+     * Anton solo existe en 400 y se usa siempre en mayúsculas, como en el sitio.
+     * Dejarlo aquí evita que cada título repita las tres mismas clases.
+     */
+    .sys-display {
+        font-family: var(--font-display);
+        font-weight: 400;
+        text-transform: uppercase;
+        letter-spacing: 0.01em;
+        line-height: 1.05;
+    }
+
+    /* El antetítulo rosa que abre cada sección en el sitio. */
+    .sys-overline {
+        font-weight: 700;
+        font-size: 0.8125rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--rosa-texto);
+    }
+
+    /*
+     * En el celular el header se encoge: 60 px dejan una pantalla más de
+     * contenido a la vista, y ahí los enlaces viven en el panel lateral, no en
+     * la barra.
+     */
+    @media (width >= 40rem) {
+        :root {
+            --header-h: 4.625rem;
+        }
+    }
+
+    /*
+     * El header es sticky, así que un salto a un ancla dejaría el destino
+     * debajo de la barra. Se descuenta aquí y no en cada vista.
+     */
+    html {
+        scroll-padding-top: calc(var(--header-h) + 1rem);
+    }
+
+    /*
+     * El pulgar sobre un botón no debe seleccionar su texto ni dejar el
+     * destello azul de Android: en una pantalla donde se quita y se devuelve un
+     * curso con toques repetidos, eso se ve como un error.
+     */
+    button,
+    [role='button'] {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    /*
+     * Quien pidió menos movimiento lo pidió para todo, no solo para lo que se
+     * nos ocurrió marcar: la animación se apaga aquí de una vez.
+     */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    /*
+     * El salto al contenido. Invisible hasta que se tabula, que es cuando sirve:
+     * sin él, llegar al formulario con teclado cuesta pasar por el logo, tres
+     * enlaces y la identidad en cada carga.
+     */
+    .sys-skip-link {
+        position: absolute;
+        left: 1rem;
+        top: 0.75rem;
+        z-index: 60;
+        transform: translateY(-200%);
+        border-radius: 9999px;
+        background: var(--color-sys-rosa);
+        padding: 0.5rem 1rem;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #fff;
+        transition: transform 150ms ease;
+    }
+
+    .sys-skip-link:focus-visible {
+        transform: translateY(0);
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+    }
+
+    /*
+     * La ayuda de un campo cede su lugar al error: el mensaje del servidor ya
+     * dice lo mismo en rojo, y las dos líneas juntas se leían como eco.
+     */
+    .sys-ayuda:has(~ [role='alert']) {
+        display: none;
+    }
+
+    /*
+     * La entrada de cada pantalla. Inertia reemplaza el contenido sin recargar,
+     * así que sin esto el cambio de página es un corte seco; con esto es el
+     * mismo gesto que ya hace el sitio al navegar.
+     */
+    .sys-page-enter {
+        animation: sys-page-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+    }
+
+    @keyframes sys-page-enter {
+        from {
+            opacity: 0;
+            transform: translateY(6px);
+        }
+
+        to {
+            opacity: 1;
+            transform: none;
+        }
     }
 }

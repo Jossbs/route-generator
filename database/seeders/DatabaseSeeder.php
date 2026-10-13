@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -11,15 +12,21 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * El orden importa: las reglas referencian cursos y especializaciones por slug
+     * y fallan ruidosamente si el catálogo no está sembrado. El asesor va primero
+     * porque es quien firma lo que se cree mientras el módulo no esté insertado.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            AdvisorSeeder::class,
+            CatalogVersionSeeder::class,
+            CatalogSeeder::class,
+            CatalogAnalysisSeeder::class,
+            DocumentTypeSeeder::class,
+            CopySeeder::class,
+            ArchetypeSeeder::class,
+            CatalogRuleSeeder::class,
         ]);
     }
 }
