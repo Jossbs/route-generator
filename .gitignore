@@ -15,6 +15,8 @@
 .env
 .env.backup
 .env.production
+.env.*
+!.env.example
 .phpactor.json
 .phpunit.result.cache
 Homestead.json
@@ -27,3 +29,18 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Cachés y entornos locales de los scripts de análisis y reportes.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Entregables de negocio y material de trabajo ajeno a la aplicación.
+/reportes/
+/design/
+/*.ogg
+/*.opus
+/*.xlsx
+/*.jpg
+/*.png
