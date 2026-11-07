@@ -39,8 +39,20 @@ venv/
 # Entregables de negocio y material de trabajo ajeno a la aplicación.
 /reportes/
 /design/
+/nueva muestra/
 /*.ogg
 /*.opus
 /*.xlsx
 /*.jpg
 /*.png
+
+# Documentación de negocio, entregables académicos y catálogos promocionales.
+/*.pdf
+/*.docx
+/*.pptx
+/*.zip
+/docs/catalogo-cursos-*/
+/docs/contexto-general-sys/
+/docs/documentacion-ingenieria/
+/docs/requirements.txt
+/docs/README.md

@@ -61,8 +61,10 @@ export default defineConfig({
             // maqueta original contra la que se compara el documento, y dejaría
             // los diffs de docs/ARQUITECTURA.md ilegibles.
             '*.md',
+            'docs/**',
             'design/**',
             'reportes/**',
+            'nueva muestra/**',
             'cursos.json',
         ],
         sortTailwindcss: {
