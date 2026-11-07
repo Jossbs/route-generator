@@ -16,6 +16,8 @@ Laravel 13, Inertia 3, React 19, Tailwind 4 y PostgreSQL. Gotenberg 8 convierte 
 
 Las decisiones de dominio y de producto están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). El [estado del MVP](docs/ESTADO_MVP.md) describe la revisión técnica y los pendientes de contenido e integración.
 
+La [guía de desarrollo](docs/DESARROLLO.md) describe cómo preparar cambios, verificarlos y subirlos en futuras iteraciones.
+
 ## Desarrollo local
 
 Requisitos: PHP 8.5 con `pdo_pgsql`, Composer 2, Node 24, npm y Docker Compose. PHP 8.5 permite ejecutar las herramientas de desarrollo fijadas en `composer.lock`.
