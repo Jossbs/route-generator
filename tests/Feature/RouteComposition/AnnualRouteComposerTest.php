@@ -62,13 +62,24 @@ it('balancea las horas para que ningún mes doble a otro', function () {
 
     $hours = Course::whereIn('id', $draft->courseIds())->pluck('duration_hours', 'id');
 
-    $porMes = collect(itinerary($draft))
-        ->groupBy('month')
-        ->map(fn ($items): int => (int) $items->sum(fn ($i): int => $hours[$i->courseId] ?? 0));
+    $porMes = array_fill(1, 12, 0);
+    foreach (itinerary($draft) as $item) {
+        $start = $item->month;
+        $end = $item->monthEnd ?? $start;
+        $span = $end - $start + 1;
+        $duration = $hours[$item->courseId];
+
+        // Un curso largo también ocupa sus meses de continuación. Cargar todas
+        // sus horas al mes inicial daría una falsa impresión de desequilibrio.
+        for ($month = $start; $month <= $end; $month++) {
+            $porMes[$month] += intdiv($duration, $span) + ($month - $start < $duration % $span ? 1 : 0);
+        }
+    }
 
     // Un mes de noventa horas junto a uno de doce no es una recomendación creíble
     // para alguien que estudia después del trabajo.
-    expect($porMes->max())->toBeLessThanOrEqual((int) ($porMes->min() * 2.5));
+    expect(array_sum($porMes))->toBe((int) $hours->sum());
+    expect(max($porMes))->toBeLessThanOrEqual((int) (min($porMes) * 2.5));
 });
 
 it('recomienda un solo curso de cada grupo que se traslapa', function () {

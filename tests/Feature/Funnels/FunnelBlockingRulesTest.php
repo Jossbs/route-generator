@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Course;
 use App\Services\Funnels\FunnelRouteValidator;
 use Tests\Support\FunnelFactory;
 
@@ -148,8 +149,8 @@ it('bloquea la comparación de precio contra una certificación de mercado', fun
 });
 
 it('bloquea un curso que su ficha no deja entrar al itinerario', function () {
-    // Tres micro-cursos no publican duración. Sin horas no se pueden ordenar en un
-    // mes: van al inventario de la membresía, nunca a una recomendación.
+    // La restricción sigue vigente si Contenido limita un curso al inventario.
+    Course::where('slug', 'mente-millonaria')->update(['allowed_layers' => ['inventario']]);
     $result = validateFunnel(['mente-millonaria', 'comunicacion-efectiva'], 'soft');
 
     expect(codes($result->bloqueantes))->toContain('COURSE_LAYER_RESTRICTION');

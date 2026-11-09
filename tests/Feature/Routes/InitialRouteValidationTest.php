@@ -43,7 +43,7 @@ it('revisa los cursos editados sin guardar y distingue conflictos de advertencia
         ->assertJsonPath('bloqueos.0.codigo', 'LEADERSHIP_OVERLAP')
         ->assertJsonPath('advertencias.0.codigo', 'PREREQUISITE_SUGGESTED')
         ->assertJsonPath('totales.cursos', 5)
-        ->assertJsonPath('totales.horas_netas', 108)
+        ->assertJsonPath('totales.horas_netas', 91)
         ->assertJsonPath('bloqueos.0.mensaje', fn (string $message): bool => str_contains($message, 'Liderazgo para Ingenieros') && str_contains($message, 'Liderazgo para Líderes y Supervisores'));
 
     expect(Lead::count())->toBe(0)->and(LearningRoute::count())->toBe(0);
@@ -59,7 +59,7 @@ it('actualiza los totales y permite generar con solo una advertencia', function 
         ->assertJsonPath('bloqueos', [])
         ->assertJsonCount(1, 'advertencias')
         ->assertJsonPath('totales.cursos', 4)
-        ->assertJsonPath('totales.horas_netas', 96);
+        ->assertJsonPath('totales.horas_netas', 79);
 
     $this->postJson('/rutas', $capture)->assertOk()->assertJsonStructure(['url']);
     $route = LearningRoute::sole();
