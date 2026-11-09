@@ -86,6 +86,8 @@ Entra con un asesor real, genera una ruta y descarga el PDF terminado por el wor
 
 La migración `2026_11_08_100000_remove_sales_metrics_module` elimina las tablas de métricas de ventas. Sus datos solo se recuperan restaurando el respaldo; los usuarios, leads, membresías y rutas se conservan. No se ejecuta ninguna migración automáticamente al arrancar un contenedor.
 
+La migración `2026_11_09_100000_reconcile_published_course_catalog` coteja los 64 cursos de SYS, actualiza 41 duraciones y reincorpora cursos ausentes o inactivos, incluido PPAP. Se aplica con la misma ejecución de `migrate --force` del release; no vuelvas a sembrar toda la base. Los documentos ya emitidos conservan su snapshot.
+
 Construye las imágenes del nuevo commit conservando las anteriores y el `.env.production` persistente. Luego, con los contenedores de la versión actual todavía arrancados:
 
 ```bash

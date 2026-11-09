@@ -94,13 +94,12 @@ it('lista en el inventario los cursos que el itinerario no recomienda', function
     $inventario = collect($draft->itemsInLayer(RouteLayer::Inventario))->pluck('courseId');
 
     // El inventario enumera la membresía completa: los 64 cursos, incluidos los
-    // traslapes que el itinerario descartó y los tres sin duración publicada.
+    // traslapes que el itinerario descartó.
     expect($inventario->unique())->toHaveCount(64);
 
-    $sinDuracion = Course::whereNull('duration_hours')->pluck('id');
-
-    expect($inventario->intersect($sinDuracion))->toHaveCount(3);
-    expect(collect(itinerary($draft))->pluck('courseId')->intersect($sinDuracion))->toBeEmpty();
+    $descartados = $inventario->diff(collect(itinerary($draft))->pluck('courseId'));
+    expect($descartados)->not->toBeEmpty();
+    expect($inventario)->toContain(Course::where('slug', 'ppap')->sole()->id);
 });
 
 it('marca el inventario como incluido y no como recomendación', function () {

@@ -192,6 +192,8 @@ El disparo es **manual, iniciado por el asesor**. La decisión es deliberada: el
 
 ### Resuelto (fuente: https://academy.dpsys.com.mx/cursos, consultado 2026-09-08)
 
+La publicación se volvió a cotejar el **2026-11-09**: conserva los **64 cursos y 12 especialidades**, incluido PPAP. Se corrigieron 41 duraciones y los tres cursos antes sin horas publicadas ya son recomendables. El [cotejo de noviembre](CATALOGO_2026_11_09.md) describe la fuente, la versión y la migración; la transcripción de septiembre se conserva como referencia histórica.
+
 - **Credencial**: constancia **DC-3 oficial ante la STPS** más diploma verificable. Publicado por DP SyS, no inferido.
 - **Modalidad**: cursos **autogestivos**, acceso 24/7 en línea. La ruta anual se redacta como **recomendación flexible de secuencia**, nunca como compromiso de fechas.
 - **Duraciones**: lecciones y horas de los 64 cursos, disponibles.

@@ -55,7 +55,7 @@ it('registra la contención de AutoCAD como parcial, con su nota de auditoría',
 
     expect($niveles)->toHaveCount(3);
     expect($niveles->first()->pivot->containment_type)->toBe('parcial');
-    expect($niveles->sum('duration_hours'))->toBe(48)
+    expect($niveles->sum('duration_hours'))->toBe(36)
         ->and($completo->duration_hours)->toBe(36);
 });
 
@@ -68,9 +68,8 @@ it('siembra las frases de resultado en borrador, con texto literal del sitio', f
     expect(Course::where('outcome_phrase_status', 'aprobado')->count())->toBe(0);
 });
 
-it('deja en null las horas que el sitio no publica', function () {
-    expect(Course::whereNull('duration_hours')->pluck('slug')->sort()->values()->all())
-        ->toBe(['estrategias-de-negociacion', 'liderazgo-efectivo', 'mente-millonaria']);
+it('incluye las horas publicadas para todos los cursos en noviembre', function () {
+    expect(Course::whereNull('duration_hours')->count())->toBe(0);
 });
 
 it('etiqueta el clúster de empleabilidad con sus cuatro cursos', function () {

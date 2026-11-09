@@ -15,6 +15,7 @@ class ProductionCatalogSeeder extends Seeder
             CatalogVersionSeeder::class,
             CatalogSeeder::class,
             CatalogAnalysisSeeder::class,
+            PublishedCatalogSeeder::class,
             DocumentTypeSeeder::class,
             CopySeeder::class,
             ArchetypeSeeder::class,

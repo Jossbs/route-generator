@@ -17,6 +17,8 @@ Las decisiones de dominio y de producto están en [docs/ARQUITECTURA.md](docs/AR
 
 La [guía de desarrollo](docs/DESARROLLO.md) describe cómo preparar cambios, verificarlos y subirlos en futuras iteraciones.
 
+El [cotejo del catálogo del 9 de noviembre](docs/CATALOGO_2026_11_09.md) confirma los 64 cursos publicados por SYS, incluido PPAP, y documenta la actualización de 41 duraciones. La migración del catálogo aplica esos datos en instalaciones existentes sin modificar los documentos emitidos.
+
 La [guía de despliegue](docs/DESPLIEGUE.md) incluye imágenes de producción, Compose separado, HTTPS, integración de identidad, diagnóstico `deploy:check`, respaldos y restauración. El paquete se verifica con `sh tests/Deployment/containers.sh` en un entorno aislado.
 
 ## Desarrollo local

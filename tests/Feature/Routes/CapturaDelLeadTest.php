@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\LeadArea;
+use App\Models\Course;
 use App\Models\Funnel;
 use App\Models\Lead;
 use App\Models\LearningRoute;
@@ -41,6 +42,29 @@ function capturaDeLead(array $overrides = []): array
         ...$overrides,
     ];
 }
+
+it('ofrece los 64 cursos incluidos PPAP al editar la propuesta inicial', function () {
+    $this->actingAs(FunnelFactory::author())
+        ->post('/rutas/propuesta', capturaDeLead())
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('rutas/propuesta')
+            ->has('catalogo', 64)
+            ->where('catalogo', fn ($catalog): bool => collect($catalog)->contains(
+                fn ($course): bool => $course['nombre'] === 'PPAP' && $course['especialidad'] === 'Core Tools' && $course['horas'] === 10,
+            )));
+});
+
+it('genera una ruta inicial con PPAP agregado desde el catálogo', function () {
+    Queue::fake();
+    $capture = capturaDeLead();
+    $courses = Funnel::findOrFail($capture['funnel_id'])->routes()->firstOrFail()->orderedCourseIds();
+    $capture['course_ids'] = [...$courses, Course::where('slug', 'ppap')->sole()->id];
+
+    $this->actingAs(FunnelFactory::author())->postJson('/rutas', $capture)
+        ->assertOk()->assertJsonStructure(['url']);
+
+    expect(LearningRoute::sole()->itineraryCourseIds())->toContain(Course::where('slug', 'ppap')->sole()->id);
+});
 
 it('genera la ruta inicial sin teléfono', function () {
     Queue::fake();
