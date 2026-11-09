@@ -8,13 +8,16 @@ use App\Enums\RouteItemRole;
 use App\Enums\RouteStatus;
 use App\Enums\UsageEventType;
 use App\Models\CatalogVersion;
+use App\Models\DocumentType;
 use App\Models\LearningRoute;
 use App\Services\Documents\CopyResolver;
 use App\Services\Documents\DocumentFiles;
 use App\Services\RouteComposition\ComposerRegistry;
+use App\Services\RouteComposition\Support\InitialRouteContinuity;
 use App\Services\RouteComposition\Support\PresetDraftBuilder;
 use App\Services\RouteGeneration\Data\GenerationResult;
 use App\Services\RouteGeneration\Data\RouteInput;
+use App\Services\RouteGeneration\Exceptions\RouteRejected;
 use App\Services\RouteValidation\Data\RouteDraft;
 use App\Services\RouteValidation\Data\ValidationReport;
 use App\Services\RouteValidation\RouteValidator;
@@ -26,7 +29,7 @@ use Illuminate\Support\Str;
  * o rechaza, y solo entonces la ruta queda en condiciones de renderizarse.
  *
  * Es un servicio y no lógica de controlador a propósito: hoy lo invoca el
- * formulario del asesor, mañana un webhook de Kommo, y ninguno de los dos tendrá
+ * formulario del asesor, mañana un webhook del CRM, y ninguno de los dos tendrá
  * que reimplementar el orden de los pasos.
  *
  * Una ruta rechazada también se persiste. El asesor necesita ver por qué, y la
@@ -48,9 +51,9 @@ final class RouteGenerator
         private readonly DocumentFiles $files,
     ) {}
 
-    public function generate(RouteInput $input): GenerationResult
+    public function generate(RouteInput $input, bool $requireValid = false): GenerationResult
     {
-        return $this->run($input, null);
+        return $this->run($input, null, $requireValid);
     }
 
     /**
@@ -66,15 +69,25 @@ final class RouteGenerator
      * No pasa por `generate()` con otro nombre: el token, el padre y el contador
      * son de la ruta que ya existía, y una ruta nueva no tiene qué conservar.
      */
-    public function regenerate(RouteInput $input, LearningRoute $route): GenerationResult
+    public function regenerate(RouteInput $input, LearningRoute $route, bool $requireValid = false): GenerationResult
     {
-        return $this->run($input, $route);
+        return $this->run($input, $route, $requireValid);
     }
 
-    private function run(RouteInput $input, ?LearningRoute $existing): GenerationResult
+    /** @param array<string, string> $copyOverrides */
+    public function review(RouteDraft $draft, DocumentType $documentType, array $copyOverrides = []): ValidationReport
+    {
+        return $this->validator->validate($this->withCatalogCopy($draft, $documentType, $copyOverrides));
+    }
+
+    private function run(RouteInput $input, ?LearningRoute $existing, bool $requireValid): GenerationResult
     {
         $draft = $this->draftFor($input);
         $report = $this->validator->validate($draft);
+
+        if ($requireValid && ! $report->passes()) {
+            throw new RouteRejected($report);
+        }
 
         $route = DB::transaction(function () use ($input, $draft, $report, $existing): LearningRoute {
             $route = $existing === null
@@ -129,7 +142,8 @@ final class RouteGenerator
         if (! $input->hasPreset()) {
             return $this->withCatalogCopy(
                 $this->composers->for($input->documentType)->compose($input->compositionRequest()),
-                $input,
+                $input->documentType,
+                $input->copyOverrides,
             );
         }
 
@@ -144,7 +158,7 @@ final class RouteGenerator
             justificationsByCourseId: $input->justificationsByCourseId,
             curatedCourseIds: $input->funnelRoute?->orderedCourseIds(),
             waivers: $input->funnelRoute?->ruleWaivers(),
-        ), $input);
+        ), $input->documentType, $input->copyOverrides);
     }
 
     /**
@@ -155,13 +169,14 @@ final class RouteGenerator
      * cierre entraban a la plantilla ya pasado el validador, y una promesa de
      * equivalencia escrita ahí habría llegado impresa al lead.
      */
-    private function withCatalogCopy(RouteDraft $draft, RouteInput $input): RouteDraft
+    /** @param array<string, string> $copyOverrides */
+    private function withCatalogCopy(RouteDraft $draft, DocumentType $documentType, array $copyOverrides): RouteDraft
     {
         // Lo que el asesor ajustó a mano se escanea igual que el catálogo: un
         // párrafo editable no es una puerta para imprimir «equivale a».
         $bodies = [
-            ...$this->copy->bodiesFor($input->documentType),
-            ...array_values($input->copyOverrides),
+            ...$this->copy->bodiesFor($documentType),
+            ...array_values($copyOverrides),
             // El plan va impreso en la portada del anual, y con «Otro» es texto
             // que el asesor escribió a mano.
             ...array_filter([$draft->membership['plan'] ?? null], is_string(...)),
@@ -310,13 +325,6 @@ final class RouteGenerator
             return null;
         }
 
-        return LearningRoute::query()
-            ->where('lead_id', $input->lead->id)
-            // Para cuando el lead compra, su gancho ya se renderizó: buscarlo solo
-            // en `validated` dejaba sin padre a casi todas las finales.
-            ->whereIn('status', [RouteStatus::Validated, RouteStatus::Rendering, RouteStatus::Rendered])
-            ->whereHas('documentType', fn ($q) => $q->where('requires_membership', false))
-            ->latest('id')
-            ->value('id');
+        return (new InitialRouteContinuity)->forLead($input->lead)?->id;
     }
 }

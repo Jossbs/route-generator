@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
  * otra vez. Va un paso adentro y no en la raíz a propósito; consultar es lo que se
  * hace de vez en cuando, generar es lo que se hace todo el día.
  *
- * La entrega es el PDF —`rutas/{route}/pdf`, que es lo que se adjunta en Kommo—.
+ * La entrega es el PDF —`rutas/{route}/pdf`, que es lo que se comparte con el lead—.
  * El enlace sigue existiendo debajo, por si el archivo pesa para el chat, y es lo
  * único que da señal de vuelta: `/r/{token}` es lo único fuera de `auth`, porque
  * quien lo abre es el lead.
@@ -30,6 +30,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/', [LearningRouteController::class, 'create'])->name('routes.create');
 
     Route::post('rutas/propuesta', [LearningRouteController::class, 'propose'])->name('routes.propose');
+    Route::post('rutas/validacion', [LearningRouteController::class, 'validateSelection'])->name('routes.validate');
     Route::post('rutas', [LearningRouteController::class, 'store'])->name('routes.store');
 
     Route::post('rutas/final/meses', [AnnualRouteController::class, 'propose'])->name('routes.final.propose');
@@ -47,6 +48,7 @@ Route::middleware(['auth'])->group(function () {
      */
     Route::get('rutas/{route}/editar', [LearningRouteController::class, 'edit'])->name('routes.edit');
     Route::post('rutas/{route}/propuesta', [LearningRouteController::class, 'repropose'])->name('routes.repropose');
+    Route::post('rutas/{route}/validacion', [LearningRouteController::class, 'validateSelection'])->name('routes.revalidate');
     Route::put('rutas/{route}', [LearningRouteController::class, 'update'])->name('routes.update');
     Route::delete('rutas/{route}', [LearningRouteController::class, 'destroy'])->name('routes.destroy');
 

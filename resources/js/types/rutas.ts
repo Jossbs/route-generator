@@ -72,13 +72,13 @@ export type EmbudoOpcion = {
     especialidad: string | null;
 };
 
-/** Lo que la URL trae ya resuelto: Kommo mañana, el detalle de una ruta hoy. */
+/** Lo que la URL trae ya resuelto: CRM mañana, el detalle de una ruta hoy. */
 export type Precargado = {
     nombre: string;
     phone: string;
     occupation: string;
     context: string;
-    /** Una de las catorce, o «otro» cuando lo que venía no estaba en la lista. */
+    /** Una de las áreas curadas, o «otro» para un área que aún no está catalogada. */
     area: string;
     area_other: string;
     /** Uno de los planes publicados, o «otro» cuando se negoció fuera de la lista. */
@@ -89,8 +89,8 @@ export type Precargado = {
     /** La vigencia asentada, al corregir. Nula en una captura nueva: la pone la pantalla. */
     desde: string | null;
     hasta: string | null;
-    /** Las horas a la semana que el lead dijo que puede estudiar. Sin valor por defecto. */
-    weekly_hours: number | null;
+    /** Ritmo fijo para nuevas rutas: 18 horas a la semana. */
+    weekly_hours: number;
     external_id: string;
     /** El lead del gancho, cuando la final se arma desde él: la emite sobre el mismo lead. */
     lead_id: number | null;

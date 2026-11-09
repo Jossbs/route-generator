@@ -7,6 +7,7 @@ use App\Models\DocumentType;
 use App\Models\Funnel;
 use App\Models\Lead;
 use App\Models\LearningRoute;
+use App\Services\Documents\EditableCopy;
 use App\Services\RouteGeneration\Data\RouteInput;
 use App\Services\RouteGeneration\RouteGenerator;
 use Database\Seeders\DocumentTypeSeeder;
@@ -35,6 +36,7 @@ function redisenoCaptura(array $overrides = []): array
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => $overrides['funnel_id'] ?? Funnel::query()->value('id') ?? redisenoEmbudo(),
         'context' => 'quiere dejar de apagar fuegos en la línea',
         ...$overrides,
@@ -47,13 +49,13 @@ function redisenoCapturaFinal(array $overrides = []): array
         'full_name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => $overrides['funnel_id'] ?? redisenoEmbudo(['dmaic', 'siete-herramientas-de-la-calidad', 'spc'], 'sixsigma'),
         'context' => null,
         'plan' => 'expert_anual',
-        'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
         ...$overrides,
     ];
 }
@@ -79,13 +81,13 @@ function redisenoGancho(array $captura): array
 
 // ---------------------------------------------------------------- ruta inicial
 
-it('titula la portada con el nombre del embudo y nombra el curso por el que arranca', function () {
+it('titula la portada con el nombre de la ruta consultada y nombra el curso por el que arranca', function () {
     [$ruta, $html] = redisenoGancho(redisenoCaptura());
 
     $primero = Course::where('slug', 'siete-herramientas-de-la-calidad')->sole()->name;
 
     expect($html)
-        ->toContain('<h1 class="pt-h1">'.e('EJEMPLO · ruta de prueba'))
+        ->toContain('<h1 class="pt-h1">'.e('Ruta de prueba'))
         ->toContain(e('Nos dijiste: «Quiere dejar de apagar fuegos en la línea». Por eso tu ruta arranca con '.$primero.'.'))
         // El primer curso lleva la marca: es por donde entra el lead.
         ->toContain('Empieza aquí');
@@ -112,46 +114,42 @@ it('lleva una hoja de quiénes somos con lo que publica el sitio', function () {
     [, $html] = redisenoGancho(redisenoCaptura());
 
     expect($html)
-        ->toContain('<h2>Aprendes con SyS</h2>')
+        ->toContain('<h2>Quiénes somos</h2>')
         ->toContain('+80,000')
         ->toContain('Empresas que confían en SyS')
         ->toContain('img/dpsys/empresas/pfizer.png')
-        ->toContain('img/dpsys/fotos/caterpillar.jpg')
-        ->toContain('Reseña de Google');
+        ->toContain('img/dpsys/cofundadores/rosbel.jpg')
+        ->toContain('img/dpsys/cofundadores/yussef.jpg');
 
-    // Sin semblanzas de instructores: el sitio no las publica y el dueño las
-    // dejó fuera (2026-09-24).
-    expect($html)->not->toContain('Quién te enseña');
+    expect($html)->not->toContain('Reseña de Google');
 });
 
-it('prefiere la reseña que habla de una especialidad de la ruta', function () {
+it('presenta los cofundadores también cuando la ruta pertenece a otra especialidad', function () {
     [, $html] = redisenoGancho(redisenoCaptura([
         'funnel_id' => redisenoEmbudo(['excel-basico', 'excel-intermedio'], 'excel'),
     ]));
 
-    preg_match('#<div class="resenas">(.*?)</div>#s', $html, $resenas);
-
-    preg_match_all('#<figcaption>(.*?)</figcaption>#s', $resenas[1] ?? '', $autores);
-
-    // La que habla de Excel va primero.
-    expect($autores[1])->toHaveCount(2);
-    expect($autores[1][0])->toContain('Gemapao');
+    expect($html)->toContain('Rosbel Salinas Reséndez')
+        ->toContain('Yussef Salomón Quirarte')
+        ->not->toContain('<div class="resenas">');
 });
 
-it('sin reseña de la especialidad, lleva las dos generales', function () {
+it('enlaza la semblanza y el registro de cada cofundador', function () {
     [, $html] = redisenoGancho(redisenoCaptura());
 
-    expect($html)
-        ->toContain('Fernanda Sánchez')
-        ->toContain('Sebastián Franco')
-        ->not->toContain('Gemapao');
+    foreach (config('dpsys.cofundadores') as $fundador) {
+        expect($html)->toContain($fundador['perfil'])
+            ->toContain('Buscar en STPS: '.$fundador['agente']);
+    }
+
+    expect($html)->toContain(config('dpsys.fuentes.stps'));
 });
 
-it('cierra con la promesa de la ruta de doce meses, igual que el audio', function () {
+it('cierra con el acceso anual, igual que el audio', function () {
     [$ruta, $html] = redisenoGancho(redisenoCaptura());
 
-    expect($html)->toContain('te preparamos tu ruta de 12 meses');
-    expect(json_encode($ruta->snapshot['guion'], JSON_UNESCAPED_UNICODE))->toContain('12 meses');
+    expect($html)->toContain('el tiempo que te quede de tus 12 meses de acceso');
+    expect(json_encode($ruta->snapshot['guion'], JSON_UNESCAPED_UNICODE))->toContain('todo el año');
 });
 
 // ------------------------------------------------------------------ ruta final
@@ -175,7 +173,7 @@ it('rotula en la portada el alcance de la ruta anual', function () {
         ->not->toContain('Programas incluidos')
         ->toContain('En tu ruta')
         ->toContain($cursos.' cursos')
-        ->toContain('15 h por semana');
+        ->toContain('18 h por semana');
     expect($html)->toContain('Empieza hoy');
 
     // Cortesía, no venta: sin botón de membresía.
@@ -224,7 +222,7 @@ it('propone los párrafos que el asesor puede ajustar, con el texto que se impri
             ->where('parrafos.0.slug', 'portada.ruta-enfocada')
             ->where('parrafos.1.slug', 'porque.con-contexto')
             ->where('parrafos.2.slug', 'objetivo.ruta-enfocada')
-            ->where('parrafos.2.texto', fn (string $texto) => str_contains($texto, 'Para tu puesto de ingeniera de procesos')));
+            ->where('parrafos.2.texto', fn (string $texto) => str_contains($texto, 'Empieza por Ruta de prueba')));
 });
 
 it('imprime el párrafo que el asesor ajustó y lo congela en el snapshot', function () {
@@ -297,4 +295,88 @@ it('una corrección conserva lo ajustado si no lo vuelve a mandar', function () 
         ->assertSessionHasNoErrors();
 
     expect($ruta->refresh()->snapshot['ajustes_copy'])->toBe([]);
+});
+
+it('aplica el lenguaje y la marca de la ruta principal sin exponer el cargo por separado', function () {
+    [, $html] = redisenoGancho(redisenoCaptura(['occupation' => 'Ing.']));
+    $texto = strip_tags($html);
+
+    expect($html)->not->toContain('class="pt-ocup"')->not->toContain('class="avatar"');
+    expect($texto)->toContain('Ruta principal personalizada')
+        ->toContain('Preparada por DPSYS')
+        ->toContain('Especialización principal')
+        ->toContain('Cursos adicionales de refuerzo')
+        ->toContain('Lo que te recomiendo')
+        ->toContain('el tiempo que te quede de tus 12 meses de acceso')
+        ->toContain('certificaciones')->toContain('facilidades de pago')
+        ->not->toContain('para tu rol de')->not->toContain('Para tu puesto de')
+        ->not->toContain('Core Tools en DP SyS son cuatro programas')
+        ->not->toContain('Terminar esta ruta no te deja videos vistos');
+
+    expect(strpos($html, 'Especialización principal'))->toBeLessThan(strpos($html, 'Cursos adicionales de refuerzo'));
+    preg_match('#<div class="firma">(.*?)</div>\s*</div>#s', $html, $firma);
+    expect($firma[0] ?? '')->toContain('logo-vino.svg')->toContain('Desarrollo profesional SyS')->not->toContain('Eje Cursos');
+});
+
+it('prepara el objetivo de la ruta inicial aun cuando no se conoce el grado ni la ocupación', function () {
+    $copy = app(EditableCopy::class);
+    expect($copy->default('objetivo.ruta-enfocada', ['ancla' => 'Lean Manufacturing']))
+        ->toContain('Empieza por Lean Manufacturing')->not->toContain('{ocupacion}');
+});
+
+it('explica cada refuerzo a partir de su contenido y conserva el contexto del lead', function () {
+    [$ruta, $html] = redisenoGancho(redisenoCaptura([
+        'context' => 'Quiero reducir rechazos y analizar datos de calidad',
+    ]));
+
+    $adicionales = collect($ruta->snapshot['ruta']['cursos'])->where('rol', 'complementaria');
+    expect($adicionales)->toHaveCount(3);
+    preg_match_all('#<div class="cu-motivo">.*?<p>(.*?)</p>.*?</div>#s', $html, $motivos);
+    expect($motivos[1])->toHaveCount(3);
+    expect(array_unique($motivos[1]))->toHaveCount(3);
+    expect($html)->toContain('Tomamos en cuenta lo que nos compartiste: «Quiero reducir rechazos y analizar datos de calidad»')
+        ->toContain('Directrices para auditar sistemas de gestión')
+        ->toContain('planear y ejecutar auditorías internas de calidad')
+        ->toContain('resolver problemas de raíz con el método 8D');
+});
+
+it('reserva espacio para el contexto y mantiene los refuerzos juntos en una hoja de continuación', function () {
+    [, $html] = redisenoGancho(redisenoCaptura([
+        'occupation' => 'Coordinadora de calidad',
+        'context' => 'Quiero mejorar el control de procesos, reducir desperdicios y desarrollar habilidades para liderar a mi equipo.',
+    ]));
+
+    preg_match_all('#<section class="hoja inicial-ruta">(.*?)</section>#s', $html, $hojas);
+
+    expect($hojas[1])->toHaveCount(2);
+    expect($hojas[1][0])->toContain('Especialización principal')->not->toContain('class="cu-motivo"');
+    expect($hojas[1][1])->toContain('Tu ruta (2)')->toContain('Tomamos en cuenta lo que nos compartiste');
+    expect(substr_count($hojas[1][1], 'class="cu-motivo"'))->toBe(3);
+
+    foreach ($hojas[1] as $hoja) {
+        expect($hoja)->toContain('class="enc"')->toContain('class="pie"');
+    }
+});
+
+it('presenta una sola hoja institucional con respaldos verificables y redes oficiales', function () {
+    [, $html] = redisenoGancho(redisenoCaptura());
+
+    expect(substr_count($html, '<section class="hoja confianza-sys">'))->toBe(1);
+    expect($html)->toContain('Desde 2018 impulsamos el desarrollo')
+        ->toContain('Certificaciones y acreditaciones')
+        ->toContain('alcance según el programa')
+        ->toContain('cofundadores/rosbel.jpg')
+        ->toContain('cofundadores/yussef.jpg')
+        ->toContain('https://academy.dpsys.com.mx/egresados')
+        ->toContain('https://www.facebook.com/DesarrolloprofesionalSyS/')
+        ->toContain('https://www.instagram.com/desarrolloprofesionalsys/')
+        ->toContain('https://www.linkedin.com/company/desarrollo-profesional-sys/')
+        ->toContain('https://www.youtube.com/@desarrolloprofesionalsys973')
+        ->toContain('https://www.tiktok.com/@dp.sys')
+        ->toContain('material de apoyo para reforzar todo aprendizaje.')
+        ->not->toContain('evaluaciones con retroalimentación.');
+
+    foreach (config('dpsys.avales') as $aval) {
+        expect($html)->toContain('https://drive.google.com/file/d/'.$aval['documento'].'/view');
+    }
 });

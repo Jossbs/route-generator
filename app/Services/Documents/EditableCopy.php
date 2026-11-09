@@ -84,6 +84,9 @@ final class EditableCopy
         $contexto = rtrim(trim((string) ($datos['contexto'] ?? '')), ' .');
 
         return match (true) {
+            $slug === 'objetivo.ruta-enfocada' => $this->copy->body($slug, [
+                'ancla' => $datos['ancla'] ?? null,
+            ]),
             str_starts_with($slug, 'objetivo.') => $this->copy->body($slug, [
                 'ocupacion' => $ocupacion === '' ? null : self::inSentence($ocupacion),
                 'ancla' => $datos['ancla'] ?? null,

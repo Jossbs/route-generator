@@ -63,14 +63,8 @@ it('acompaña la ancla con dos complementarias', function () {
     expect($complementarySpecializations)->not->toContain($draft->anchorSpecializationId);
 });
 
-it('da a cada complementaria entre dos y tres cursos', function () {
-    $draft = composeEnfocada('coretools');
-
-    collect(itemsWithRole($draft, RouteItemRole::Complementaria))
-        ->groupBy('specializationId')
-        ->each(function ($items) {
-            expect($items->count())->toBeGreaterThanOrEqual(2)->toBeLessThanOrEqual(3);
-        });
+it('agrega exactamente tres cursos de refuerzo', function () {
+    expect(itemsWithRole(composeEnfocada('coretools'), RouteItemRole::Complementaria))->toHaveCount(3);
 });
 
 it('deja el documento dentro del rango esperado, sea cual sea el ancla', function (string $anchorSlug) {
@@ -91,7 +85,7 @@ it('deja el documento dentro del rango esperado, sea cual sea el ancla', functio
         ->count();
 
     expect($draft->declaredCourseCount)
-        ->toBeGreaterThanOrEqual(min(8, $anchorCourses + 4))
+        ->toBeGreaterThanOrEqual($anchorCourses + 3)
         ->toBeLessThanOrEqual(18);
 })->with(['coretools', 'lean', 'sixsigma', 'excel', 'iso', 'datos', 'kaizen', 'soft', 'industrial', 'calidad', 'problemas']);
 

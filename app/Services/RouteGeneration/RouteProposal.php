@@ -22,7 +22,7 @@ use App\Services\RouteComposition\Support\RecommendedTopUp;
 use App\Services\RouteComposition\Support\StudyPace;
 use App\Services\RouteGeneration\Data\LeadCapture;
 use App\Services\RouteValidation\Data\RouteItemDraft;
-use App\Services\RouteValidation\RouteValidator;
+use App\Services\RouteValidation\ValidationMessages;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Support\Collection;
 
@@ -43,7 +43,8 @@ final class RouteProposal
     public function __construct(
         private readonly ComposerRegistry $composers,
         private readonly PresetDraftBuilder $preset,
-        private readonly RouteValidator $validator,
+        private readonly RouteGenerator $generator,
+        private readonly ValidationMessages $messages,
         private readonly FunnelRouteLocator $funnelRoutes,
         private readonly RecommendedTopUp $topUp,
         private readonly EditableCopy $editable,
@@ -52,6 +53,7 @@ final class RouteProposal
     /**
      * @param  list<int>|null  $courseIds  Lo que el asesor dejó; null = lo que el motor propone.
      * @param  array<string, mixed>|null  $membership  Datos de membresía, si el documento los exige.
+     * @param  array<string, string>  $copyOverrides
      * @return array<string, mixed>
      */
     public function for(
@@ -60,6 +62,7 @@ final class RouteProposal
         DocumentType $documentType,
         ?array $courseIds = null,
         ?array $membership = null,
+        array $copyOverrides = [],
     ): array {
         $funnelRoute = $this->funnelRoutes->for($capture);
         $lead = $this->lead($capture, $advisor, $funnelRoute);
@@ -79,7 +82,7 @@ final class RouteProposal
         // no son una recomendación del motor.
         $curados = $esGancho ? $funnelRoute->orderedCourseIds() : [];
 
-        // Los dos recomendados solo se proponen la primera vez, cuando la
+        // Los recomendados solo se proponen la primera vez, cuando la
         // lista es la del embudo tal cual. Si el asesor ya pasó por la pantalla y
         // quitó cursos, lo que manda de vuelta es su decisión: volver a sumarlos
         // aquí sería discutirle en silencio lo que acaba de decidir.
@@ -118,7 +121,7 @@ final class RouteProposal
                 waivers: $funnelRoute->ruleWaivers(),
             );
 
-        $report = $this->validator->validate($draft);
+        $report = $this->generator->review($draft, $documentType, $copyOverrides);
 
         // Solo el itinerario: es la capa que el asesor revisa y ajusta. El
         // inventario de la membresía no se propone ni se poda —el miembro tiene
@@ -139,11 +142,15 @@ final class RouteProposal
             'bloqueos' => array_values(array_map(
                 fn ($evaluation): array => [
                     'codigo' => $evaluation->ruleCode,
-                    'mensaje' => $evaluation->message ?? $evaluation->ruleCode,
+                    'mensaje' => $this->messages->message($evaluation),
                     'arreglo' => $this->sequenceFix($evaluation->details),
                 ],
                 $report->blockingFailures()->all(),
             )),
+            'advertencias' => $report->warnings()->map(fn ($evaluation): array => [
+                'codigo' => $evaluation->ruleCode,
+                'mensaje' => $this->messages->message($evaluation),
+            ])->all(),
             'curso_ids' => array_values(array_unique(array_map(
                 fn (RouteItemDraft $item): int => $item->courseId,
                 $itinerary,
@@ -153,7 +160,9 @@ final class RouteProposal
             'parrafos' => $this->editable->paragraphs($documentType->slug, [
                 'ocupacion' => $membership['occupation'] ?? $capture->occupation,
                 'contexto' => $capture->context,
-                'ancla' => $anchor?->name,
+                'ancla' => $documentType->slug === DocumentTypeSeeder::ENFOCADA
+                    ? ($funnelRoute->name ?? $anchor?->name)
+                    : ($courses->get($itinerary[0]->courseId ?? 0)->specialization->name ?? $anchor?->name),
                 'primer_curso' => $courses->get($itinerary[0]->courseId ?? 0)?->name,
             ]),
         ];
@@ -171,11 +180,16 @@ final class RouteProposal
             'occupation' => $capture->occupation,
             'context' => $capture->context,
             ...$capture->area->toAttributes(),
-            'source' => 'formulario',
+            'source' => $capture->externalId === null ? 'formulario' : 'crm',
+            'external_id' => $capture->externalId,
             'requested_specialization_id' => $funnelRoute->main_specialization_id,
             'advisor_id' => $advisor->id,
             'status' => 'prospecto',
         ]);
+
+        if ($capture->leadId !== null) {
+            $lead->id = $capture->leadId;
+        }
 
         $lead->setRelation('advisor', $advisor);
         $lead->setRelation('archetype', Archetype::query()->where('slug', 'general')->first());
@@ -190,15 +204,13 @@ final class RouteProposal
      * ANNUAL_FITS_PACE; esto solo lo dice en voz alta.
      *
      * @param  array<string, mixed>|null  $membership
-     * @return array{horas_semana: int, capacidad: int, horas: int}|null
+     * @return array{horas_semana: int, capacidad: int, horas: int}
      */
-    private function pace(?array $membership, int $hours): ?array
+    private function pace(?array $membership, int $hours): array
     {
         $weekly = $membership['weekly_hours'] ?? null;
 
-        if ($weekly === null) {
-            return null;
-        }
+        $weekly ??= StudyPace::DEFAULT_WEEKLY_HOURS;
 
         return [
             'horas_semana' => (int) $weekly,

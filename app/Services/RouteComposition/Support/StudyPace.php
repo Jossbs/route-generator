@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Services\RouteComposition\Support;
 
 /**
- * El ritmo al que estudia el miembro: las horas a la semana que dijo que tiene.
+ * El ritmo de referencia: 18 horas por semana, tres horas durante seis días.
  *
  * De aquí salen dos cosas del documento anual: cuántos cursos caben en su año y
  * dónde termina cada mes. Un plan de 746 horas para alguien con cinco a la semana
@@ -16,8 +16,8 @@ namespace App\Services\RouteComposition\Support;
  */
 final readonly class StudyPace
 {
-    /** El ritmo de referencia cuando no hay uno capturado: el gancho y las membresías anteriores. */
-    public const DEFAULT_WEEKLY_HOURS = 15;
+    /** Ritmo fijo de recomendación: tres horas diarias, seis días por semana. */
+    public const DEFAULT_WEEKLY_HOURS = 18;
 
     public const MIN_WEEKLY_HOURS = 1;
 

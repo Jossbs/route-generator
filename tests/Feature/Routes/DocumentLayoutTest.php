@@ -182,7 +182,7 @@ it('declara las dos cifras del catálogo con su contención', function () {
     // 64 cursos · 55 programas. El lead que sume tiene que cuadrar, y la razón de
     // que las dos cifras no coincidan va dicha a un lado.
     expect($html)
-        ->toContain('Lo que abre tu membresía')
+        ->toContain('Sigue aprendiendo durante tus 12 meses')
         ->toContain('programas de contenido distintos');
 });
 
@@ -219,9 +219,9 @@ it('numera la portada y dice de cuántas hojas es el documento', function (strin
     $total = str_pad((string) $hojas, 2, '0', STR_PAD_LEFT);
 
     if ($documento === DocumentTypeSeeder::ANUAL) {
-        expect($html)->toContain('<span>01/'.$total.'</span>');
+        expect($html)->toContain('<span>01 / '.$total.'</span>');
 
-        preg_match_all('#<div class="pie">.*?<span>(\d{2})/(\d{2})(?: ·|</span>)#s', $html, $folios);
+        preg_match_all('#<div class="pie">.*?<span>(\d{2}) / (\d{2})(?: ·|</span>)#s', $html, $folios);
 
         expect($folios[1])->toHaveCount($hojas - 1, 'Cada hoja interior lleva su folio.');
         expect(array_unique($folios[2]))->toBe([$total]);
@@ -279,7 +279,7 @@ it('escribe todas las duraciones en un solo formato', function (string $document
     'anual' => [DocumentTypeSeeder::ANUAL, 'sixsigma'],
 ]);
 
-it('dice qué programas de Core Tools lleva la ruta, no los que publica la especialización', function () {
+it('conserva los cursos Core Tools sin imprimir la nota retirada', function () {
     $documentType = DocumentType::where('slug', DocumentTypeSeeder::ENFOCADA)->sole();
     $ancla = Specialization::where('slug', 'calidad')->sole();
     $coreTools = Specialization::where('slug', 'coretools')->sole();
@@ -297,10 +297,10 @@ it('dice qué programas de Core Tools lleva la ruta, no los que publica la espec
 
     expect($texto)
         ->toContain('AMEF')
-        ->toContain('quedan dentro de tu membresía');
+        ->not->toContain('Core Tools en DP SyS son cuatro programas');
 
     // Y en ningún caso promete la especialización completa (CORE_TOOLS_PARTIAL).
-    expect($texto)->toContain('No abarca APQP ni MSA');
+    expect($texto)->not->toContain('No abarca APQP ni MSA');
     expect($coreTools->isPartial())->toBeTrue();
 });
 
@@ -310,15 +310,15 @@ it('aterriza las horas en un tiempo, con el ritmo dicho al lado', function () {
     // «96 horas» no le dice al lead si eso es un mes o un año. La estimación va
     // siempre con el ritmo con el que se calculó, para que se pueda comprobar, y
     // una sola vez: al pie del itinerario que describe.
-    expect($html)->toContain('<p class="ritmo">A 15 horas por semana, la terminas en');
-    expect(substr_count($html, '15 horas por semana'))->toBe(1);
+    expect($html)->toContain('<p class="ritmo">A 18 horas por semana, la terminas en');
+    expect(substr_count($html, '18 horas por semana'))->toBe(1);
 });
 
-it('arma la ruta alrededor del puesto que el asesor capturó', function () {
+it('presenta el objetivo sin depender del puesto o grado capturado', function () {
     $html = documentoDe(DocumentTypeSeeder::ENFOCADA, 'sixsigma', lead: leadCapturado('sixsigma'));
 
     // Solo baja la inicial: lo demás se queda como el asesor lo escribió.
-    expect($html)->toContain('Para tu puesto de analista de Calidad');
+    expect($html)->toContain('Empieza por Six Sigma')->not->toContain('Para tu puesto de');
 });
 
 it('no rompe las siglas de la ocupación al ponerla a media frase', function (string $capturada, string $impresa) {
@@ -332,14 +332,14 @@ it('no rompe las siglas de la ocupación al ponerla a media frase', function (st
     ['Técnico de mantenimiento', 'técnico de mantenimiento'],
 ]);
 
-it('cae en la entradilla genérica cuando no hay puesto que nombrar', function () {
+it('presenta el objetivo de la ruta aunque no haya ocupación', function () {
     // Un marcador sin valor deja el bloque fuera: imprimir «tu rol de {ocupacion}»
     // delante de un lead es peor que no imprimir la frase.
     $html = documentoDe(DocumentTypeSeeder::ENFOCADA, 'sixsigma');
 
     expect($html)
         ->not->toContain('{ocupacion}')
-        ->toContain('Empieza por el curso marcado');
+        ->toContain('Empieza por Six Sigma');
 });
 
 it('enlaza al WhatsApp del asesor y no imprime un solo precio al hacerlo', function () {

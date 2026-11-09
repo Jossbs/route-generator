@@ -36,6 +36,7 @@ function capturaDeLead(array $overrides = []): array
     return [
         'name' => 'Mariana Cruz',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => embudoDeCaptura(),
         ...$overrides,
     ];
@@ -113,14 +114,10 @@ it('pide el área escrita cuando el asesor eligió «otra»', function () {
         ->assertSessionHasErrors('area_other');
 });
 
-it('no exige el área: la captura sigue funcionando sin ella', function () {
-    Queue::fake();
-
+it('exige capturar el área del lead', function () {
     $this->actingAs(FunnelFactory::author())
-        ->post('/rutas', capturaDeLead())
-        ->assertRedirect();
-
-    expect(Lead::sole()->area)->toBeNull();
+        ->post('/rutas', capturaDeLead(['area' => '']))
+        ->assertSessionHasErrors('area');
 });
 
 it('deja el select elegido cuando el área llega por URL', function () {
@@ -130,15 +127,17 @@ it('deja el select elegido cuando el área llega por URL', function () {
             ->component('rutas/generar')
             ->where('precargado.area', 'rh')
             ->where('precargado.area_other', '')
-            ->has('areas', count(LeadArea::cases())));
+            ->has('areas', count(LeadArea::cases()) + 1)
+            ->where('areas.0.label', 'Administración y Finanzas')
+            ->where('areas.1.label', 'Almacén / inventarios'));
 });
 
 it('abre el campo abierto cuando el área de la URL no es de la lista', function () {
     $this->actingAs(FunnelFactory::author())
-        ->get('/?area=comercio+exterior')
+        ->get('/?area=Control+de+Gestion')
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('precargado.area', 'otro')
-            ->where('precargado.area_other', 'Comercio Exterior')
+            ->where('precargado.area_other', 'Control de Gestion')
             ->etc());
 });
 

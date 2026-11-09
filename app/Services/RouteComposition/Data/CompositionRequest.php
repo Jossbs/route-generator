@@ -15,7 +15,7 @@ use App\Services\RouteComposition\Support\StudyPace;
  * Lo que hace falta para proponer una ruta, ya resuelto a modelos.
  *
  * El compositor recibe esto y no vuelve a preguntar de dónde salió el lead: el
- * formulario de hoy y el webhook de Kommo de mañana construyen el mismo objeto.
+ * formulario de hoy y el webhook del CRM de mañana construyen el mismo objeto.
  */
 final readonly class CompositionRequest
 {
@@ -38,15 +38,14 @@ final readonly class CompositionRequest
     ) {}
 
     /**
-     * El ritmo al que estudia el miembro, si se capturó. Sin él —membresías
-     * anteriores al 2026-09-22— el anual se reparte como antes: todo el año
-     * balanceado, sin tope de horas.
+     * El ritmo fijo de estudio para las nuevas membresías. Para documentos
+     * históricos conserva el ritmo que ya fue acordado.
      */
-    public function pace(): ?StudyPace
+    public function pace(): StudyPace
     {
         $hours = $this->membership?->weekly_hours;
 
-        return $hours === null ? null : new StudyPace((int) $hours);
+        return new StudyPace((int) ($hours ?? StudyPace::DEFAULT_WEEKLY_HOURS));
     }
 
     /**
@@ -69,7 +68,7 @@ final readonly class CompositionRequest
             'starts_on' => $this->membership->starts_on->toDateString(),
             'ends_on' => $this->membership->ends_on->toDateString(),
             // Va impreso («a 5 h/semana») y es lo que recortó los meses.
-            'weekly_hours' => $this->membership->weekly_hours,
+            'weekly_hours' => $this->membership->weekly_hours ?? StudyPace::DEFAULT_WEEKLY_HOURS,
         ];
     }
 }

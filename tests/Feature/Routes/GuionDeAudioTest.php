@@ -7,7 +7,11 @@ use App\Models\CopyBlock;
 use App\Models\Course;
 use App\Models\LearningRoute;
 use App\Services\Documents\AudioScript;
+use App\Services\Documents\InitialRouteScriptCopy;
+use App\Services\Documents\RouteDuration;
+use App\Services\Documents\WrittenMessage;
 use App\Services\RouteComposition\Support\RecommendedTopUp;
+use App\Services\RouteGeneration\PayloadHash;
 use Illuminate\Support\Facades\Queue;
 use Inertia\Testing\AssertableInertia;
 use Tests\Support\FunnelFactory;
@@ -15,8 +19,8 @@ use Tests\Support\FunnelFactory;
 /*
  * El guión del audio que acompaña a la ruta inicial (2026-09-22).
  *
- * No tiene captura propia: se arma con la misma ruta, así que nombra el primer y
- * el último curso del embudo y los mismos recomendados que lleva el PDF. Se
+ * No tiene captura propia: se arma con la misma ruta, y usa el nombre, la duración y
+ * el total de constancias del PDF. Se
  * congela en el snapshot, y la bandeja es su historial.
  */
 
@@ -45,127 +49,139 @@ function emitirConGuion(array $overrides = []): LearningRoute
     return LearningRoute::query()->latest('id')->firstOrFail();
 }
 
-it('arma el guión con la misma ruta y lo congela en el snapshot', function () {
-    $route = emitirConGuion();
-    $guion = $route->snapshot['guion'];
+it('personaliza el texto autorizado con las mismas cifras que el PDF', function () {
+    $route = emitirConGuion(['context' => 'Quiere mejorar sus procesos']);
+    $payload = $route->snapshot;
+    $guion = $payload['guion'];
+    $count = $payload['ruta']['totales']['cursos'];
 
-    $principal = collect($route->snapshot['ruta']['cursos'])
-        ->where('rol', '!=', 'complementaria')->pluck('nombre');
-    $regalos = collect($route->snapshot['ruta']['cursos'])
-        ->where('rol', 'complementaria')->pluck('nombre');
-
-    expect($guion['texto'])
-        ->toContain('Mariana')
-        ->toContain('tu trabajo en Calidad')
-        ->toContain('arranca con '.$principal->first())
-        ->toContain('esto es apenas el inicio')
-        ->toContain('12 meses')
-        ->toContain('facilidades de pago');
-
-    // Los recomendados se cuentan, no se nombran: el PDF los nombra y así el
-    // lead tiene un motivo para abrirlo (2026-09-23).
-    expect($regalos)->toHaveCount(2);
-
-    foreach ($regalos as $regalo) {
-        expect($guion['texto'])->not->toContain($regalo);
-    }
-
-    expect($guion['texto'])->toContain('dos cursos más')
-        ->and($guion['menciones_nombre'])->toBe(2)
+    expect($route->status)->toBe(RouteStatus::Validated)
+        ->and($route->snapshotIsIntact())->toBeTrue()
+        ->and($guion['texto'])
+        ->toStartWith('Mariana, ¿qué tal? Soy Eje Cursos, de Desarrollo Profesional SyS.')
+        ->toContain('Tu ruta no es un catálogo: la armé con lo que me contaste, para que cada curso te sirva en tu trabajo.')
+        ->toContain('Imagínate en '.RouteDuration::for($payload, spoken: true))
+        ->toContain(RouteDuration::number($count).' constancias DC-3 ante la STPS')
+        ->toContain('sesenta y cuatro cursos abiertos todo el año')
+        ->toContain('por mucho menos de lo que pagarías curso por curso')
+        ->toContain('escríbeme “¡Me gustó!”')
+        ->not->toMatch('/\{[a-z_]+\}/')
+        ->and($guion['menciones_nombre'])->toBe(1)
         ->and(array_column($guion['bloques'], 'clave'))
-        ->toBe(['saludo', 'conexion', 'ruta', 'inicio', 'cierre']);
+        ->toBe(['saludo', 'conexion', 'ruta', 'inicio', 'pago', 'cierre']);
 });
 
-it('dura entre 45 y 60 segundos en cada variante', function (array $overrides) {
+it('mantiene el audio de referencia entre 45 y 60 segundos', function (array $overrides) {
     $guion = emitirConGuion($overrides)->snapshot['guion'];
 
     expect($guion['segundos'])
         ->toBeGreaterThanOrEqual(AudioScript::SEGUNDOS_MIN)
         ->toBeLessThanOrEqual(AudioScript::SEGUNDOS_MAX);
 })->with([
-    'por área' => [[]],
-    'con lo que contó' => [['context' => 'quiere liderar el área de mejora continua.']],
+    'sin contexto' => [[]],
+    'con contexto' => [['context' => 'Quiere liderar el área de mejora continua.']],
     'estudiante' => [['area' => 'estudiante', 'occupation' => 'Estudiante de ingeniería']],
 ]);
 
-it('no vuelve a decir «certificaciones» como conteo del catálogo', function () {
-    $texto = emitirConGuion()->snapshot['guion']['texto'];
+it('reproduce las cifras del ejemplo y las cambia para otra ruta', function () {
+    $route = emitirConGuion(['name' => 'Joss', 'context' => 'Quiere mejorar su perfil']);
+    $payload = $route->snapshot;
+    $payload['ruta']['totales'] = ['cursos' => 10, 'programas' => 10, 'horas_netas' => 225];
 
-    expect($texto)
-        ->not->toContain('64 certificaciones')
-        ->not->toContain('certificado verificable')
-        ->toContain('constancia DC-3');
+    $audio = app(AudioScript::class)->for($payload, $route->lead);
+    $message = app(WrittenMessage::class)->for($payload, $route->lead);
+
+    expect($audio['texto'])->toContain('Imagínate en tres meses con diez constancias DC-3')
+        ->and($message['texto'])->toStartWith('Joss, tu ruta ya está lista 🎯 La armé con lo que me contaste.')
+        ->toContain('En 3 meses puedes tener 10 constancias DC-3');
+
+    $payload['lead']['nombre'] = 'Ana Lucía';
+    $payload['asesor']['nombre'] = 'Daniela';
+    $payload['ruta']['totales'] = ['cursos' => 1, 'programas' => 1, 'horas_netas' => 15];
+    $payload['catalogo']['cursos'] = 63;
+    $audio = app(AudioScript::class)->for($payload, $route->lead);
+    $message = app(WrittenMessage::class)->for($payload, $route->lead);
+
+    expect($audio['texto'])->toStartWith('Ana Lucía, ¿qué tal? Soy Daniela, de Desarrollo Profesional SyS.')
+        ->toContain('una semana con una constancia DC-3')
+        ->toContain('sesenta y tres cursos abiertos')
+        ->not->toContain('Joss', 'diez constancias', 'sesenta y cuatro')
+        ->and($message['texto'])->toContain('1 constancia DC-3', '63 cursos todo el año')
+        ->not->toContain('10 constancias', '64 cursos');
 });
 
-it('marca qué parte es dato y dónde sube la voz', function () {
-    $segmentos = emitirConGuion()->snapshot['guion']['bloques'][0]['segmentos'];
+it('resalta los datos personales y las cifras para quien graba', function () {
+    $blocks = emitirConGuion()->snapshot['guion']['bloques'];
+    $segments = collect($blocks)->flatMap(fn (array $block): array => $block['segmentos']);
 
-    expect($segmentos[1])->toMatchArray(['texto' => 'Mariana', 'dato' => 'nombre', 'enfasis' => true]);
+    expect($segments->firstWhere('dato', 'nombre'))
+        ->toMatchArray(['texto' => 'Mariana', 'enfasis' => true]);
+    expect($segments->firstWhere('dato', 'duracion_audio')['enfasis'])->toBeTrue();
+    expect($segments->firstWhere('dato', 'constancias_audio')['enfasis'])->toBeTrue();
 });
 
-it('devuelve lo que el lead contó cuando lo hay', function () {
-    $texto = emitirConGuion(['context' => 'quiere liderar el área de mejora continua.'])
-        ->snapshot['guion']['texto'];
+it('no atribuye una conversación cuando no hay contexto capturado', function () {
+    $route = emitirConGuion();
 
-    expect($texto)->toContain('me contaste: quiere liderar el área de mejora continua. Y créeme que te entiendo');
+    expect($route->snapshot['guion']['texto'])
+        ->toContain('la armé pensando en tu perfil')
+        ->not->toContain('lo que me contaste')
+        ->and($route->snapshot['mensaje']['texto'])
+        ->toContain('La armé pensando en tu perfil.');
 });
 
-it('baja la mayúscula de lo que contó el lead al meterlo después de dos puntos', function () {
-    $texto = emitirConGuion(['context' => 'QUIERE LIDERAR EL ÁREA DE MEJORA CONTINUA'])
-        ->snapshot['guion']['texto'];
-
-    expect($texto)->toContain('me contaste: quiere liderar el área de mejora continua.');
-});
-
-it('nombra la ocupación cuando el lead no trabaja todavía', function () {
+it('adapta el audio a estudiantes sin atribuirles un trabajo', function () {
     $texto = emitirConGuion(['area' => 'estudiante', 'occupation' => 'Estudiante de ingeniería'])
         ->snapshot['guion']['texto'];
 
-    expect($texto)
-        ->not->toContain('tu trabajo en')
-        ->toContain('me compartiste como estudiante de ingeniería');
+    expect($texto)->toContain('en tu desarrollo profesional')
+        ->not->toContain('en tu trabajo');
 });
 
-it('ajusta el guión a cuántos recomendados dejó el asesor', function () {
-    // Quitó los dos: el audio ya no ofrece «cursos más» que el PDF no trae.
+it('recalcula las constancias y la duración si se retiran recomendados', function () {
     $curados = FunnelFactory::available(['lean-manufacturing', 'kaizen-mejora-continua'], 'lean');
-
     $route = emitirConGuion([
         'funnel_id' => $curados->funnel_id,
         'course_ids' => $curados->orderedCourseIds(),
     ]);
 
-    expect($route->snapshot['guion']['texto'])->not->toContain('más que te va')
-        ->and($route->snapshot['mensaje']['texto'])->not->toContain('extra');
+    expect($route->snapshot['guion']['texto'])->toContain('dos constancias DC-3')
+        ->and($route->snapshot['mensaje']['texto'])->toContain('2 constancias DC-3')
+        ->not->toContain('3 meses y medio', '10 constancias DC-3');
 });
 
-it('arma el mensaje que sustituye al audio, sin calcar el guión', function () {
-    $route = emitirConGuion(['context' => 'quiere liderar el área de mejora continua.']);
-    $mensaje = $route->snapshot['mensaje'];
-    $principal = collect($route->snapshot['ruta']['cursos'])
-        ->where('rol', '!=', 'complementaria')->pluck('nombre');
+it('arma el mensaje autorizado en cuatro párrafos listos para WhatsApp', function () {
+    $message = emitirConGuion(['context' => 'Quiere liderar el área de mejora continua.'])->snapshot['mensaje'];
 
-    expect($mensaje['texto'])
-        ->toStartWith('¡Hola, Mariana! 👋')
-        ->toContain('me contaste: quiere liderar el área de mejora continua.')
-        // Las negritas ya van con la sintaxis de WhatsApp, pegadas al texto.
-        ->toContain('Arrancas con *'.$principal->first().'*')
-        ->toContain('*apenas el comienzo*')
-        ->toContain('12 meses')
-        ->toContain('facilidades de pago')
-        ->not->toMatch('/(^|\s)\*\s|\s\*($|[\s.,])/u')
-        ->and(array_column($mensaje['bloques'], 'clave'))
-        ->toBe(['saludo', 'conexion', 'ruta', 'inicio', 'cierre']);
+    expect($message['texto'])
+        ->toStartWith('Mariana, tu ruta ya está lista 🎯 La armé con lo que me contaste.')
+        ->toContain('tu membresía te abre 64 cursos todo el año')
+        ->toContain('Y tenemos facilidades para que el pago no te detenga.')
+        ->toEndWith('👉 Si te gustó y quieres empezar hoy, respóndeme “¡Me gustó!” y te mando las facilidades y todos los detalles')
+        ->and(explode("\n\n", $message['texto']))->toHaveCount(4)
+        ->and(array_column($message['bloques'], 'clave'))->toBe(['saludo', 'ruta', 'pago', 'cierre']);
+});
 
-    // Mismo trabajo que el audio, otras frases. Lo único que se repite es lo que
-    // contó el lead, que es suyo.
-    $frasesDelGuion = preg_split('/(?<=[.:?!])\s+/u', $route->snapshot['guion']['texto']);
+it('muestra el complemento nuevo en rutas anteriores sin alterar su snapshot', function () {
+    $route = emitirConGuion(['context' => 'Quiere mejorar sus procesos']);
+    $snapshot = $route->snapshot;
+    $snapshot['guion'] = ['texto' => 'Audio anterior'];
+    $snapshot['mensaje'] = ['texto' => 'Mensaje anterior'];
+    $hash = PayloadHash::of($snapshot);
+    $route->update(['snapshot' => $snapshot, 'snapshot_hash' => $hash]);
+    $expected = app(WrittenMessage::class)->for($snapshot, $route->lead);
 
-    foreach ($frasesDelGuion as $frase) {
-        if (mb_strlen($frase) > 30 && ! str_contains($frase, 'mejora continua')) {
-            expect($mensaje['texto'])->not->toContain($frase);
-        }
-    }
+    $this->get("/rutas/{$route->id}")
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('guion.version', InitialRouteScriptCopy::VERSION)
+            ->where('mensaje.texto', $expected['texto']));
+    $this->get('/rutas')
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('rutas.data.0.mensaje', $expected['texto']));
+
+    expect($route->fresh()->snapshot)->toEqual($snapshot)
+        ->and($route->fresh()->snapshot_hash)->toBe($hash)
+        ->and($route->fresh()->snapshotIsIntact())->toBeTrue();
 });
 
 it('escanea el mensaje igual que el documento', function () {
@@ -174,12 +190,18 @@ it('escanea el mensaje igual que el documento', function () {
     CopyBlock::query()->where('slug', 'mensaje.cierre')
         ->update(['body' => 'Es equivalente a un Green Belt 👇']);
 
-    $route = emitirConGuion();
+    Queue::fake();
+    $this->actingAs(FunnelFactory::author())->postJson('/rutas', [
+        'name' => 'Mariana',
+        'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
+        'funnel_id' => embudoDelGuion(),
+    ])->assertUnprocessable()->assertJsonValidationErrors('course_ids');
 
-    expect($route->status)->toBe(RouteStatus::Rejected);
+    expect(LearningRoute::count())->toBe(0);
 });
 
-it('no deja pasar más recomendados de los que menciona el audio', function () {
+it('conserva el límite de recomendados de la ruta inicial', function () {
     Queue::fake();
     $curados = FunnelFactory::available(['lean-manufacturing'], 'lean');
     $extra = Course::query()
@@ -192,6 +214,7 @@ it('no deja pasar más recomendados de los que menciona el audio', function () {
         ->post('/rutas', [
             'name' => 'Mariana',
             'occupation' => 'Ingeniera de procesos',
+            'area' => 'calidad',
             'funnel_id' => $curados->funnel_id,
             'course_ids' => [...$curados->orderedCourseIds(), ...$extra],
         ])

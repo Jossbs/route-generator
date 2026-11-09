@@ -22,7 +22,7 @@ final class MexicanPhone
     /**
      * El número canónico, o null si no son diez dígitos.
      *
-     * Acepta que venga con la lada —por URL desde Kommo, o pegado del chat— y
+     * Acepta que venga con la lada —por URL desde el CRM, o pegado del chat— y
      * con el `1` que WhatsApp todavía antepone a los celulares viejos (`521…`).
      */
     public static function normalize(?string $numero): ?string

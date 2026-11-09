@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * El lead es entidad propia desde el primer día. `external_id` nullable es la
- * costura con Kommo: cuando llegue, no hay migración de datos.
+ * costura con el CRM: cuando llegue, no hay migración de datos.
  *
  * unique(source, external_id) no estorba a los leads de formulario porque en
  * PostgreSQL los NULL no colisionan en un índice único.
@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
-            $table->enum('source', ['formulario', 'kommo'])->default('formulario');
+            $table->enum('source', ['formulario', 'crm'])->default('formulario');
             $table->string('external_id')->nullable();
             $table->foreignId('requested_specialization_id')->nullable()->constrained('specializations')->nullOnDelete();
             $table->foreignId('archetype_id')->nullable()->constrained()->nullOnDelete();

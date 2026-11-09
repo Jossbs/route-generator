@@ -19,15 +19,8 @@ use App\Services\RouteComposition\Data\CompositionPolicy;
  * uno. La campaña los eligió, así que ninguno se toca. Abajo van los recomendados,
  * que son la muestra de lo que el lead no sabía que venía dentro de su membresía.
  *
- * Son dos, nunca más. No es una cifra estética: es lo que el asesor puede
- * defender uno por uno en la conversación. Una lista larga de sugerencias deja de
- * leerse como «pensé en ti» y empieza a leerse como catálogo, que es justo lo que
- * el gancho no es. El asesor puede quitarlos o cambiarlos: lo que sale es lo que
- * él dejó.
- *
- * Eran dos o tres hasta el 2026-09-22. Bajaron a dos con el guión del audio, que
- * se los presenta al lead como «dos cursos más, sin costo adicional»: si el PDF
- * trajera un tercero, el lead encontraría un curso que el asesor no le mencionó.
+ * Se proponen tres cursos de refuerzo según la ocupación y el objetivo del lead.
+ * El asesor puede sustituirlos o retirarlos durante la revisión.
  *
  * Los del embudo no cuentan aquí aunque sean de otra especialidad. Antes sí
  * contaban, y un embudo con seis cursos de tres ramas salía sin una sola
@@ -37,10 +30,10 @@ use App\Services\RouteComposition\Data\CompositionPolicy;
 final class RecommendedTopUp
 {
     /** Cuántos propone el motor, y el techo de lo que el asesor puede dejar. */
-    public const OBJETIVO = 2;
+    public const OBJETIVO = 3;
 
     /** Menos de esto no es una sección, es un renglón suelto. */
-    public const MINIMO = 2;
+    public const MINIMO = 3;
 
     /** Cuántos se toman de una misma especialización antes de pasar a la siguiente. */
     private const POR_ESPECIALIDAD = 2;
@@ -69,7 +62,7 @@ final class RecommendedTopUp
             excludeIds: $excluir,
             // De sobra: cada candidata puede quedarse sin cursos que el guard
             // admita, y quedarse corto aquí es volver a quedarse corto abajo.
-            limit: self::OBJETIVO,
+            limit: PHP_INT_MAX,
         );
 
         foreach ($candidatas as [$especialidad, $justificacion]) {

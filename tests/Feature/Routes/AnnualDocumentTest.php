@@ -8,6 +8,7 @@ use App\Models\Funnel;
 use App\Models\Lead;
 use App\Models\LearningRoute;
 use App\Models\Membership;
+use App\Services\Documents\DocumentView;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
@@ -45,16 +46,15 @@ function capturaFinal(array $overrides = []): array
         'full_name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoFinal(),
         'context' => null,
         'plan' => 'expert_anual',
-        // Lo que se cobró. Se asienta en la membresía y nunca llega al documento.
-        'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        // A 15 h por semana cabe el itinerario completo (746 h en 783): las
+        // A 18 h por semana cabe el itinerario completo: las
         // pruebas que no son del ritmo siguen viendo el año entero.
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
         ...$overrides,
     ];
 }
@@ -116,6 +116,7 @@ it('liga el anual con el gancho que lo originó', function () {
         'name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoFinal(),
     ]);
 
@@ -148,6 +149,7 @@ it('imprime la portada con los datos de la membresía', function () {
         ->assertSee('Mariana Cruz Aguilar', escape: false)
         ->assertSee('Coordinadora de calidad', escape: false)
         ->assertSee('Tu membresía', escape: false)
+        ->assertDontSee('class="rf-firma-asesor"', escape: false)
         // El plan que el asesor eligió, no el respaldo genérico: se capturaba, se
         // guardaba y no llegaba nunca a la portada.
         ->assertSee('Expert Anual', escape: false)
@@ -167,7 +169,7 @@ it('asienta lo que se cobró sin dejarlo llegar al documento', function () {
 
     // El importe existe: una membresía asentada sin decir por cuánto se cerró deja
     // ese dato viviendo solo en la conversación de WhatsApp del asesor.
-    expect($ruta->membership->price)->toBe('4199.00');
+    expect($ruta->membership->price)->toBeNull();
     expect($ruta->membership->planLabel())->toBe('Expert Anual');
 
     // Y no viaja al snapshot, que es lo que alimenta al PDF. Lo que el payload no
@@ -182,10 +184,11 @@ it('asienta lo que se cobró sin dejarlo llegar al documento', function () {
     expect($html)->not->toContain('4199');
 });
 
-it('exige el plan y el importe al cerrar la membresía', function () {
+it('exige el plan, pero no pide el costo de la membresía', function () {
     $this->actingAs(FunnelFactory::author())
-        ->post('/rutas/final', capturaFinal(['plan' => '', 'price' => '']))
-        ->assertSessionHasErrors(['plan', 'price']);
+        ->post('/rutas/final', capturaFinal(['plan' => '']))
+        ->assertSessionHasErrors(['plan'])
+        ->assertSessionDoesntHaveErrors('price');
 
     // Un plan fuera de la lista publicada se escribe, pero se escribe: si no, el
     // documento imprimiría «Otro» en la portada del miembro.
@@ -280,6 +283,7 @@ it('reconoce al lead del gancho en vez de darlo de alta otra vez', function () {
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoFinal(),
     ])->assertSessionHasNoErrors();
 
@@ -410,9 +414,13 @@ it('bloquea un curso puesto antes de su requisito y ofrece el arreglo', function
  * cabe: si la lista se pasa, no se genera.
  */
 
-it('pide las horas por semana, que es lo que decide cuántos cursos caben', function () {
+it('usa el ritmo fijo de 18 horas y rechaza valores distintos', function () {
     $this->actingAs(FunnelFactory::author())
         ->post('/rutas/final/meses', capturaFinal(['weekly_hours' => null]))
+        ->assertSessionHasErrors('weekly_hours');
+
+    $this->actingAs(FunnelFactory::author())
+        ->post('/rutas/final/meses', capturaFinal(['weekly_hours' => 15]))
         ->assertSessionHasErrors('weekly_hours');
 
     $this->actingAs(FunnelFactory::author())
@@ -420,22 +428,19 @@ it('pide las horas por semana, que es lo que decide cuántos cursos caben', func
         ->assertSessionHasErrors('weekly_hours');
 });
 
-it('a pocas horas propone menos cursos, que caben en su año, y empieza por lo que pidió', function () {
-    $holgado = mesesCon(capturaFinal(['weekly_hours' => 15]));
-    $justo = mesesCon(capturaFinal(['weekly_hours' => 3]));
+it('reparte la ruta anual al ritmo estándar de 18 horas por semana', function () {
+    $plan = mesesCon(capturaFinal());
 
-    expect(count($justo['curso_ids']))->toBeLessThan(count($holgado['curso_ids']));
-    expect($justo['ritmo']['horas'])->toBeLessThanOrEqual($justo['ritmo']['capacidad']);
-    expect($justo['bloqueos'])->toBe([]);
-
-    // La especialidad del embudo abre el año aunque el tiempo no alcance para todo.
-    expect($justo['bloques'][0]['abre'])->toBeTrue();
-    expect($justo['bloques'][0]['mes'])->toBe(1);
+    expect($plan['ritmo']['horas_semana'])->toBe(18)
+        ->and($plan['ritmo']['horas'])->toBeLessThanOrEqual($plan['ritmo']['capacidad'])
+        ->and($plan['bloqueos'])->toBe([])
+        ->and($plan['bloques'][0]['abre'])->toBeTrue()
+        ->and($plan['bloques'][0]['mes'])->toBe(1);
 });
 
 it('la portada y la meta anual cuentan lo recomendado, sin prometer todo el inventario', function () {
     Queue::fake();
-    $captura = capturaFinal(['weekly_hours' => 3]);
+    $captura = capturaFinal();
     $propuesta = mesesCon($captura);
 
     $this->actingAs(FunnelFactory::author())
@@ -448,57 +453,31 @@ it('la portada y la meta anual cuentan lo recomendado, sin prometer todo el inve
 
     expect($html)
         ->toContain($cursos.' cursos · '.$horas.' h')
-        ->toContain($cursos.' cursos · '.$horas.' horas · '.$cursos.' constancias')
         ->not->toContain('64 cursos · 746 h')
         ->toContain('Todo lo que tienes abierto');
+
+    // La meta presenta cada cifra en una tarjeta; se verifican sus valores
+    // visibles, independientemente de los elementos que los separan.
+    preg_match('#<div class="rf-meta-cifras">(.*?)</section>#s', $html, $meta);
+    $textoMeta = trim((string) preg_replace('/\s+/u', ' ', (string) preg_replace('/<[^>]*>/', ' ', $meta[1] ?? '')));
+    expect($textoMeta)->toStartWith($cursos.' cursos '.$horas.' horas '.$cursos.' constancias DC-3');
     expect(anualEmitido()->snapshot['ruta']['totales']['cursos'])->toBe(64);
 });
 
-it('no deja generar un año que no cabe en sus horas', function () {
+it('imprime el ritmo estándar y reparte el itinerario entre los doce meses', function () {
     Queue::fake();
-    $holgado = mesesCon(capturaFinal(['weekly_hours' => 15]))['curso_ids'];
-    $captura = capturaFinal(['weekly_hours' => 3, 'course_ids' => $holgado]);
-
-    $pantalla = mesesCon($captura);
-
-    expect($pantalla['ritmo']['horas'])->toBeGreaterThan($pantalla['ritmo']['capacidad']);
-    expect(collect($pantalla['bloqueos'])->pluck('codigo'))->toContain('ANNUAL_FITS_PACE');
-
-    $this->actingAs(FunnelFactory::author())->post('/rutas/final', $captura);
-
-    expect(anualEmitido()->status)->toBe(RouteStatus::Rejected);
-    Queue::assertNothingPushed();
-});
-
-it('reparte un curso largo en los meses que abarca a su ritmo', function () {
-    Queue::fake();
-    $captura = capturaFinal(['weekly_hours' => 3]);
+    $captura = capturaFinal();
     $propuestos = mesesPropuestos($captura);
-
-    // El curso más largo de la propuesta: a 3 h por semana, cualquiera de más de
-    // 13 h cruza la orilla del mes.
-    $largo = Course::query()->whereIn('id', $propuestos)->orderByDesc('duration_hours')->first();
-    expect($largo->duration_hours)->toBeGreaterThan(13);
 
     $this->actingAs(FunnelFactory::author())
         ->post('/rutas/final', [...$captura, 'course_ids' => $propuestos])
         ->assertSessionHasNoErrors();
 
-    $renglon = collect(anualEmitido()->snapshot['ruta']['cursos'])
-        ->where('capa', 'itinerario')
-        ->firstWhere('slug', $largo->slug);
-
-    expect($renglon['mes_fin'])->toBeGreaterThan($renglon['mes_sugerido']);
-
     $html = $this->actingAs(FunnelFactory::author())
         ->get('/rutas/'.anualEmitido()->id.'/documento')
         ->getContent();
 
-    // La tarjeta reaparece en cada mes que abarca y señala la continuación.
-    expect(substr_count($html, '<b>'.$renglon['nombre'].'</b>'))
-        ->toBe($renglon['mes_fin'] - $renglon['mes_sugerido'] + 1);
-    expect($html)->toContain('Continúa · lo terminas este mes');
-    expect($html)->toContain('3 h por semana');
+    expect($html)->toContain('18 h por semana');
     expect($html)->not->toContain('15 h por semana');
 });
 
@@ -526,6 +505,7 @@ it('reconoce al lead aunque el teléfono se haya escrito distinto en el gancho',
         'name' => 'Mariana Cruz',
         'phone' => '442 118 55 02',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoFinal(),
     ])->assertSessionHasNoErrors();
 
@@ -541,12 +521,111 @@ it('no acepta un WhatsApp que no son diez dígitos', function (string $telefono)
         ->assertSessionHasErrors('phone');
 })->with(['442118550', '44211855021', 'sin número']);
 
-it('acepta cualquier número de horas entre 1 y 40, no solo los de 5 en 5', function () {
+it('guarda siempre 18 horas semanales aunque una petición intente cambiarlas', function () {
     Queue::fake();
 
     $this->actingAs(FunnelFactory::author())
-        ->post('/rutas/final', capturaFinal(['weekly_hours' => 7]))
+        ->post('/rutas/final', capturaFinal(['weekly_hours' => 18]))
         ->assertSessionHasNoErrors();
 
-    expect(Membership::sole()->weekly_hours)->toBe(7);
+    expect(Membership::sole()->weekly_hours)->toBe(18);
+});
+
+it('retoma los cursos reales y los refuerzos del inicial en la propuesta y la emisión anual', function (RouteStatus $status) {
+    Queue::fake();
+    $advisor = FunnelFactory::author();
+
+    $this->actingAs($advisor)->post('/rutas', [
+        'name' => 'Mariana Cruz',
+        'phone' => '4421185502',
+        'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
+        'context' => 'Quiero analizar indicadores en Power BI y mejorar el liderazgo de mi equipo.',
+        'funnel_id' => embudoFinal(),
+    ])->assertSessionHasNoErrors();
+
+    $initial = LearningRoute::sole();
+    $initial->update(['status' => $status]);
+    $original = collect($initial->snapshot['ruta']['cursos'])->where('capa', 'itinerario');
+    expect($original->where('rol', 'complementaria'))->not->toBeEmpty();
+
+    $capture = capturaFinal(['lead_id' => $status === RouteStatus::Validated ? $initial->lead_id : null]);
+    $proposed = mesesPropuestos($capture);
+    $initialIds = $initial->itineraryCourseIds();
+
+    // Este embudo no tiene niveles absorbidos: conserva cada curso concreto.
+    expect(array_slice($proposed, 0, count($initialIds)))->toBe($initialIds);
+
+    $this->actingAs($advisor)->post('/rutas/final', $capture)->assertSessionHasNoErrors();
+    expect(anualEmitido()->parent_route_id)->toBe($initial->id);
+    expect(anualEmitido()->itineraryCourseIds())->toBe($proposed);
+})->with([RouteStatus::Validated, RouteStatus::Rendered, RouteStatus::Failed]);
+
+it('usa el ritmo estándar y hace cuadrar meses etapas y meta', function () {
+    Queue::fake();
+    $this->actingAs(FunnelFactory::author())->post('/rutas/final', capturaFinal([
+        'full_name' => 'Mariana Cruz Aguilar',
+        'starts_on' => '2026-12-31',
+        'ends_on' => '2027-12-30',
+        'weekly_hours' => 18,
+    ]))->assertSessionHasNoErrors();
+
+    $route = anualEmitido();
+    $view = app(DocumentView::class)->for($route);
+    $data = $view->getData();
+    $html = $view->render();
+
+    expect($html)->toContain('Tu año de un vistazo', '12 meses · 4 etapas', 'Mariana Cruz Aguilar')
+        ->toContain('18 h por semana')
+        ->not->toContain('Rosbel Salinas');
+    expect(array_column($data['mesesRuta'], 'etiqueta'))
+        ->toBe(['dic 2026', 'ene 2027', 'feb 2027', 'mar 2027', 'abr 2027', 'may 2027', 'jun 2027', 'jul 2027', 'ago 2027', 'sep 2027', 'oct 2027', 'nov 2027']);
+    expect(array_sum(array_column($data['mesesRuta'], 'horas')))->toBe($data['totalesItinerario']['horas_netas']);
+    expect(array_sum(array_column($data['etapasRuta'], 'horas')))->toBe($data['totalesItinerario']['horas_netas']);
+    expect(array_sum(array_column($data['etapasRuta'], 'cursos')))->toBe($data['totalesItinerario']['cursos']);
+    expect(substr_count($html, 'class="rf-hex'))->toBe(12);
+    expect($data['paginas'])->toBe(substr_count($html, '<section class="hoja'));
+
+});
+
+it('retoma la ruta inicial completa con el ritmo anual estándar', function () {
+    Queue::fake();
+    $this->actingAs(FunnelFactory::author())->post('/rutas', [
+        'name' => 'Mariana Cruz',
+        'phone' => '4421185502',
+        'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
+        'funnel_id' => embudoFinal(),
+    ])->assertSessionHasNoErrors();
+
+    $initial = LearningRoute::sole();
+    $capture = capturaFinal(['lead_id' => $initial->lead_id]);
+    $props = mesesCon($capture);
+
+    expect($props['curso_ids'])->toContain(...$initial->itineraryCourseIds())
+        ->and($props['ritmo']['horas_semana'])->toBe(18)
+        ->and($props['bloqueos'])->toBe([]);
+});
+
+it('retoma niveles del inicial mediante su paquete sin duplicar contenido', function () {
+    Queue::fake();
+    $funnel = FunnelFactory::available(['autocad-basico', 'autocad-intermedio'], 'industrial');
+    $this->actingAs(FunnelFactory::author())->post('/rutas', [
+        'name' => 'Mariana Cruz',
+        'phone' => '4421185502',
+        'occupation' => 'Diseñadora industrial',
+        'area' => 'ingenieria',
+        'funnel_id' => $funnel->funnel_id,
+    ])->assertSessionHasNoErrors();
+
+    $initial = LearningRoute::sole();
+    expect($initial->status)->toBe(RouteStatus::Validated);
+    $capture = capturaFinal(['lead_id' => $initial->lead_id, 'funnel_id' => $funnel->funnel_id]);
+    $proposed = mesesPropuestos($capture);
+    expect($proposed[0])->toBe(courseId('autocad-completo'));
+    expect($proposed)->not->toContain(courseId('autocad-basico'), courseId('autocad-intermedio'));
+
+    $this->actingAs(FunnelFactory::author())->post('/rutas/final', $capture)->assertSessionHasNoErrors();
+    expect(anualEmitido()->status)->toBe(RouteStatus::Validated);
+    expect(anualEmitido()->itineraryCourseIds())->toBe($proposed);
 });

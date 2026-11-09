@@ -16,7 +16,7 @@
     @endphp
     <div class="alcance">
         <div class="cab">
-            <h4>Lo que abre tu membresía</h4>
+            <h4>{{ ($doc['tipo_documento'] ?? null) === 'ruta-anual' ? 'Lo que abre tu membresía' : 'Sigue aprendiendo durante tus 12 meses' }}</h4>
             <div class="c">
                 <div><b>{{ count($catalogo['especialidades']) }}</b><span>Especializaciones</span></div>
                 <div><b>{{ $catalogo['cursos'] }}</b><span>Cursos</span></div>

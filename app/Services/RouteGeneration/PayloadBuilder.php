@@ -65,7 +65,7 @@ final class PayloadBuilder
                 'nombre' => $input->lead->name,
                 'telefono' => $input->lead->phone,
                 'email' => $input->lead->email,
-                'kommo_id' => $input->lead->external_id,
+                'external_id' => $input->lead->external_id,
                 // Los dos campos que el asesor captura de la conversación. Viajan
                 // porque el documento se los devuelve al lead con sus palabras:
                 // es lo que demuestra que alguien lo escuchó, y no hay nada que

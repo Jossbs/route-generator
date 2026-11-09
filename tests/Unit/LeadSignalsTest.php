@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\LeadArea;
+use App\Models\Lead;
 use App\Services\RouteComposition\Support\LeadSignals;
 
 /*
@@ -18,6 +19,20 @@ it('prefiere lo que declara el área de la lista', function () {
     $signals = LeadSignals::from('Inspector', null, LeadArea::Calidad);
 
     expect($signals->preferredSpecializations())->toBe(LeadArea::Calidad->specializationSlugs());
+});
+
+it('da recomendaciones distintas a supervisión y mejora continua', function () {
+    expect(LeadArea::Supervisor->specializationSlugs())->toContain('soft', 'lean')
+        ->and(LeadArea::MejoraContinua->specializationSlugs())->toContain('sixsigma', 'kaizen')
+        ->and(LeadArea::Supervisor->specializationSlugs())->not->toBe(LeadArea::MejoraContinua->specializationSlugs());
+});
+
+it('recupera el área de leads históricos escrita a mano', function () {
+    $lead = new Lead(['area_other' => 'Área de calidad']);
+    $signals = LeadSignals::of($lead);
+
+    expect($signals->areaLabel())->toBe('Calidad / auditoría')
+        ->and($signals->preferredSpecializations())->toBe(LeadArea::Calidad->specializationSlugs());
 });
 
 it('lee los temas del área escrita a mano', function () {
@@ -57,4 +72,14 @@ it('deja el área vacía cuando no se capturó ninguna', function () {
 
     expect($signals->preferredSpecializations())->toBe([])
         ->and($signals->areaLabel())->toBeNull();
+});
+
+it('usa el objetivo del lead aunque no haya un área capturada', function () {
+    expect(LeadSignals::from(null, 'Quiero aprender Power BI para analizar datos')->preferredSpecializations())
+        ->toContain('datos');
+});
+
+it('usa la ocupación del lead aunque no haya un área capturada', function () {
+    expect(LeadSignals::from('Analista de presupuestos', null)->preferredSpecializations())
+        ->toContain('excel');
 });

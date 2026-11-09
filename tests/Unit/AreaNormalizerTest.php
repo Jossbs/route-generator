@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Enums\LeadArea;
 use App\Services\Leads\AreaNormalizer;
+use Illuminate\Support\Str;
 
 /*
  * El área capturada, guardada de una sola manera.
@@ -23,7 +24,7 @@ it('respeta lo que el asesor eligió de la lista', function () {
 
     expect($resuelta->area)->toBe(LeadArea::Calidad);
     expect($resuelta->other)->toBeNull();
-    expect($resuelta->label())->toBe('Calidad');
+    expect($resuelta->label())->toBe('Calidad / auditoría');
 });
 
 it('no guarda nada cuando no se capturó área', function () {
@@ -59,11 +60,16 @@ it('no confunde dos palabras cortas parecidas', function () {
 it('lee el área dentro de una frase', function () {
     expect(resolver('otro', 'jefe de almacén')->area)->toBe(LeadArea::Logistica);
     expect(resolver('otro', 'Coordinador de seguridad e higiene')->area)->toBe(LeadArea::Seguridad);
+    expect(resolver('otro', 'Analista de cadena de suministro')->area)->toBe(LeadArea::Compras);
+    expect(resolver('otro', 'Supervisor de línea')->area)->toBe(LeadArea::Supervisor);
+    expect(resolver('otro', 'Especialista de mejora continua')->area)->toBe(LeadArea::MejoraContinua);
 });
 
 it('quita los acentos para comparar, no para guardar', function () {
+    // Conserva el código histórico `logistica`, cuya etiqueta ahora distingue Almacén.
     expect(resolver('otro', 'logistica')->area)->toBe(LeadArea::Logistica);
     expect(resolver('otro', 'LOGÍSTICA')->area)->toBe(LeadArea::Logistica);
+    expect(resolver('otro', 'almacen')->area)->toBe(LeadArea::Logistica);
 });
 
 it('estandariza el área que no está en la lista', function () {
@@ -79,6 +85,25 @@ it('conserva los acentos del área nueva', function () {
     expect(resolver('otro', 'control de gestión')->other)->toBe('Control de Gestión');
 });
 
+it('ordena las áreas por etiqueta y deja otra hasta el final', function () {
+    $labels = array_column(LeadArea::options(), 'label');
+    $otra = array_pop($labels);
+    $ordenadas = $labels;
+    usort($ordenadas, fn (string $a, string $b): int => [
+        Str::ascii(Str::lower($a)),
+        $a,
+    ] <=> [
+        Str::ascii(Str::lower($b)),
+        $b,
+    ]);
+
+    expect($labels[0])->toBe('Administración y Finanzas')
+        ->and($labels[1])->toBe('Almacén / inventarios')
+        ->and($labels)->toContain('Mejora continua', 'Supervisor / líder de línea')
+        ->and($labels)->toBe($ordenadas)
+        ->and($otra)->toBe('Otra — la escribo');
+});
+
 it('acepta el área tipificada aunque llegue por el campo abierto', function () {
     // Es lo que pasa cuando la captura viene por URL desde el CRM: ahí nadie
     // garantiza que mande uno de los catorce valores.
@@ -87,10 +112,10 @@ it('acepta el área tipificada aunque llegue por el campo abierto', function () 
 });
 
 it('no inventa un área que no reconoce', function () {
-    $resuelta = resolver('otro', 'Comercio exterior');
+    $resuelta = resolver('otro', 'Investigación clínica');
 
     expect($resuelta->area)->toBeNull();
-    expect($resuelta->other)->toBe('Comercio Exterior');
+    expect($resuelta->other)->toBe('Investigación Clínica');
 });
 
 it('reutiliza la escritura de un área nueva que ya se guardó', function () {
@@ -100,5 +125,5 @@ it('reutiliza la escritura de un área nueva que ya se guardó', function () {
 
     expect($normalizador->resolve('otro', 'control de gestion')->other)->toBe('Control de Gestión');
     expect($normalizador->resolve('otro', 'Control de Gestoin')->other)->toBe('Control de Gestión');
-    expect($normalizador->resolve('otro', 'Auditoría interna')->other)->toBe('Auditoría Interna');
+    expect($normalizador->resolve('otro', 'Gestión del Cambio')->other)->toBe('Gestión del Cambio');
 });

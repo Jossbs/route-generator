@@ -9,6 +9,7 @@ use App\Models\CopyBlock;
 use App\Models\Course;
 use App\Models\DocumentType;
 use App\Models\Specialization;
+use App\Services\Documents\InitialRouteScriptCopy;
 use App\Services\RouteValidation\RuleInterpreterRegistry;
 use Database\Seeders\DatabaseSeeder;
 
@@ -144,12 +145,11 @@ it('siembra los dos tipos de documento con su forma de entrega', function () {
     expect($anual->layers)->toBe(['itinerario', 'inventario']);
 });
 
-it('siembra el copy como borrador y nunca como aprobado', function () {
-    // El copy del documento se siembra redactado, no en blanco: un documento que
-    // solo enumera cursos no persuade. Lo que no puede pasar es que se dé por
-    // aprobado: aprobar es de Contenido, y el estado es lo que distingue una
-    // propuesta del sistema de un texto revisado por una persona.
-    expect(CopyBlock::where('status', 'aprobado')->count())->toBe(0);
+it('reserva el estado aprobado para los textos autorizados del complemento inicial', function () {
+    // El guion y el mensaje fueron proporcionados por el usuario. El resto del
+    // copy conserva su estado de borrador hasta recibir aprobación de Contenido.
+    expect(CopyBlock::where('status', 'aprobado')->orderBy('slug')->pluck('slug')->all())
+        ->toBe(collect(InitialRouteScriptCopy::slots())->pluck('slug')->sort()->values()->all());
 
     expect(CopyBlock::where('status', 'borrador')->whereNull('body')->count())->toBe(
         0,

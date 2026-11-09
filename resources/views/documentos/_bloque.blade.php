@@ -16,7 +16,7 @@
 @php
     $numeracion ??= 'orden';
 @endphp
-<div class="bloque">
+<div class="bloque" data-ruta-tipo="{{ $bloque['rol'] === 'complementaria' ? 'refuerzo' : 'principal' }}">
     <div class="bl-enc">
         <span class="bl-barra"></span>
 

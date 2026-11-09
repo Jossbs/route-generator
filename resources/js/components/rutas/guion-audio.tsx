@@ -26,9 +26,9 @@ const SEGUNDOS_MAX = 60;
  */
 const REVISION = [
     'Dije su nombre en los primeros 3 segundos.',
-    'Dije «SyS» completo y se entiende.',
+    'Dije «Desarrollo Profesional SyS» completo y se entiende.',
     'Se oye el énfasis en las frases resaltadas.',
-    'Lo que me contó lo dije con sus palabras, no leído.',
+    'Revisé que la duración y las constancias coincidan con su ruta.',
     'No prometí nada que no controlo.',
     `Duró entre ${SEGUNDOS_MIN} y ${SEGUNDOS_MAX} segundos, en una sola toma.`,
 ];

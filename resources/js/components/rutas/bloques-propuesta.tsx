@@ -22,7 +22,7 @@ type Props = {
      */
     orden?: OrdenDeLaRuta;
     /**
-     * Ya no cabe otro recomendado. En la ruta inicial son dos, los mismos que el
+     * Ya no cabe otro recomendado. En la ruta inicial son tres, los mismos que el
      * asesor menciona en el audio: para cambiar uno, primero se quita otro. La
      * ruta final no lo pasa y no tiene tope.
      */
@@ -371,7 +371,7 @@ export function BloquesPropuesta({
                                                 }
                                                 title={
                                                     quitado && lleno
-                                                        ? 'Ya van los dos recomendados: quita uno para devolver este'
+                                                        ? 'Ya van los tres recomendados: quita uno para devolver este'
                                                         : undefined
                                                 }
                                                 aria-label={
@@ -407,7 +407,7 @@ export function BloquesPropuesta({
 
             {lleno ? (
                 <p className="text-muted-foreground text-sm">
-                    Ya van los dos recomendados, que son los que le vas a
+                    Ya van los tres recomendados, que son los que le vas a
                     mencionar en el audio. Para cambiar uno, quítalo primero.
                 </p>
             ) : buscando ? (

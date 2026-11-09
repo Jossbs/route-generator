@@ -13,12 +13,9 @@ use App\Models\Lead;
  * Desde el 2026-09-22 se arma con la ruta, en el mismo momento, y dice lo mismo
  * que el PDF que el lead va a abrir.
  *
- * El 2026-09-23 pasó de 90–110 s a 45–60 s. El PDF ya hace el trabajo de
- * demostrar que la ruta es suya; el audio es complemento y su trabajo es
- * conectar: que el lead sienta que alguien escuchó lo que contó, que sepa que
- * esto es apenas el inicio —con la membresía llega la ruta de los 12 meses— y
- * que conteste para platicar certificaciones y facilidades de pago. Por eso ya
- * no nombra los cursos recomendados: los cuenta, y el PDF los nombra.
+ * El texto autorizado el 2026-11-08 conecta la ruta con la duración estimada,
+ * las constancias que puede obtener y el acceso anual de la membresía. Cierra
+ * invitando a responder «¡Me gustó!» para conocer las facilidades de pago.
  *
  * Se guarda en el snapshot como todo lo demás: si mañana Contenido reescribe un
  * bloque, el guión de un audio que ya se grabó sigue siendo el que se leyó.
@@ -39,6 +36,7 @@ final class AudioScript extends RouteScript
         'conexion' => 'Lo que te contó',
         'ruta' => 'Su ruta',
         'inicio' => 'Apenas el inicio',
+        'pago' => 'Facilidades de pago',
         'cierre' => 'Cierre',
     ];
 
@@ -49,20 +47,11 @@ final class AudioScript extends RouteScript
     public function for(array $payload, Lead $lead): ?array
     {
         $tokens = $this->tokens($payload, $lead);
-        $recomendados = $this->recommendedVariant($tokens);
-
-        $variantes = [
-            'saludo' => ['guion.saludo'],
-            'conexion' => ['guion.conexion.con-contexto', 'guion.conexion.por-area', 'guion.conexion.por-ocupacion'],
-            'ruta' => ["guion.ruta.{$recomendados}"],
-            'inicio' => ['guion.inicio'],
-            'cierre' => ['guion.cierre'],
-        ];
 
         $bloques = [];
 
         foreach (self::BLOQUES as $clave => $titulo) {
-            $segmentos = $this->firstAvailable($variantes[$clave], $tokens);
+            $segmentos = $this->firstAvailable(['guion.'.$clave], $tokens);
 
             if ($segmentos === null) {
                 continue;
@@ -86,6 +75,7 @@ final class AudioScript extends RouteScript
         $palabras = array_sum(array_column($bloques, 'palabras'));
 
         return [
+            'version' => InitialRouteScriptCopy::VERSION,
             'bloques' => $bloques,
             'palabras' => $palabras,
             'segundos' => $this->seconds($palabras),

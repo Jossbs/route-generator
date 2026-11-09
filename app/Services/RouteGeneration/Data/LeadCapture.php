@@ -13,15 +13,15 @@ use App\Services\Leads\MexicanPhone;
  * Lo que el asesor captura de un lead.
  *
  * Seis campos, y tres de ellos no son datos de contacto sino la materia prima de
- * la ruta: el área —una de catorce, tipificada—, la ocupación —«de aquí salen los
+ * la ruta: el área —una categoría tipificada—, la ocupación —«de aquí salen los
  * cursos que te voy a proponer»— y lo que el lead dijo —«lo uso para escoger
  * entre cursos parecidos»—. Sin ellos el generador propone lo mismo para
  * cualquiera y el documento deja de demostrar trato personalizado, que es de lo
  * único que vive el gancho.
  *
  * El área llega ya resuelta: la pantalla manda lo que el asesor eligió y, si
- * eligió «Otro», lo que escribió; `AreaNormalizer` decide de una vez si eso es
- * una de las catorce o un área nueva, y nadie más vuelve a interpretarlo.
+ * eligió «Otra», lo que escribió; `AreaNormalizer` decide de una vez si eso es
+ * una categoría conocida o un área nueva, y nadie más vuelve a interpretarlo.
  *
  * El teléfono es opcional en el gancho. No siempre lo hay —el asesor puede estar
  * armando la ruta antes de pedirlo— y exigirlo obligaría a inventar uno. Lo que
@@ -33,7 +33,7 @@ use App\Services\Leads\MexicanPhone;
  * especialidad que lo abre. El asesor elige un embudo, no una especialidad
  * suelta: la estrategia es enseñarle al lead una rama armada, no el catálogo.
  *
- * `externalId` es el identificador en Kommo. Viaja desde el primer día aunque la
+ * `externalId` es el identificador en CRM. Viaja desde el primer día aunque la
  * integración no exista: el formulario acepta parámetros por URL, así que el día
  * que el CRM mande al asesor aquí con el lead en la mano, no hay nada que
  * cambiar.

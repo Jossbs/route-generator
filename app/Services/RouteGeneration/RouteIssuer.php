@@ -25,7 +25,7 @@ use Illuminate\Support\Facades\DB;
  * Entre la captura y el motor hay un paso que no es del motor: dar de alta al
  * lead, resolver su arquetipo y decidir con qué documento se le responde. Vive
  * aquí y no en el controlador por la razón de siempre —hoy lo llama un formulario,
- * mañana un webhook de Kommo— y porque un lead a medio crear con una ruta que
+ * mañana un webhook del CRM— y porque un lead a medio crear con una ruta que
  * falló no debe quedar en la base: las dos cosas van en la misma transacción.
  *
  * Los dos documentos tienen su propia captura y se emiten por separado. No son
@@ -51,8 +51,9 @@ final class RouteIssuer
         User $advisor,
         ?array $courseIds = null,
         array $copyOverrides = [],
+        bool $requireValid = false,
     ): GenerationResult {
-        return DB::transaction(function () use ($capture, $advisor, $courseIds, $copyOverrides): GenerationResult {
+        return DB::transaction(function () use ($capture, $advisor, $courseIds, $copyOverrides, $requireValid): GenerationResult {
             $funnelRoute = $this->funnelRoutes->for($capture);
             $lead = $this->lead($capture, $advisor, $funnelRoute);
             $documentType = $this->documentType(DocumentTypeSeeder::ENFOCADA);
@@ -60,7 +61,7 @@ final class RouteIssuer
             $curados = $funnelRoute->orderedCourseIds();
 
             // Emitir sin pasar por la pantalla es la vía del webhook: ahí nadie
-            // revisó la propuesta, así que los dos recomendados los pone
+            // revisó la propuesta, así que los recomendados los pone
             // el motor. Cuando el asesor sí revisó, su lista manda sobre ellos.
             $sumados = $courseIds === null
                 ? $this->topUp->for($curados, $funnelRoute->mainSpecialization, $lead, $documentType)
@@ -78,7 +79,7 @@ final class RouteIssuer
                 courseIds: [...$curados, ...array_values(array_diff($elegidos, $curados))],
                 justificationsByCourseId: $sumados,
                 copyOverrides: $copyOverrides,
-            ));
+            ), requireValid: $requireValid);
         });
     }
 
@@ -127,10 +128,8 @@ final class RouteIssuer
     /**
      * La corrección de una ruta inicial ya emitida.
      *
-     * Mismo lead, mismo renglón, mismo embudo: lo que cambia son los datos que el
-     * asesor escribió mal y los cursos que recomendó de más o de menos. El embudo
-     * no se toca al corregir —cambiarlo sería otro documento, no este corregido—
-     * así que se lee de la ruta y no de la captura.
+     * Mismo lead y mismo renglón: además de corregir los datos, el asesor puede
+     * elegir el embudo correcto si el que preguntó el lead se capturó mal.
      *
      * Los porqués de los cursos recomendados viajan de vuelta desde los renglones
      * que ya existían. Sin eso, corregir un nombre mal escrito dejaría la propuesta
@@ -146,9 +145,10 @@ final class RouteIssuer
         User $advisor,
         ?array $courseIds = null,
         ?array $copyOverrides = null,
+        bool $requireValid = false,
     ): GenerationResult {
-        return DB::transaction(function () use ($route, $capture, $advisor, $courseIds, $copyOverrides): GenerationResult {
-            $funnelRoute = $route->funnelRoute ?? $this->funnelRoutes->for($capture);
+        return DB::transaction(function () use ($route, $capture, $advisor, $courseIds, $copyOverrides, $requireValid): GenerationResult {
+            $funnelRoute = $this->funnelRoutes->for($capture);
             $lead = $this->correct($route, $capture, $advisor, $funnelRoute);
 
             $curados = $funnelRoute->orderedCourseIds();
@@ -166,6 +166,7 @@ final class RouteIssuer
                     copyOverrides: $copyOverrides ?? $this->overrides($route),
                 ),
                 $route,
+                requireValid: $requireValid,
             );
         });
     }
@@ -191,7 +192,7 @@ final class RouteIssuer
         ?array $copyOverrides = null,
     ): GenerationResult {
         return DB::transaction(function () use ($route, $capture, $membershipData, $advisor, $courseIds, $copyOverrides): GenerationResult {
-            $funnelRoute = $route->funnelRoute ?? $this->funnelRoutes->for($capture);
+            $funnelRoute = $this->funnelRoutes->for($capture);
             $lead = $this->correct($route, $capture, $advisor, $funnelRoute);
 
             $membership = $route->membership;
@@ -246,7 +247,7 @@ final class RouteIssuer
             ...$capture->area->toAttributes(),
             'requested_specialization_id' => $funnelRoute->main_specialization_id,
             'advisor_id' => $lead->advisor_id ?? $advisor->id,
-            // Un identificador de Kommo en blanco no borra el que ya había: la
+            // Un identificador del CRM en blanco no borra el que ya había: la
             // captura puede llegar sin él y el par (origen, id) es la llave con la
             // que el CRM reencuentra a este mismo lead.
             ...($capture->externalId === null ? [] : ['external_id' => $capture->externalId]),
@@ -344,7 +345,7 @@ final class RouteIssuer
             'name' => $capture->name,
             'occupation' => $capture->occupation,
             'context' => $capture->context,
-            // Ya viene resuelta: una de las catorce, o el área nueva
+            // Ya viene resuelta: una categoría del catálogo, o el área nueva
             // estandarizada. Ver App\Services\Leads\AreaNormalizer.
             ...$capture->area->toAttributes(),
             // La especialidad por la que preguntó ya no se captura: es la que abre
@@ -360,7 +361,7 @@ final class RouteIssuer
             $capture->leadId !== null => tap(Lead::query()->findOrFail($capture->leadId))
                 ->update([...$attributes, 'phone' => $capture->phone]),
             $capture->externalId !== null => Lead::updateOrCreate(
-                ['source' => 'kommo', 'external_id' => $capture->externalId],
+                ['source' => 'crm', 'external_id' => $capture->externalId],
                 [...$attributes, 'phone' => $capture->phone],
             ),
             $capture->phone !== null => Lead::updateOrCreate(

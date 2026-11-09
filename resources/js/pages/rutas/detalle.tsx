@@ -6,6 +6,7 @@ import {
     ExternalLink,
     Eye,
     FileText,
+    Info,
     Pencil,
     RefreshCw,
     ShieldX,
@@ -50,6 +51,7 @@ type PageProps = {
     guion: GuionDeAudio | null;
     mensaje: MensajeEscrito | null;
     rechazos: Rechazo[];
+    advertencias: Rechazo[];
     aperturas: { fecha: string | null }[];
     copyPendiente: string[];
     sinWhatsApp: boolean;
@@ -85,6 +87,7 @@ export default function RutaDetalle() {
         guion,
         mensaje,
         rechazos,
+        advertencias,
         aperturas,
         copyPendiente,
         sinWhatsApp,
@@ -227,7 +230,10 @@ export default function RutaDetalle() {
                 </div>
 
                 {rechazada && (
-                    <div className="bg-destructive/10 text-destructive space-y-2 rounded-xl p-4">
+                    <div
+                        role="alert"
+                        className="bg-destructive/10 text-destructive space-y-2 rounded-xl p-4"
+                    >
                         <p className="flex items-center gap-2 font-medium">
                             <ShieldX className="size-4 shrink-0" />
                             El validador detuvo esta ruta y no se entregó.
@@ -240,8 +246,24 @@ export default function RutaDetalle() {
                     </div>
                 )}
 
+                {advertencias.length > 0 && (
+                    <section className="space-y-2 rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200">
+                        <p className="flex items-center gap-2 font-medium">
+                            <Info className="size-4 shrink-0" />
+                            Advertencias para revisar
+                        </p>
+                        <ul className="list-inside list-disc space-y-1 text-sm">
+                            {advertencias.map((advertencia) => (
+                                <li key={advertencia.codigo}>
+                                    {advertencia.mensaje}
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
                 {/*
-                 * La entrega. El archivo es lo que se adjunta en Kommo, así que va
+                 * La entrega. El archivo es lo que se comparte con el lead, así que va
                  * primero y con nombre: el asesor tiene que reconocerlo entre los
                  * veinte que tiene en Descargas.
                  */}
@@ -253,8 +275,8 @@ export default function RutaDetalle() {
                                     El PDF para mandarle
                                 </h2>
                                 <p className="text-muted-foreground mt-1 text-sm">
-                                    Adjúntalo en su conversación de Kommo. Se
-                                    llama{' '}
+                                    Compártelo en la conversación con el lead.
+                                    Se llama{' '}
                                     <span className="text-foreground [overflow-wrap:anywhere]">
                                         {pdf.nombre}
                                     </span>
@@ -539,7 +561,7 @@ export default function RutaDetalle() {
                                 ))}
                         </ol>
 
-                        {sinWhatsApp && (
+                        {sinWhatsApp && !rechazada && (
                             <p className="text-muted-foreground border-t pt-3 text-xs break-words">
                                 El cierre salió sin el botón de WhatsApp: tu
                                 perfil todavía no trae número. El documento se
@@ -583,11 +605,11 @@ export default function RutaDetalle() {
                                         ocupacion: lead.ocupacion ?? '',
                                         area: lead.area ?? '',
                                         contexto: lead.contexto ?? '',
-                                        // El embudo y el identificador de Kommo
+                                        // El embudo y el identificador del CRM
                                         // viajan para que la ruta final salga del
                                         // mismo lead y no de uno nuevo.
                                         embudo: lead.embudo ?? '',
-                                        kommo_id: lead.external_id ?? '',
+                                        external_id: lead.external_id ?? '',
                                     },
                                 })}
                             >

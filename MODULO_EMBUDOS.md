@@ -252,7 +252,7 @@ Schema::create('rutas_emitidas', function (Blueprint $table) {
     $table->string('lead_nombre');
     $table->string('lead_telefono')->nullable();
     $table->string('lead_email')->nullable();
-    $table->string('kommo_id')->nullable();
+    $table->string('external_id')->nullable();
 
     $table->foreignId('asesor_id')->constrained('users');
 
@@ -363,7 +363,7 @@ El costo es unos pocos KB de JSON por emisión. Es el mejor intercambio del proy
     "nombre": "...",
     "telefono": "...",
     "email": null,
-    "kommo_id": null
+    "external_id": null
   },
 
   "asesor": { "id": 3, "nombre": "..." },
@@ -576,7 +576,7 @@ pasos 2 a 6, el diseño se desvió.
 
 ## 9. Parámetro de URL — pendiente de confirmación
 
-El formulario ya lee `?nombre=&telefono=&especializacion=&kommo_id=`.
+El formulario ya lee `?nombre=&telefono=&especializacion=&external_id=`.
 
 Está propuesto agregar `?embudo={slug}` para que el anuncio del que vino el lead **preseleccione**
 el embudo en el formulario. El asesor confirma o lo cambia. Cero lógica de ruteo automático.
@@ -666,7 +666,7 @@ No construir, aunque el modelo lo permita:
 - Mecánica "elige N de M"
 - Interfaz de precios y descuentos
 - Ruteo automático por parámetro de URL
-- Integración con Kommo CRM
+- Integración con el CRM
 - Landing pages o formularios públicos
 - Archivado automático de embudos vencidos
 - Métricas de conversión por embudo

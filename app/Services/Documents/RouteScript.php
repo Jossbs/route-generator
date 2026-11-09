@@ -21,92 +21,35 @@ abstract class RouteScript
     public function __construct(protected readonly CopyResolver $copy) {}
 
     /**
-     * Cuántos recomendados quedaron encima del embudo, como sufijo de variante.
-     *
-     * @param  array<string, string|null>  $tokens
-     */
-    protected function recommendedVariant(array $tokens): string
-    {
-        return match (true) {
-            (int) $tokens['recomendados'] >= 2 => 'dos',
-            (int) $tokens['recomendados'] === 1 => 'uno',
-            default => 'ninguno',
-        };
-    }
-
-    /**
-     * Lo que el texto puede decir del lead y de su ruta. Nada se teclea aquí:
-     * todo sale de la captura, del embudo o de las cifras del catálogo.
-     *
-     * Los recomendados no se nombran —el PDF los nombra, y así el lead tiene un
-     * motivo para abrirlo—; solo se cuentan. Decidido el 2026-09-23.
+     * Los datos variables salen del snapshot: el audio y el mensaje deben
+     * coincidir con las cifras del PDF, sin fijar diez constancias ni 64 cursos.
      *
      * @param  array<string, mixed>  $payload
      * @return array<string, string|null>
      */
     protected function tokens(array $payload, Lead $lead): array
     {
-        $filas = $payload['ruta']['cursos'] ?? [];
-        $cursos = collect(is_array($filas) ? $filas : []);
-
-        // La ruta principal es lo que vino del embudo. Un nivel que un paquete
-        // «Completo» de la misma ruta ya contiene no se nombra: nunca se dice
-        // «Excel Básico» si va Excel Completo.
-        $principal = $cursos
-            ->filter(fn (array $c): bool => ($c['rol'] ?? null) !== 'complementaria')
-            ->reject(fn (array $c): bool => (bool) ($c['horas_absorbidas'] ?? false))
-            ->pluck('nombre')
-            ->values();
+        $count = isset($payload['ruta']['totales']['cursos'])
+            ? (int) $payload['ruta']['totales']['cursos'] : null;
+        $catalog = isset($payload['catalogo']['cursos']) ? (int) $payload['catalogo']['cursos'] : null;
+        $context = $this->clean($payload['lead']['contexto'] ?? null);
+        $occupation = $this->clean($payload['lead']['ocupacion'] ?? null);
+        $student = $lead->area === LeadArea::Estudiante
+            || preg_match('/^estudiante\b/iu', $occupation ?? '') === 1;
 
         return [
             'nombre' => $this->clean($payload['lead']['nombre'] ?? null),
             'asesor' => $this->clean($payload['asesor']['nombre'] ?? null),
-            'area' => $this->area($lead),
-            'ocupacion' => $this->midSentence($payload['lead']['ocupacion'] ?? null),
-            'contexto' => $this->midSentence($payload['lead']['contexto'] ?? null),
-            'ruta' => $this->clean($payload['ruta']['nombre'] ?? null)
-                ?? $this->clean($payload['ruta']['especialidad_principal'] ?? null),
-            'desde' => $principal->first(),
-            'recomendados' => (string) $cursos->where('rol', 'complementaria')->count(),
-            'cursos' => isset($payload['catalogo']['cursos']) ? (string) $payload['catalogo']['cursos'] : null,
+            'conexion_audio' => $context === null ? 'la armé pensando en tu perfil' : 'la armé con lo que me contaste',
+            'conexion_mensaje' => $context === null ? 'La armé pensando en tu perfil' : 'La armé con lo que me contaste',
+            'aplicacion' => $student ? 'en tu desarrollo profesional' : 'en tu trabajo',
+            'duracion' => RouteDuration::for($payload),
+            'duracion_audio' => RouteDuration::for($payload, spoken: true),
+            'constancias' => $count === null ? null : ($count === 1 ? '1 constancia DC-3' : $count.' constancias DC-3'),
+            'constancias_audio' => $count === null ? null : ($count === 1 ? 'una constancia DC-3' : RouteDuration::number($count).' constancias DC-3'),
+            'catalogo' => $catalog === null ? null : $catalog.($catalog === 1 ? ' curso' : ' cursos'),
+            'catalogo_audio' => $catalog === null ? null : ($catalog === 1 ? 'un curso abierto' : RouteDuration::number($catalog).' cursos abiertos'),
         ];
-    }
-
-    /**
-     * Una frase que el asesor capturó suelta, con mayúscula inicial, lista para
-     * ir a media oración —después de dos puntos o de «como»—, donde el español
-     * la pide en minúscula. Una sigla al inicio («TI», «GM») se queda como está.
-     */
-    private function midSentence(mixed $valor): ?string
-    {
-        $texto = rtrim(trim((string) $valor), ' .');
-
-        if (preg_match('/^\p{Lu}\p{Ll}/u', $texto) === 1) {
-            $texto = mb_strtolower(mb_substr($texto, 0, 1)).mb_substr($texto, 1);
-        }
-
-        return $texto === '' ? null : $texto;
-    }
-
-    /**
-     * El área como se dice en voz alta: «Producción», no «Producción /
-     * Manufactura»; y ninguna para quien no trabaja todavía, porque «tu trabajo
-     * en Estudiante» no se puede decir. Sin área, cae en la variante que nombra
-     * la ocupación.
-     */
-    private function area(Lead $lead): ?string
-    {
-        if ($lead->area === LeadArea::Estudiante) {
-            return null;
-        }
-
-        if ($lead->area === null) {
-            return $this->clean($lead->area_other);
-        }
-
-        $etiqueta = explode(' / ', $lead->area->label())[0];
-
-        return trim((string) preg_replace('/\s*\(.*\)$/u', '', $etiqueta));
     }
 
     /**

@@ -12,6 +12,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Controllers\Routes\Concerns\ProvidesCourseCatalog;
 use App\Http\Requests\Routes\ProposeRouteRequest;
 use App\Http\Requests\Routes\StoreLearningRouteRequest;
+use App\Http\Requests\Routes\ValidateRouteSelectionRequest;
 use App\Http\Resources\Routes\LearningRouteSummaryResource;
 use App\Jobs\RenderRouteDocument;
 use App\Models\DocumentType;
@@ -20,17 +21,23 @@ use App\Models\LearningRoute;
 use App\Services\Documents\CopyResolver;
 use App\Services\Documents\DocumentFiles;
 use App\Services\Documents\EditableCopy;
+use App\Services\Documents\RouteCompanions;
 use App\Services\Leads\AreaNormalizer;
 use App\Services\Leads\MexicanPhone;
 use App\Services\RouteComposition\Exceptions\CompositionException;
+use App\Services\RouteComposition\Support\StudyPace;
 use App\Services\RouteGeneration\Data\LeadCapture;
+use App\Services\RouteGeneration\Exceptions\RouteRejected;
 use App\Services\RouteGeneration\RouteIssuer;
 use App\Services\RouteGeneration\RouteProposal;
+use App\Services\RouteValidation\ValidationMessages;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -54,7 +61,7 @@ class LearningRouteController extends Controller
      * dos documentos porque comparten cuatro campos; el tipo decide si además se
      * piden la vigencia y el plan.
      *
-     * Los parámetros por URL existen desde el primer día aunque Kommo no esté
+     * Los parámetros por URL existen desde el primer día aunque el CRM no esté
      * integrado: el día que el CRM mande al asesor aquí con el lead en la mano,
      * no hay nada que cambiar.
      */
@@ -62,7 +69,7 @@ class LearningRouteController extends Controller
     {
         // El área que venga por URL puede estar escrita de cualquier forma: quien
         // la manda es el CRM, no la pantalla. Se resuelve aquí para que el select
-        // aparezca ya elegido cuando es una de las catorce, y el campo abierto
+        // aparezca ya elegido cuando está en el catálogo, y el campo abierto
         // solo cuando de verdad es otra.
         $area = (new AreaNormalizer)->resolve($request->string('area')->toString());
 
@@ -71,7 +78,7 @@ class LearningRouteController extends Controller
             precargado: [
                 'nombre' => $request->string('nombre')->toString(),
                 // La pantalla pide los diez dígitos; la lada ya va puesta. Lo que
-                // Kommo mande sin forma de número se muestra como vino para que el
+                // CRM mande sin forma de número se muestra como vino para que el
                 // asesor lo vea y lo corrija.
                 'phone' => MexicanPhone::national($request->string('telefono')->toString())
                     ?? $request->string('telefono')->toString(),
@@ -86,10 +93,8 @@ class LearningRouteController extends Controller
                 'price' => '',
                 'desde' => null,
                 'hasta' => null,
-                // Sin valor por defecto a propósito: es un dato del lead, y uno
-                // precargado se queda sin que nadie se lo pregunte.
-                'weekly_hours' => $request->integer('horas') ?: null,
-                'external_id' => $request->string('kommo_id')->toString(),
+                'weekly_hours' => StudyPace::DEFAULT_WEEKLY_HOURS,
+                'external_id' => $request->string('external_id')->toString(),
                 // Solo la final lo usa: llega desde el gancho, en la bandeja o la ficha.
                 'lead_id' => $request->integer('lead') ?: null,
                 'funnel_id' => Funnel::query()
@@ -104,9 +109,8 @@ class LearningRouteController extends Controller
      *
      * Corregir es rehacer el documento encima del mismo renglón: el nombre que se
      * escribió mal, la ocupación que el lead corrigió después, los dos cursos que
-     * el asesor recomendó de más. El embudo no se elige otra vez —cambiarlo sería
-     * otro documento, no este corregido— así que llega fijo y la pantalla lo
-     * muestra en vez de ofrecerlo.
+     * el asesor recomendó de más. El asesor también puede corregir el embudo si
+     * el lead preguntó por otra ruta.
      *
      * El tipo tampoco se elige: un gancho no se convierte en anual editándolo. El
      * anual se emite aparte, desde la ficha del gancho que lo originó.
@@ -134,7 +138,7 @@ class LearningRouteController extends Controller
                 'price' => $membresia?->price === null ? '' : (string) $membresia->price,
                 'desde' => $membresia?->starts_on->toDateString(),
                 'hasta' => $membresia?->ends_on->toDateString(),
-                'weekly_hours' => $membresia?->weekly_hours,
+                'weekly_hours' => StudyPace::DEFAULT_WEEKLY_HOURS,
                 'external_id' => (string) $lead->external_id,
                 'lead_id' => null,
                 'funnel_id' => $route->funnel_id,
@@ -183,7 +187,7 @@ class LearningRouteController extends Controller
                 DocumentType::query()->where('slug', DocumentTypeSeeder::ENFOCADA)->sole(),
             );
         } catch (CompositionException $e) {
-            return back()->withInput()->withErrors(['funnel_id' => $e->getMessage()]);
+            throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);
         }
 
         return Inertia::render('rutas/propuesta', [
@@ -215,10 +219,14 @@ class LearningRouteController extends Controller
                 LeadCapture::fromArray($request->validated()),
                 $request->user(),
                 $route->documentType,
-                $this->courseIds($request) ?? $route->itineraryCourseIds(),
+                $this->courseIds($request) ?? array_values(array_diff(
+                    $route->itineraryCourseIds(),
+                    $route->funnelRoute?->orderedCourseIds() ?? [],
+                )),
+                copyOverrides: $this->adjustments($request, DocumentTypeSeeder::ENFOCADA) ?? ($route->snapshot['ajustes_copy'] ?? []),
             );
         } catch (CompositionException $e) {
-            return back()->withInput()->withErrors(['funnel_id' => $e->getMessage()]);
+            throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);
         }
 
         return Inertia::render('rutas/propuesta', [
@@ -226,7 +234,7 @@ class LearningRouteController extends Controller
             'captura' => $request->validated(),
             'catalogo' => $this->catalog(),
             // Lo que ya había ajustado a mano: corregir no lo devuelve al catálogo.
-            'ajustes' => (object) ($route->snapshot['ajustes_copy'] ?? []),
+            'ajustes' => (object) ($this->adjustments($request, DocumentTypeSeeder::ENFOCADA) ?? ($route->snapshot['ajustes_copy'] ?? [])),
             'editando' => [
                 'id' => (int) $route->id,
                 'revisiones' => (int) $route->revisions,
@@ -235,7 +243,33 @@ class LearningRouteController extends Controller
         ]);
     }
 
-    public function store(StoreLearningRouteRequest $request, RouteIssuer $issuer): RedirectResponse
+    public function validateSelection(ValidateRouteSelectionRequest $request, RouteProposal $proposal, ?LearningRoute $route = null): JsonResponse
+    {
+        if ($route !== null) {
+            $this->assertFocused($route);
+        }
+
+        $capture = $request->validated();
+        try {
+            $result = $proposal->for(
+                LeadCapture::fromArray($capture),
+                $request->user(),
+                $route->documentType ?? DocumentType::where('slug', DocumentTypeSeeder::ENFOCADA)->sole(),
+                $this->courseIds($request),
+                copyOverrides: $this->adjustments($request, DocumentTypeSeeder::ENFOCADA) ?? [],
+            );
+        } catch (CompositionException $e) {
+            throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);
+        }
+
+        return response()->json([
+            'totales' => $result['totales'],
+            'bloqueos' => $result['bloqueos'],
+            'advertencias' => $result['advertencias'],
+        ]);
+    }
+
+    public function store(StoreLearningRouteRequest $request, RouteIssuer $issuer): RedirectResponse|JsonResponse
     {
         try {
             $result = $issuer->issueFocused(
@@ -243,16 +277,18 @@ class LearningRouteController extends Controller
                 $request->user(),
                 $this->courseIds($request),
                 $this->adjustments($request, DocumentTypeSeeder::ENFOCADA) ?? [],
+                requireValid: true,
             );
+        } catch (RouteRejected $e) {
+            throw ValidationException::withMessages(['course_ids' => $e->report->blockingFailures()
+                ->map(fn ($evaluation): string => app(ValidationMessages::class)->message($evaluation))->all()]);
         } catch (CompositionException $e) {
             // Un embudo vacío no puede sembrar nada, y eso se sabe antes de
             // componer. El mensaje ya viene redactado para quien está capturando.
-            return back()->withInput()->withErrors(['funnel_id' => $e->getMessage()]);
+            throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);
         }
 
-        // Una ruta rechazada también se guarda: el asesor necesita ver por qué, y
-        // la bitácora necesita poder demostrar después que la restricción se
-        // evaluó. Lo que no se hace es renderizarla.
+        // El formulario devuelve los conflictos al editor antes de guardar.
         if ($result->report->passes()) {
             RenderRouteDocument::dispatch($result->route->id, $result->route->snapshot_hash, $result->route->revisions);
         }
@@ -260,6 +296,12 @@ class LearningRouteController extends Controller
         // La ficha a la que se llega recién generada descarga el PDF sola, en
         // cuanto la cola lo termina. El asesor viene de decir «generar»; pedirle
         // además que encuentre un botón es pedirle un paso que ya dio.
+        if ($request->expectsJson()) {
+            $request->session()->flash('descargar', true);
+
+            return response()->json(['url' => route('routes.show', $result->route)]);
+        }
+
         return to_route('routes.show', $result->route)->with('descargar', true);
     }
 
@@ -274,7 +316,7 @@ class LearningRouteController extends Controller
         StoreLearningRouteRequest $request,
         LearningRoute $route,
         RouteIssuer $issuer,
-    ): RedirectResponse {
+    ): RedirectResponse|JsonResponse {
         $this->assertFocused($route);
 
         try {
@@ -284,9 +326,13 @@ class LearningRouteController extends Controller
                 $request->user(),
                 $this->courseIds($request),
                 $this->adjustments($request, DocumentTypeSeeder::ENFOCADA),
+                requireValid: true,
             );
+        } catch (RouteRejected $e) {
+            throw ValidationException::withMessages(['course_ids' => $e->report->blockingFailures()
+                ->map(fn ($evaluation): string => app(ValidationMessages::class)->message($evaluation))->all()]);
         } catch (CompositionException $e) {
-            return back()->withInput()->withErrors(['funnel_id' => $e->getMessage()]);
+            throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);
         }
 
         if ($result->report->passes()) {
@@ -295,6 +341,12 @@ class LearningRouteController extends Controller
 
         // Se corrigió para volver a mandarlo: el archivo baja solo, igual que
         // cuando se emitió la primera vez.
+        if ($request->expectsJson()) {
+            $request->session()->flash('descargar', true);
+
+            return response()->json(['url' => route('routes.show', $result->route)]);
+        }
+
         return to_route('routes.show', $result->route)->with('descargar', true);
     }
 
@@ -336,7 +388,7 @@ class LearningRouteController extends Controller
     /**
      * La entrega: el enlace, el mensaje y lo que el documento todavía no dice.
      */
-    public function show(Request $request, LearningRoute $route, CopyResolver $copy): Response
+    public function show(Request $request, LearningRoute $route, CopyResolver $copy, RouteCompanions $companions, ValidationMessages $messages): Response
     {
         $route->load([
             'advisor',
@@ -348,6 +400,9 @@ class LearningRouteController extends Controller
             'usageEvents',
             'validations',
         ]);
+
+        $scripts = $companions->for($route, $route->lead);
+        $issues = $messages->recorded($route);
 
         return Inertia::render('rutas/detalle', [
             'ruta' => (new LearningRouteSummaryResource($route))->resolve(),
@@ -366,7 +421,7 @@ class LearningRouteController extends Controller
                 'especialidad' => $route->lead->requestedSpecialization?->name,
                 // Lo que hace falta para abrir la ruta final sin volver a
                 // capturar al mismo lead: sin el embudo el asesor tendría que
-                // adivinar cuál eligió, y sin el identificador de Kommo el
+                // adivinar cuál eligió, y sin el identificador del CRM el
                 // miembro entraría por segunda vez a la base.
                 'embudo' => $route->funnel?->slug,
                 'external_id' => $route->lead->external_id,
@@ -382,20 +437,12 @@ class LearningRouteController extends Controller
             ],
             'totales' => $route->snapshot['ruta']['totales'] ?? null,
             'cursos' => $route->snapshot['ruta']['cursos'] ?? [],
-            // El audio que acompaña al gancho, armado con la misma ruta. Una
-            // ruta emitida antes del 2026-09-22 no lo trae: corregirla lo arma.
-            'guion' => $route->snapshot['guion'] ?? null,
-            // El mensaje escrito que lo sustituye cuando no se puede grabar.
-            // Llegó el 2026-09-23: las rutas anteriores no lo traen.
-            'mensaje' => $route->snapshot['mensaje'] ?? null,
-            'rechazos' => $route->validations
-                ->where('result', 'fail')
-                ->map(fn ($validation): array => [
-                    'codigo' => $validation->rule_code,
-                    'mensaje' => $validation->details['message'] ?? $validation->rule_code,
-                ])
-                ->values()
-                ->all(),
+            // Los documentos anteriores muestran el nuevo complemento usando
+            // sus datos congelados, sin modificar el PDF ni el snapshot original.
+            'guion' => $scripts['guion'],
+            'mensaje' => $scripts['mensaje'],
+            'rechazos' => $issues['bloqueos'],
+            'advertencias' => $issues['advertencias'],
             'aperturas' => $route->usageEvents
                 ->where('event', UsageEventType::AbiertaPorLead)
                 ->map(fn ($event): array => ['fecha' => $event->created_at->toIso8601String()])

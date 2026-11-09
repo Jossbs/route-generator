@@ -1,6 +1,6 @@
 # DP SyS · Generador de rutas formativas
 
-Herramienta interna para asesores: captura un lead, propone una ruta, valida el catálogo y entrega un PDF personalizado. La ruta inicial acompaña la conversación de venta; la ruta anual se entrega al cerrar la membresía. Incluye embudos curados, bandeja por lead, guión de audio, mensaje de WhatsApp y KPIs de ventas.
+Herramienta interna para asesores: captura un lead, propone una ruta, valida el catálogo y entrega un PDF personalizado. La ruta inicial acompaña la conversación de venta; la ruta anual se entrega al cerrar la membresía. Incluye embudos curados, bandeja por lead, guión de audio y mensaje de WhatsApp.
 
 ## Arquitectura
 
@@ -11,7 +11,6 @@ Laravel 13, Inertia 3, React 19, Tailwind 4 y PostgreSQL. Gotenberg 8 convierte 
 - `app/Services/RouteGeneration`: propuesta, emisión, snapshot y correcciones.
 - `app/Services/Documents`: copy, presentación, guiones, archivos y conversión.
 - `app/Services/Funnels`: curación y validación de embudos.
-- `app/Services/Kpis`: eventos, fórmulas, metas, cierres y reportes.
 - `trust-hub`: sitio estático independiente; reporta eventos a `/hub/eventos`.
 
 Las decisiones de dominio y de producto están en [docs/ARQUITECTURA.md](docs/ARQUITECTURA.md). El [estado del MVP](docs/ESTADO_MVP.md) describe la revisión técnica y los pendientes de contenido e integración.
@@ -63,6 +62,8 @@ Una emisión aprobada queda `validated`, se encola y pasa a `rendered` al guarda
 
 Los trabajos llevan hash y revisión; un trabajo antiguo no modifica una corrección posterior. El bloqueo de la fila serializa renders, correcciones y borrados. Una ruta rechazada no se imprime ni se descarga. Los archivos viven en un disco privado y el borrado conserva la auditoría mediante soft delete.
 
+La migración `2026_11_08_100000_remove_sales_metrics_module` elimina las tablas del antiguo módulo de métricas de ventas y su permiso de usuario. En instalaciones existentes, respalda la base antes de ejecutar `php artisan migrate`: los datos de ese módulo se eliminan y solo se recuperan restaurando el respaldo. Los usuarios, leads, membresías y rutas se conservan.
+
 El timeout de Gotenberg debe ser menor que el del trabajo (60 y 90 segundos por defecto). `DB_QUEUE_RETRY_AFTER` debe superar el timeout del trabajo (120 segundos por defecto). Tras desplegar cambios, reinicia los workers con `php artisan queue:restart`.
 
 ## Integración y publicación
@@ -71,6 +72,6 @@ El módulo no incorpora login propio: el sistema anfitrión debe proporcionar la
 
 Para producción: configura `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con HTTPS, credenciales de PostgreSQL y una `APP_KEY` persistente; instala dependencias, ejecuta migraciones, compila assets y supervisa el worker. El document root es `public/`. PostgreSQL y Gotenberg deben quedar accesibles solo para la aplicación; los puertos del Compose incluido están pensados para desarrollo local.
 
-Configura el scheduler (`php artisan schedule:run` cada minuto) si se usan los resúmenes de KPIs. Telegram necesita `TELEGRAM_BOT_TOKEN` y `TELEGRAM_KPI_CHAT_ID`; el envío es optativo y registra fallos sin perder el resumen. El centro de confianza necesita `TRUST_HUB_ORIGINS` con sus dominios autorizados.
+El centro de confianza necesita `TRUST_HUB_ORIGINS` con sus dominios autorizados.
 
 Respalda tanto PostgreSQL como `storage/app/private`; conserva la clave de aplicación. Las migraciones y los seeders del catálogo constituyen el mecanismo de actualización, no la edición manual de datos.

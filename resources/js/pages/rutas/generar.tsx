@@ -97,9 +97,6 @@ function unAnioDespues(desde: string): string {
  * formulario y no dos pantallas gemelas. El tipo decide a qué endpoint se envía y si además
  * se piden la vigencia y el plan, que solo existen cuando ya hay membresía.
  */
-/** De 5 en 5 hasta el tope de 40; cualquier otro, de 1 a 40, va en el campo de al lado. */
-const HORAS_RAPIDAS = [5, 10, 15, 20, 25, 30, 35, 40];
-
 /** Un número de México sin lada. La lada va fija junto al campo. */
 const DIGITOS_TELEFONO = 10;
 
@@ -139,17 +136,13 @@ export default function GenerarRuta({
     const [telefono, setTelefono] = useState<string>(
         soloDiezDigitos(precargado.phone ?? ''),
     );
-    const [horas, setHoras] = useState<string>(
-        precargado.weekly_hours ? String(precargado.weekly_hours) : '',
-    );
     const [desde, setDesde] = useState(precargado.desde ?? hoy);
     const [hasta, setHasta] = useState(
         precargado.hasta ?? unAnioDespues(precargado.desde ?? hoy),
     );
 
-    // Corregir es rehacer el documento encima del mismo renglón. Ni el tipo ni el
-    // embudo se vuelven a elegir: cambiar cualquiera de los dos sería otro
-    // documento, no este corregido.
+    // Corregir rehace el mismo documento y permite cambiar la ruta consultada si
+    // se capturó equivocadamente.
     const corrigiendo = editando !== null;
 
     const esFinal = tipo === 'final';
@@ -459,7 +452,7 @@ export default function GenerarRuta({
                                      * que se escriba ahí se guarda estandarizado.
                                      */}
                                     <div className="grid content-start gap-2">
-                                        <EtiquetaCampo htmlFor="area" opcional>
+                                        <EtiquetaCampo htmlFor="area" requerido>
                                             ¿En qué área trabaja?
                                         </EtiquetaCampo>
                                         <Select
@@ -485,9 +478,6 @@ export default function GenerarRuta({
                                                         {opcion.label}
                                                     </SelectItem>
                                                 ))}
-                                                <SelectItem value={OTRA_AREA}>
-                                                    Otra — la escribo
-                                                </SelectItem>
                                             </SelectContent>
                                         </Select>
                                         {area === OTRA_AREA ? (
@@ -523,80 +513,53 @@ export default function GenerarRuta({
                                     <div className="grid content-start gap-2">
                                         <EtiquetaCampo
                                             htmlFor="funnel_id"
-                                            requerido={!corrigiendo}
+                                            requerido
                                         >
                                             ¿Por cuál ruta preguntó?
                                         </EtiquetaCampo>
-                                        {/*
-                                         * Al corregir se muestra, no se elige: el
-                                         * embudo es de qué campaña salió este
-                                         * documento, y cambiarlo sería otro
-                                         * documento. Viaja en un campo oculto
-                                         * porque el endpoint lo sigue exigiendo.
-                                         */}
-                                        {corrigiendo ? (
-                                            <>
-                                                <input
-                                                    type="hidden"
-                                                    name="funnel_id"
-                                                    value={embudo}
-                                                />
-                                                <p
-                                                    id="funnel_id"
-                                                    className="bg-muted/50 rounded-md border px-3 py-2 text-sm break-words"
-                                                >
-                                                    {elegido?.label ??
-                                                        editando?.embudo ??
-                                                        '—'}
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <Select
-                                                name="funnel_id"
-                                                value={embudo}
-                                                onValueChange={setEmbudo}
+                                        {/* Se puede corregir si se eligió una ruta equivocada. */}
+                                        <Select
+                                            name="funnel_id"
+                                            value={embudo}
+                                            onValueChange={setEmbudo}
+                                        >
+                                            <SelectTrigger
+                                                id="funnel_id"
+                                                className="w-full"
+                                                title={elegido?.label}
+                                                aria-invalid={
+                                                    !!errors.funnel_id ||
+                                                    undefined
+                                                }
                                             >
-                                                <SelectTrigger
-                                                    id="funnel_id"
-                                                    className="w-full"
-                                                    title={elegido?.label}
-                                                    aria-invalid={
-                                                        !!errors.funnel_id ||
-                                                        undefined
-                                                    }
-                                                >
-                                                    <SelectValue placeholder="— Elige la ruta —" />
-                                                </SelectTrigger>
-                                                <SelectContent className="max-w-(--radix-select-trigger-width)">
-                                                    {embudos.map((opcion) => (
-                                                        <SelectItem
-                                                            key={opcion.value}
-                                                            value={String(
-                                                                opcion.value,
-                                                            )}
-                                                            className="whitespace-normal"
-                                                        >
-                                                            {/*
-                                                             * El conteo va dentro del
-                                                             * mismo texto: es lo que
-                                                             * se ve en el campo ya
-                                                             * elegido, y ahí se corta
-                                                             * con puntos suspensivos
-                                                             * si el nombre es largo.
-                                                             */}
-                                                            {
-                                                                opcion.label
-                                                            } ·{' '}
-                                                            {opcion.cursos}{' '}
-                                                            curso
-                                                            {opcion.cursos === 1
-                                                                ? ''
-                                                                : 's'}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        )}
+                                                <SelectValue placeholder="— Elige la ruta —" />
+                                            </SelectTrigger>
+                                            <SelectContent className="max-w-(--radix-select-trigger-width)">
+                                                {embudos.map((opcion) => (
+                                                    <SelectItem
+                                                        key={opcion.value}
+                                                        value={String(
+                                                            opcion.value,
+                                                        )}
+                                                        className="whitespace-normal"
+                                                    >
+                                                        {/*
+                                                         * El conteo va dentro del
+                                                         * mismo texto: es lo que
+                                                         * se ve en el campo ya
+                                                         * elegido, y ahí se corta
+                                                         * con puntos suspensivos
+                                                         * si el nombre es largo.
+                                                         */}
+                                                        {opcion.label} ·{' '}
+                                                        {opcion.cursos} curso
+                                                        {opcion.cursos === 1
+                                                            ? ''
+                                                            : 's'}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
                                         <p className="sys-ayuda text-muted-foreground text-xs">
                                             {elegido
                                                 ? esFinal
@@ -713,91 +676,24 @@ export default function GenerarRuta({
                                     <InputError message={errors.starts_on} />
                                     <InputError message={errors.ends_on} />
 
-                                    {/*
-                                     * El ritmo del lead. Decide cuántos cursos
-                                     * caben en su año y dónde termina cada mes,
-                                     * y va impreso. Sin valor por defecto: uno
-                                     * precargado se queda sin que nadie se lo
-                                     * pregunte al lead.
-                                     */}
+                                    {/* El ritmo de referencia es fijo para todas las nuevas rutas. */}
                                     <div className="grid content-start gap-2">
-                                        <EtiquetaCampo
-                                            htmlFor="weekly_hours"
-                                            requerido
-                                        >
-                                            ¿Cuántas horas a la semana puede
-                                            estudiar?
+                                        <EtiquetaCampo htmlFor="weekly_hours">
+                                            Ritmo de estudio
                                         </EtiquetaCampo>
                                         <input
                                             type="hidden"
                                             name="weekly_hours"
-                                            value={horas}
+                                            value={precargado.weekly_hours}
                                         />
-                                        <div className="flex flex-wrap items-center gap-2">
-                                            {HORAS_RAPIDAS.map((opcion) => (
-                                                <Button
-                                                    key={opcion}
-                                                    type="button"
-                                                    variant={
-                                                        horas === String(opcion)
-                                                            ? 'default'
-                                                            : 'outline'
-                                                    }
-                                                    className="min-w-12"
-                                                    aria-pressed={
-                                                        horas === String(opcion)
-                                                    }
-                                                    onClick={() =>
-                                                        setHoras(String(opcion))
-                                                    }
-                                                >
-                                                    {opcion} h
-                                                </Button>
-                                            ))}
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-muted-foreground text-sm">
-                                                    otro:
-                                                </span>
-                                                <Input
-                                                    id="weekly_hours"
-                                                    type="number"
-                                                    min={1}
-                                                    max={40}
-                                                    step={1}
-                                                    inputMode="numeric"
-                                                    className="w-20"
-                                                    aria-label="Otro número de horas por semana"
-                                                    aria-invalid={
-                                                        !!errors.weekly_hours ||
-                                                        undefined
-                                                    }
-                                                    value={
-                                                        HORAS_RAPIDAS.includes(
-                                                            Number(horas),
-                                                        )
-                                                            ? ''
-                                                            : horas
-                                                    }
-                                                    onChange={(event) =>
-                                                        setHoras(
-                                                            event.target.value
-                                                                .replace(
-                                                                    /\D+/g,
-                                                                    '',
-                                                                )
-                                                                .slice(0, 2),
-                                                        )
-                                                    }
-                                                    placeholder="—"
-                                                />
-                                                <span className="text-muted-foreground text-sm">
-                                                    h
-                                                </span>
-                                            </div>
-                                        </div>
+                                        <p className="text-sm font-medium">
+                                            {precargado.weekly_hours} horas por
+                                            semana · 3 horas al día, 6 días a la
+                                            semana y 1 día de descanso
+                                        </p>
                                         <p className="sys-ayuda text-muted-foreground text-xs">
-                                            De aquí sale cuántos cursos caben en
-                                            su año y cómo se reparten los meses.
+                                            Con este ritmo distribuyo los cursos
+                                            a lo largo del año.
                                         </p>
                                         <InputError
                                             message={errors.weekly_hours}
@@ -872,44 +768,6 @@ export default function GenerarRuta({
                                             <InputError message={errors.plan} />
                                             <InputError
                                                 message={errors.plan_other}
-                                            />
-                                        </div>
-
-                                        <div className="grid content-start gap-2">
-                                            <EtiquetaCampo
-                                                htmlFor="price"
-                                                requerido
-                                            >
-                                                ¿Por cuánto se cerró?
-                                            </EtiquetaCampo>
-                                            <div className="relative">
-                                                <span className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm">
-                                                    $
-                                                </span>
-                                                <Input
-                                                    id="price"
-                                                    name="price"
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    inputMode="decimal"
-                                                    className="pl-7"
-                                                    aria-invalid={
-                                                        !!errors.price ||
-                                                        undefined
-                                                    }
-                                                    defaultValue={
-                                                        precargado.price
-                                                    }
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                            <p className="sys-ayuda text-muted-foreground text-xs">
-                                                Queda en su expediente. No sale
-                                                en el documento.
-                                            </p>
-                                            <InputError
-                                                message={errors.price}
                                             />
                                         </div>
                                     </div>

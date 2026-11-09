@@ -27,7 +27,7 @@
 
     $absorbido = (bool) ($curso['horas_absorbidas'] ?? false);
 @endphp
-<div class="curso{{ ($primero ?? false) ? ' primero' : '' }}">
+<div class="curso{{ ($primero ?? false) ? ' primero' : '' }}{{ filled($curso['motivo_recomendacion'] ?? null) ? ' curso-refuerzo' : '' }}">
     <span class="cu-n">{{ $marca }}</span>
 
     <div class="cu-cuerpo">
@@ -35,7 +35,12 @@
             <span class="cu-aqui">Empieza aquí</span>
         @endif
         <div class="cu-nom">{{ $curso['nombre'] }}@if ($nivelEtiqueta)<span class="cu-nivel{{ $curso['nivel'] === 'completo' ? ' paquete' : '' }}">{{ $nivelEtiqueta }}</span>@endif</div>
-        @if ($curso['frase_resultado'])
+        @if (filled($curso['motivo_recomendacion'] ?? null))
+            <div class="cu-motivo">
+                <span>Por qué te lo recomiendo</span>
+                <p>{{ $curso['motivo_recomendacion'] }}</p>
+            </div>
+        @elseif ($curso['frase_resultado'])
             <div class="cu-desc">{{ $curso['frase_resultado'] }}</div>
         @endif
     </div>

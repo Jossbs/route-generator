@@ -11,6 +11,7 @@ use App\Http\Requests\Routes\StoreAnnualRouteRequest;
 use App\Jobs\RenderRouteDocument;
 use App\Models\DocumentType;
 use App\Models\LearningRoute;
+use App\Models\Membership;
 use App\Services\Documents\EditableCopy;
 use App\Services\RouteComposition\Exceptions\CompositionException;
 use App\Services\RouteGeneration\Data\LeadCapture;
@@ -158,7 +159,7 @@ class AnnualRouteController extends Controller
             $result = $issuer->reissueAnnual(
                 $route,
                 $this->capture($datos),
-                $this->membershipAttributes($datos),
+                $this->membershipAttributes($datos, $route->membership),
                 $request->user(),
                 isset($datos['course_ids'])
                     ? array_values(array_map(intval(...), $datos['course_ids']))
@@ -212,7 +213,7 @@ class AnnualRouteController extends Controller
      * @param  array<string, mixed>  $datos
      * @return array<string, mixed>
      */
-    private function membershipAttributes(array $datos): array
+    private function membershipAttributes(array $datos, ?Membership $membresia = null): array
     {
         $plan = MembershipPlan::from($datos['plan']);
 
@@ -221,7 +222,7 @@ class AnnualRouteController extends Controller
             'occupation' => $datos['occupation'],
             'plan' => $plan,
             'plan_other' => $plan === MembershipPlan::Otro ? $datos['plan_other'] : null,
-            'price' => $datos['price'],
+            'price' => $membresia?->price,
             'starts_on' => $datos['starts_on'],
             'ends_on' => $datos['ends_on'],
             'weekly_hours' => (int) $datos['weekly_hours'],
