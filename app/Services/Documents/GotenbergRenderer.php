@@ -13,7 +13,7 @@ use RuntimeException;
 /**
  * El PDF, hecho por Chromium headless dentro de Gotenberg.
  *
- * Es el producto: lo que el asesor adjunta en el chat de Kommo y lo que el lead
+ * Es el producto: lo que el asesor adjunta en la conversación con el lead y lo que el lead
  * guarda. La plantilla ya declara `@page { size: Letter }`, así que aquí no se
  * redefine el papel —`preferCssPageSize` le dice a Chromium que respete lo que el
  * documento pide— y los márgenes van en cero porque cada hoja trae los suyos.

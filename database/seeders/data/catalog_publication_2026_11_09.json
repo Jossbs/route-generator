@@ -1,0 +1,518 @@
+{
+    "source": "https://academy.dpsys.com.mx/cursos",
+    "checked_at": "2026-11-09",
+    "courses": [
+        {
+            "slug": "amef",
+            "name": "AMEF",
+            "specialization": "Core Tools",
+            "lessons": 7,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/amef"
+        },
+        {
+            "slug": "autocad-avanzado",
+            "name": "AutoCAD Avanzado",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/autocad-avanzado"
+        },
+        {
+            "slug": "autocad-basico",
+            "name": "AutoCAD Básico",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/autocad-basico"
+        },
+        {
+            "slug": "autocad-completo",
+            "name": "AutoCAD Completo",
+            "specialization": "Diseño Industrial",
+            "lessons": 18,
+            "hours": 36,
+            "url": "https://academy.dpsys.com.mx/autocad-completo"
+        },
+        {
+            "slug": "autocad-intermedio",
+            "name": "AutoCAD Intermedio",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/autocad-intermedio"
+        },
+        {
+            "slug": "balanceo-de-lineas",
+            "name": "Balanceo de Líneas",
+            "specialization": "Lean Manufacturing",
+            "lessons": 4,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/tiempo-de-takt-vs-tiempo-de-ciclo"
+        },
+        {
+            "slug": "black-belt-six-sigma",
+            "name": "Black Belt – Six Sigma",
+            "specialization": "Six Sigma",
+            "lessons": 10,
+            "hours": 40,
+            "url": "https://academy.dpsys.com.mx/black-belt-six-sigma"
+        },
+        {
+            "slug": "como-hablar-en-una-entrevista-de-trabajo",
+            "name": "Cómo hablar en una entrevista de trabajo",
+            "specialization": "Soft Skills",
+            "lessons": 4,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/como-hablar-en-una-entrevista-de-trabajo"
+        },
+        {
+            "slug": "como-venderte-a-las-empresas",
+            "name": "Cómo venderte a las empresas",
+            "specialization": "Soft Skills",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/como-venderte-a-las-empresas"
+        },
+        {
+            "slug": "comunicacion-efectiva",
+            "name": "Comunicación Efectiva",
+            "specialization": "Soft Skills",
+            "lessons": 7,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/comunicacion-efectiva"
+        },
+        {
+            "slug": "curriculum-vitae-de-alto-impacto",
+            "name": "Curriculum Vitae de Alto Impacto",
+            "specialization": "Soft Skills",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/curriculum-vitae-de-alto-impacto"
+        },
+        {
+            "slug": "dmaic",
+            "name": "DMAIC",
+            "specialization": "Six Sigma",
+            "lessons": 8,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/dmaic"
+        },
+        {
+            "slug": "el-arte-de-la-persuasion",
+            "name": "El Arte de la Persuasión",
+            "specialization": "Soft Skills",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/el-arte-de-la-persuasion"
+        },
+        {
+            "slug": "estrategias-de-negociacion",
+            "name": "Estrategias de Negociación",
+            "specialization": "Soft Skills",
+            "lessons": 1,
+            "hours": 1,
+            "url": "https://academy.dpsys.com.mx/estrategias-de-negociacion"
+        },
+        {
+            "slug": "excel-avanzado",
+            "name": "Microsoft Excel Avanzado",
+            "specialization": "Microsoft Excel",
+            "lessons": 10,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/microsoft-excel-avanzado"
+        },
+        {
+            "slug": "excel-basico",
+            "name": "Microsoft Excel Básico",
+            "specialization": "Microsoft Excel",
+            "lessons": 8,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/microsoft-excel-basico"
+        },
+        {
+            "slug": "excel-completo",
+            "name": "Microsoft Excel Completo",
+            "specialization": "Microsoft Excel",
+            "lessons": 18,
+            "hours": 36,
+            "url": "https://academy.dpsys.com.mx/microsoft-excel-completo"
+        },
+        {
+            "slug": "excel-intermedio",
+            "name": "Microsoft Excel Intermedio",
+            "specialization": "Microsoft Excel",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/microsoft-excel-intermedio"
+        },
+        {
+            "slug": "experto-en-ventas",
+            "name": "Experto en Ventas",
+            "specialization": "Soft Skills",
+            "lessons": 8,
+            "hours": 2,
+            "url": "https://academy.dpsys.com.mx/experto-en-ventas"
+        },
+        {
+            "slug": "foda",
+            "name": "FODA",
+            "specialization": "Kaizen y Mejora Continua",
+            "lessons": 4,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/foda"
+        },
+        {
+            "slug": "gestion-de-inventarios",
+            "name": "Gestión de Inventarios",
+            "specialization": "Cadena de Suministros",
+            "lessons": 7,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/gestion-de-inventarios"
+        },
+        {
+            "slug": "green-belt-six-sigma",
+            "name": "Green Belt – Six Sigma",
+            "specialization": "Six Sigma",
+            "lessons": 14,
+            "hours": 40,
+            "url": "https://academy.dpsys.com.mx/green-belt-six-sigma"
+        },
+        {
+            "slug": "historia-economia-manufactura",
+            "name": "Historia de la Economía y Manufactura",
+            "specialization": "Lean Manufacturing",
+            "lessons": 4,
+            "hours": 2,
+            "url": "https://academy.dpsys.com.mx/historia-de-la-economia-y-manufactura"
+        },
+        {
+            "slug": "hoshin-kanri",
+            "name": "Hoshin Kanri – Planeación Estratégica",
+            "specialization": "Solución de Problemas",
+            "lessons": 7,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/hoshin-kanri-planeacion-estrategica"
+        },
+        {
+            "slug": "integracion-y-trabajo-en-equipo",
+            "name": "Integración y Trabajo en Equipo",
+            "specialization": "Soft Skills",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/integracion-y-trabajo-en-equipo"
+        },
+        {
+            "slug": "inteligencia-emocional",
+            "name": "Inteligencia Emocional",
+            "specialization": "Soft Skills",
+            "lessons": 6,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/inteligencia-emocional"
+        },
+        {
+            "slug": "iso-19011-2018-auditorias",
+            "name": "ISO 19011:2018 Auditorías de Sistemas de Gestión",
+            "specialization": "Normas ISO",
+            "lessons": 8,
+            "hours": 16,
+            "url": "https://academy.dpsys.com.mx/iso-19011-2018-auditorias-de-sistemas-de-gestion"
+        },
+        {
+            "slug": "iso-9001-2015-auditor-interno",
+            "name": "ISO 9001:2015 Auditor Interno",
+            "specialization": "Normas ISO",
+            "lessons": 9,
+            "hours": 20,
+            "url": "https://academy.dpsys.com.mx/iso-9001-2015-auditor-interno"
+        },
+        {
+            "slug": "kaizen-mejora-continua",
+            "name": "Kaizen – Mejora Continua",
+            "specialization": "Kaizen y Mejora Continua",
+            "lessons": 8,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/kaizen-mejora-continua"
+        },
+        {
+            "slug": "lean-manufacturing",
+            "name": "Lean Manufacturing",
+            "specialization": "Lean Manufacturing",
+            "lessons": 12,
+            "hours": 40,
+            "url": "https://academy.dpsys.com.mx/lean-manufacturing"
+        },
+        {
+            "slug": "lean-thinking",
+            "name": "Lean Thinking",
+            "specialization": "Lean Manufacturing",
+            "lessons": 8,
+            "hours": 16,
+            "url": "https://academy.dpsys.com.mx/lean-thinking"
+        },
+        {
+            "slug": "liderazgo-efectivo",
+            "name": "Liderazgo Efectivo",
+            "specialization": "Soft Skills",
+            "lessons": 1,
+            "hours": 1,
+            "url": "https://academy.dpsys.com.mx/liderazgo-efectivo"
+        },
+        {
+            "slug": "liderazgo-para-ingenieros",
+            "name": "Liderazgo para Ingenieros",
+            "specialization": "Soft Skills",
+            "lessons": 9,
+            "hours": 10,
+            "url": "https://academy.dpsys.com.mx/liderazgo-para-ingenieros"
+        },
+        {
+            "slug": "liderazgo-para-lideres-y-supervisores",
+            "name": "Liderazgo para Líderes y Supervisores",
+            "specialization": "Soft Skills",
+            "lessons": 7,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/liderazgo-para-lideres-y-supervisores"
+        },
+        {
+            "slug": "manejo-del-personal",
+            "name": "Manejo del Personal",
+            "specialization": "Soft Skills",
+            "lessons": 6,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/manejo-del-personal"
+        },
+        {
+            "slug": "mente-millonaria",
+            "name": "Mente Millonaria",
+            "specialization": "Soft Skills",
+            "lessons": 1,
+            "hours": 1,
+            "url": "https://academy.dpsys.com.mx/mente-millonaria"
+        },
+        {
+            "slug": "metodologia-5s",
+            "name": "Metodología 5'S",
+            "specialization": "Kaizen y Mejora Continua",
+            "lessons": 5,
+            "hours": 4,
+            "url": "https://academy.dpsys.com.mx/metodologia-5-s"
+        },
+        {
+            "slug": "metodologia-kanban",
+            "name": "Metodología Kanban",
+            "specialization": "Lean Manufacturing",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/metodologia-kanban"
+        },
+        {
+            "slug": "metodologia-scrum",
+            "name": "Metodología SCRUM",
+            "specialization": "Ingeniería de Calidad",
+            "lessons": 7,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/metodologia-scrum"
+        },
+        {
+            "slug": "nom-035",
+            "name": "NOM-035",
+            "specialization": "Soft Skills",
+            "lessons": 5,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/nom-035"
+        },
+        {
+            "slug": "ocho-desperdicios",
+            "name": "Los 8 Desperdicios",
+            "specialization": "Lean Manufacturing",
+            "lessons": 5,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/los-8-desperdicios"
+        },
+        {
+            "slug": "oee",
+            "name": "OEE",
+            "specialization": "Kaizen y Mejora Continua",
+            "lessons": 5,
+            "hours": 4,
+            "url": "https://academy.dpsys.com.mx/oee"
+        },
+        {
+            "slug": "plan-de-control",
+            "name": "Plan de Control",
+            "specialization": "Core Tools",
+            "lessons": 5,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/plan-de-control"
+        },
+        {
+            "slug": "poka-yoke",
+            "name": "Poka Yoke",
+            "specialization": "Ingeniería de Calidad",
+            "lessons": 5,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/poka-yoke"
+        },
+        {
+            "slug": "power-bi",
+            "name": "Power BI",
+            "specialization": "Análisis de Datos",
+            "lessons": 8,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/power-bi"
+        },
+        {
+            "slug": "ppap",
+            "name": "PPAP",
+            "specialization": "Core Tools",
+            "lessons": 6,
+            "hours": 10,
+            "url": "https://academy.dpsys.com.mx/ppap"
+        },
+        {
+            "slug": "pqt-contraten",
+            "name": "PQT Contraten",
+            "specialization": "Soft Skills",
+            "lessons": 12,
+            "hours": 9,
+            "url": "https://academy.dpsys.com.mx/pqt-contraten"
+        },
+        {
+            "slug": "siete-herramientas-de-la-calidad",
+            "name": "7 Herramientas de la Calidad",
+            "specialization": "Ingeniería de Calidad",
+            "lessons": 8,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/7-herramientas-de-la-calidad"
+        },
+        {
+            "slug": "sistema-andon",
+            "name": "Sistema Andon",
+            "specialization": "Ingeniería de Calidad",
+            "lessons": 4,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/sistema-andon"
+        },
+        {
+            "slug": "smed",
+            "name": "SMED",
+            "specialization": "Lean Manufacturing",
+            "lessons": 6,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/smed"
+        },
+        {
+            "slug": "solidworks-avanzado",
+            "name": "SolidWorks Avanzado",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/solidworks-avanzado"
+        },
+        {
+            "slug": "solidworks-basico",
+            "name": "SolidWorks Básico",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/solidworks-basico"
+        },
+        {
+            "slug": "solidworks-completo",
+            "name": "SolidWorks Completo",
+            "specialization": "Diseño Industrial",
+            "lessons": 16,
+            "hours": 36,
+            "url": "https://academy.dpsys.com.mx/solidworks-completo"
+        },
+        {
+            "slug": "solidworks-intermedio",
+            "name": "SolidWorks Intermedio",
+            "specialization": "Diseño Industrial",
+            "lessons": 9,
+            "hours": 12,
+            "url": "https://academy.dpsys.com.mx/solidworks-intermedio"
+        },
+        {
+            "slug": "solucion-de-problemas-8d",
+            "name": "Solución de Problemas 8 D's",
+            "specialization": "Solución de Problemas",
+            "lessons": 6,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/solucion-de-problemas-8-d-s"
+        },
+        {
+            "slug": "solucion-de-problemas-para-ingenieros",
+            "name": "Solución de Problemas para Ingenieros",
+            "specialization": "Solución de Problemas",
+            "lessons": 6,
+            "hours": 4,
+            "url": "https://academy.dpsys.com.mx/solucion-de-problemas-para-ingenieros"
+        },
+        {
+            "slug": "spc",
+            "name": "Control Estadístico de Procesos (SPC)",
+            "specialization": "Core Tools",
+            "lessons": 8,
+            "hours": 16,
+            "url": "https://academy.dpsys.com.mx/control-estadistico-de-procesos-spc"
+        },
+        {
+            "slug": "sql-server",
+            "name": "SQL Server",
+            "specialization": "Análisis de Datos",
+            "lessons": 9,
+            "hours": 16,
+            "url": "https://academy.dpsys.com.mx/sql-server"
+        },
+        {
+            "slug": "toyota-production-system",
+            "name": "Toyota Production System",
+            "specialization": "Lean Manufacturing",
+            "lessons": 8,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/toyota-production-system"
+        },
+        {
+            "slug": "tpm",
+            "name": "TPM – Mantenimiento Total Productivo",
+            "specialization": "Lean Manufacturing",
+            "lessons": 8,
+            "hours": 4,
+            "url": "https://academy.dpsys.com.mx/tpm-mantenimiento-total-productivo"
+        },
+        {
+            "slug": "trabajo-estandar",
+            "name": "Trabajo Estándar",
+            "specialization": "Lean Manufacturing",
+            "lessons": 4,
+            "hours": 5,
+            "url": "https://academy.dpsys.com.mx/trabajo-estandar"
+        },
+        {
+            "slug": "value-stream-mapping",
+            "name": "Value Stream Mapping",
+            "specialization": "Lean Manufacturing",
+            "lessons": 6,
+            "hours": 4,
+            "url": "https://academy.dpsys.com.mx/value-stream-mapping"
+        },
+        {
+            "slug": "white-belt-six-sigma",
+            "name": "White Belt – Six Sigma",
+            "specialization": "Six Sigma",
+            "lessons": 5,
+            "hours": 3,
+            "url": "https://academy.dpsys.com.mx/white-belt-six-sigma"
+        },
+        {
+            "slug": "yellow-belt-six-sigma",
+            "name": "Yellow Belt – Six Sigma",
+            "specialization": "Six Sigma",
+            "lessons": 10,
+            "hours": 24,
+            "url": "https://academy.dpsys.com.mx/yellow-belt-six-sigma"
+        }
+    ]
+}

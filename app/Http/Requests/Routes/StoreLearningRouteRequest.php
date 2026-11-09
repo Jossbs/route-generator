@@ -26,8 +26,8 @@ use Illuminate\Validation\Validator;
  * escribiera cualquier cosa, y un teléfono inventado es peor que ninguno porque
  * reencuentra al lead equivocado. La ruta final sí lo exige, ahí sí es la llave.
  *
- * `area` acepta cualquier texto, no solo los catorce valores: la captura puede
- * llegar por URL desde Kommo, donde nadie garantiza el vocabulario.
+ * `area` acepta cualquier texto, no solo los valores del catálogo: la captura puede
+ * llegar por URL desde el CRM, donde nadie garantiza el vocabulario.
  * `AreaNormalizer` resuelve después qué era.
  *
  * La ruta por la que preguntó es un embudo, no una especialidad suelta: sus
@@ -50,7 +50,7 @@ class StoreLearningRouteRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['nullable', ...$this->phoneRules()],
             'occupation' => ['required', 'string', 'max:255'],
-            'area' => ['nullable', 'string', 'max:80'],
+            'area' => ['required', 'string', 'max:80'],
             'area_other' => [
                 Rule::requiredIf(fn (): bool => $this->input('area') === AreaNormalizer::OTRO),
                 'nullable',
@@ -72,8 +72,8 @@ class StoreLearningRouteRequest extends FormRequest
     /**
      * El techo de recomendados también se cuida aquí, no solo en la pantalla.
      *
-     * Son dos porque el guión del audio le presenta al lead «dos cursos más»: un
-     * tercero en el PDF sería un curso que el asesor no mencionó. Lo del embudo
+     * Son tres porque el guión del audio le presenta al lead «tres cursos más»: un
+     * cuarto en el PDF sería un curso que el asesor no mencionó. Lo del embudo
      * no cuenta, va completo siempre.
      *
      * @return list<callable(Validator): void>
@@ -97,7 +97,7 @@ class StoreLearningRouteRequest extends FormRequest
                 if (count(array_unique($extra)) > RecommendedTopUp::OBJETIVO) {
                     $validator->errors()->add(
                         'course_ids',
-                        'Son dos cursos recomendados como máximo: los mismos que le mencionas en el audio.',
+                        'Son tres cursos recomendados como máximo: los mismos que le mencionas en el audio.',
                     );
                 }
             },

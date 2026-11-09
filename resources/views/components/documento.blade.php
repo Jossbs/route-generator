@@ -9,7 +9,7 @@
     consulta al catálogo: el documento que el lead recibió en septiembre tiene que
     seguir diciendo lo mismo en enero.
 --}}
-@props(['titulo', 'imprimible' => false])
+@props(['titulo', 'imprimible' => false, 'inicial' => false])
 <!doctype html>
 <html lang="es">
 <head>
@@ -18,6 +18,9 @@
 <title>{{ $titulo }}</title>
 @include('documentos._fuentes')
 @include('documentos._estilos')
+@if ($inicial)
+    @include('documentos._estilos-inicial')
+@endif
 </head>
 <body>
 @if ($imprimible)

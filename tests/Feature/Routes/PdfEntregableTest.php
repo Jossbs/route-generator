@@ -16,7 +16,7 @@ use Tests\Support\FunnelFactory;
 /*
  * El PDF es la entrega.
  *
- * El asesor lo adjunta en la conversación de Kommo, así que tiene que existir
+ * El asesor lo adjunta en la conversación con el lead, así que tiene que existir
  * como archivo —no como una página que alguien se acuerde de imprimir— y llegar
  * con un nombre que se reconozca entre los veinte que ese teléfono ya tiene.
  *
@@ -37,6 +37,7 @@ function rutaEmitida(): LearningRoute
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => $embudo->funnel_id,
     ]);
 

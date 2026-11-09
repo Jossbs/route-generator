@@ -5,7 +5,7 @@ declare(strict_types=1);
 /*
  * Cómo se materializa el documento.
  *
- * El PDF es el producto: es lo que el asesor adjunta en Kommo y lo que el lead
+ * El PDF es el producto: es lo que el asesor comparte con el lead y lo que el lead
  * guarda en su teléfono. Por eso el render es un archivo de verdad y no una
  * página que alguien tiene que acordarse de imprimir.
  *

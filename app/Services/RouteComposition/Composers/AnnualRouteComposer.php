@@ -17,6 +17,7 @@ use App\Services\RouteComposition\Support\CompositionCatalog;
 use App\Services\RouteComposition\Support\CourseRanker;
 use App\Services\RouteComposition\Support\DraftAssembler;
 use App\Services\RouteComposition\Support\ExclusionGuard;
+use App\Services\RouteComposition\Support\InitialRouteContinuity;
 use App\Services\RouteComposition\Support\LeadSignals;
 use App\Services\RouteComposition\Support\MonthPlanner;
 use App\Services\RouteValidation\Data\RouteDraft;
@@ -57,6 +58,28 @@ final class AnnualRouteComposer implements RouteComposer
 
         $pace = $request->pace();
         $priority = $this->specializationPriority($request, $catalog, $policy);
+        $initial = (new InitialRouteContinuity)->forLead($request->lead);
+        $initialRows = $initial?->snapshot['ruta']['cursos'] ?? [];
+        $initialSlugs = [];
+
+        foreach (is_array($initialRows) ? $initialRows : [] as $row) {
+            if (is_array($row) && ($row['capa'] ?? null) === 'itinerario' && is_string($row['slug'] ?? null)) {
+                $initialSlugs[] = $row['slug'];
+            }
+        }
+        $universe = $catalog->resolvePackages($catalog->recommendable(), expandPackages: false);
+        $included = $catalog->included()->keyBy('slug');
+        $preferred = [];
+
+        foreach ($initialSlugs as $slug) {
+            $original = $included->get($slug);
+            $equivalent = $universe->firstWhere('slug', $slug)
+                ?? ($original === null ? null : $universe->firstWhere('content_unit_id', $original->content_unit_id));
+
+            if ($equivalent !== null && ! in_array($equivalent->id, $preferred, true)) {
+                $preferred[] = (int) $equivalent->id;
+            }
+        }
 
         $itinerary = $this->itineraryCourses(
             $catalog,
@@ -64,12 +87,13 @@ final class AnnualRouteComposer implements RouteComposer
             $ranker,
             $request->itineraryCourseIds,
             $priority,
-            $pace?->capacity($policy->months()),
+            $pace->capacity($policy->months()),
+            $preferred,
         );
 
         // Con la lista del asesor, su orden es la secuencia y el motor solo la corta
         // en meses. Sin ella, el motor propone también el orden.
-        $plan = $request->itineraryCourseIds === null
+        $plan = $request->itineraryCourseIds === null && $preferred === []
             ? $this->planner->distribute($itinerary, $priority, $ranker, $policy->months(), $pace)
             : $this->planner->sequence(array_values($itinerary->all()), $policy->months(), $pace);
         $endMonths = $this->planner->endMonths();
@@ -129,6 +153,7 @@ final class AnnualRouteComposer implements RouteComposer
      * @param  list<int>|null  $only  Los cursos que el asesor dejó; null = sin poda.
      * @param  list<int>  $priority  Especializaciones en orden de prioridad para el lead.
      * @param  int|null  $capacity  Horas que caben en el año a su ritmo; null = sin tope.
+     * @param  list<int>  $preferred  Cursos de la ruta inicial, incluidos sus refuerzos.
      * @return Collection<int, Course>
      */
     private function itineraryCourses(
@@ -138,6 +163,7 @@ final class AnnualRouteComposer implements RouteComposer
         ?array $only,
         array $priority,
         ?int $capacity,
+        array $preferred = [],
     ): Collection {
         // Condensado: en un recorrido de doce meses sobre todo el catálogo, el
         // paquete dice en un renglón lo que sus niveles dirían en tres, y evita que
@@ -165,6 +191,16 @@ final class AnnualRouteComposer implements RouteComposer
             ]);
         }
 
+        if ($only === null && $preferred !== []) {
+            $order = array_flip($preferred);
+            $remainingOrder = array_flip(array_map(fn (Course $c): int => $c->id, $candidates));
+            usort($candidates, fn (Course $a, Course $b): int => [
+                $order[$a->id] ?? PHP_INT_MAX, $remainingOrder[$a->id],
+            ] <=> [
+                $order[$b->id] ?? PHP_INT_MAX, $remainingOrder[$b->id],
+            ]);
+        }
+
         $chosen = [];
         $kept = [];
         $remaining = $only === null ? $capacity : null;
@@ -176,7 +212,10 @@ final class AnnualRouteComposer implements RouteComposer
 
             $hours = $course->duration_hours ?? 0;
 
-            if ($remaining !== null && $hours > $remaining) {
+            // Si ni siquiera cabe la ruta inicial, la revisión debe mostrar el
+            // bloqueo de capacidad. Quitar sus cursos en silencio rompería la
+            // continuidad con lo que ya recibió el cliente.
+            if ($remaining !== null && $hours > $remaining && ! in_array($course->id, $preferred, true)) {
                 continue;
             }
 
@@ -189,6 +228,18 @@ final class AnnualRouteComposer implements RouteComposer
         }
 
         $kept = collect($kept)->keyBy('id');
+
+        if ($only === null && $preferred !== []) {
+            $first = $kept->only($preferred);
+            $rest = $kept->except($preferred)->groupBy('specialization_id');
+            $ordered = $first->values()->all();
+
+            foreach ($priority as $specializationId) {
+                $ordered = [...$ordered, ...$ranker->sequence($rest->get($specializationId, collect()))];
+            }
+
+            return collect($ordered)->keyBy('id');
+        }
 
         return $only === null
             ? $kept
@@ -243,7 +294,7 @@ final class AnnualRouteComposer implements RouteComposer
     /**
      * La especialización que el lead pidió es el ancla del documento; las demás son
      * refuerzo. Ninguna es «complementaria» aquí: ese rol pertenece al gancho, donde
-     * hay exactamente dos y significan algo.
+     * los cursos complementarios acompañan la ruta principal.
      *
      * Cadena de Suministros abre el mes 1 si es lo que el lead pidió, pero bajo el
      * rol de bloque, no de ancla: su ficha no admite ese papel ni siquiera aquí, y

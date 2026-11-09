@@ -1,0 +1,107 @@
+name: ${COMPOSE_PROJECT_NAME:-route-generator-production}
+
+x-app: &app
+    image: ${APP_IMAGE:-route-generator-app}:${RELEASE_TAG:-latest}
+    build:
+        context: .
+        target: app
+        args:
+            VCS_REF: ${VCS_REF:-unknown}
+    env_file: ${DEPLOY_ENV_FILE:-.env.production}
+    restart: unless-stopped
+    volumes:
+        - app_storage:/var/www/html/storage
+    networks: [backend, frontend]
+    depends_on:
+        postgres:
+            condition: service_healthy
+        gotenberg:
+            condition: service_healthy
+
+services:
+    app:
+        <<: *app
+
+    worker:
+        <<: *app
+        command:
+            [
+                php,
+                artisan,
+                queue:work,
+                '--sleep=3',
+                '--tries=3',
+                '--timeout=90',
+                '--max-time=3600',
+            ]
+        stop_grace_period: 100s
+
+    web:
+        image: ${WEB_IMAGE:-route-generator-web}:${RELEASE_TAG:-latest}
+        build:
+            context: .
+            target: web
+            args:
+                VCS_REF: ${VCS_REF:-unknown}
+        restart: unless-stopped
+        ports:
+            - '${HTTP_BIND:-127.0.0.1}:${HTTP_PORT:-8080}:8080'
+        networks: [frontend]
+        depends_on: [app]
+        healthcheck:
+            test: [CMD, wget, '--spider', '--quiet', 'http://127.0.0.1:8080/up']
+            interval: 15s
+            timeout: 5s
+            retries: 5
+
+    postgres:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:?Configura DB_DATABASE}
+            POSTGRES_USER: ${DB_USERNAME:?Configura DB_USERNAME}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?Configura DB_PASSWORD}
+        volumes:
+            - postgres_data:/var/lib/postgresql
+        networks: [backend]
+        healthcheck:
+            test:
+                [
+                    CMD-SHELL,
+                    'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    gotenberg:
+        image: gotenberg/gotenberg:8
+        restart: unless-stopped
+        command:
+            [
+                gotenberg,
+                '--chromium-disable-javascript=true',
+                '--chromium-allow-list=file:///tmp/.*',
+            ]
+        networks: [backend]
+        healthcheck:
+            test:
+                [
+                    CMD,
+                    curl,
+                    '--silent',
+                    '--fail',
+                    'http://localhost:3000/health',
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    app_storage:
+    postgres_data:
+
+networks:
+    backend:
+        internal: true
+    frontend:

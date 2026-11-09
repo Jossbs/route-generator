@@ -46,6 +46,7 @@ function rutaParaElHub(): LearningRoute
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => $embudo->funnel_id,
     ]);
 

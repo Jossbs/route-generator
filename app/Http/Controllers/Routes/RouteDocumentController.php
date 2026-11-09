@@ -18,7 +18,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 /**
  * El documento: el archivo que se manda y la vista que se revisa antes.
  *
- * `download` es la entrega. El asesor adjunta ese PDF en el chat de Kommo, así
+ * `download` es la entrega. El asesor adjunta ese PDF en la conversación con el lead, así
  * que el archivo llega con el nombre del lead en el nombre: un «documento.pdf»
  * en una conversación de WhatsApp no lo abre nadie.
  *

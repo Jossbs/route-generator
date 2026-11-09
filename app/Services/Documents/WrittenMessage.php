@@ -23,9 +23,8 @@ final class WrittenMessage extends RouteScript
     /** Los bloques, en el orden en que se leen, con su nombre para el asesor. */
     private const BLOQUES = [
         'saludo' => 'Saludo',
-        'conexion' => 'Lo que te contó',
         'ruta' => 'Su ruta',
-        'inicio' => 'Apenas el comienzo',
+        'pago' => 'Facilidades de pago',
         'cierre' => 'Cierre',
     ];
 
@@ -36,20 +35,11 @@ final class WrittenMessage extends RouteScript
     public function for(array $payload, Lead $lead): ?array
     {
         $tokens = $this->tokens($payload, $lead);
-        $recomendados = $this->recommendedVariant($tokens);
-
-        $variantes = [
-            'saludo' => ['mensaje.saludo'],
-            'conexion' => ['mensaje.conexion.con-contexto', 'mensaje.conexion.por-area', 'mensaje.conexion.por-ocupacion'],
-            'ruta' => ["mensaje.ruta.{$recomendados}"],
-            'inicio' => ['mensaje.inicio'],
-            'cierre' => ['mensaje.cierre'],
-        ];
 
         $bloques = [];
 
         foreach (self::BLOQUES as $clave => $titulo) {
-            $segmentos = $this->firstAvailable($variantes[$clave], $tokens);
+            $segmentos = $this->firstAvailable(['mensaje.'.$clave], $tokens);
 
             if ($segmentos !== null) {
                 $bloques[] = ['clave' => $clave, 'titulo' => $titulo, 'segmentos' => $segmentos];
@@ -63,6 +53,7 @@ final class WrittenMessage extends RouteScript
         $texto = implode("\n\n", array_map(fn (array $b): string => $this->whatsApp($b['segmentos']), $bloques));
 
         return [
+            'version' => InitialRouteScriptCopy::VERSION,
             'bloques' => $bloques,
             'palabras' => $this->words($texto),
             'texto' => $texto,

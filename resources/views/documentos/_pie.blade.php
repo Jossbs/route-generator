@@ -9,7 +9,7 @@
     «02 / 04» se lee sin salto.
 --}}
 <div class="pie">
-    <b>Desarrollo Profesional SyS</b>
+    <b>{{ ($doc['tipo_documento'] ?? null) === 'ruta-anual' ? 'Desarrollo Profesional SyS' : 'Preparada por DPSYS' }}</b>
     <span>academy.dpsys.com.mx</span>
     <span class="num">{{ $folio }}<i>/{{ str_pad((string) $paginas, 2, '0', STR_PAD_LEFT) }}</i></span>
 </div>

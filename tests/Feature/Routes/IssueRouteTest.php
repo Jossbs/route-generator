@@ -38,6 +38,7 @@ function capturar(array $overrides = []): array
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => embudo(),
         'context' => null,
         ...$overrides,
@@ -156,7 +157,7 @@ it('precarga la captura desde los parámetros del CRM', function () {
     $slug = Funnel::whereKey($funnelId)->value('slug');
 
     $this->actingAs(FunnelFactory::author())
-        ->get("/?nombre=Mariana&telefono=4421185502&embudo={$slug}&kommo_id=A-42")
+        ->get("/?nombre=Mariana&telefono=4421185502&embudo={$slug}&external_id=A-42")
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('rutas/generar')
             ->where('tipo', 'inicial')
@@ -180,6 +181,22 @@ it('solo ofrece en el selector las rutas curadas que ya tienen cursos', function
             ->where('embudos.0.cursos', 1)
             ->where('embudos.0.especialidad', 'Ingeniería de Calidad')
             ->etc());
+});
+
+it('reencuentra al lead con un identificador de CRM genérico', function () {
+    Queue::fake();
+    $advisor = FunnelFactory::author();
+    $capture = capturar(['external_id' => 'CRM-42']);
+
+    $this->actingAs($advisor)->post('/rutas', $capture)->assertSessionHasNoErrors();
+    $this->actingAs($advisor)->post('/rutas', [...$capture, 'name' => 'Mariana Cruz Aguilar'])
+        ->assertSessionHasNoErrors();
+
+    expect(Lead::count())->toBe(1)
+        ->and(Lead::sole()->source)->toBe('crm')
+        ->and(Lead::sole()->external_id)->toBe('CRM-42')
+        ->and(LearningRoute::count())->toBe(2)
+        ->and(LearningRoute::latest('id')->first()->snapshot['lead']['external_id'])->toBe('CRM-42');
 });
 
 it('reencuentra al lead por su teléfono en vez de duplicarlo', function () {
@@ -285,9 +302,13 @@ it('no imprime la palabra prohibida ni un solo precio', function () {
 
     $html = $this->get('/r/'.LearningRoute::sole()->access_token)->getContent();
 
-    expect(strtolower($html))->not->toContain('lecciones');
-    expect($html)->not->toContain('$');
-    expect($html)->not->toContain('MXN');
+    // Los scripts de paginación pueden contener «$»: lo que se comprueba
+    // es el texto del documento que verá el lead, sin estilos ni JavaScript.
+    $texto = html_entity_decode(strip_tags((string) preg_replace('#<(script|style)\b[^>]*>.*?</\1>#is', '', $html)));
+
+    expect(mb_strtolower($texto))->not->toContain('lecciones');
+    expect($texto)->not->toContain('$');
+    expect($texto)->not->toContain('MXN');
 });
 
 it('no acepta cursos que no existen', function () {

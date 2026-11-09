@@ -83,7 +83,9 @@ final class ComplementaryPicker
         }
 
         foreach ($signals->preferredSpecializations() as $slug) {
-            $candidates[] = [$slug, 'Por el área en la que trabaja: '.Str::lower((string) $signals->areaLabel()).'.'];
+            $candidates[] = [$slug, $signals->areaLabel() !== null
+                ? 'Por el área en la que trabaja: '.Str::lower($signals->areaLabel()).'.'
+                : 'Por lo que compartió sobre su ocupación u objetivo.'];
         }
 
         $candidates[] = $signals->leadsPeople()

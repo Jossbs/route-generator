@@ -11,7 +11,7 @@ use App\Enums\LeadArea;
  *
  * Las dos formas no compiten. `area` es el valor tipificado —el que se cuenta, se
  * segmenta y pesa en la composición—; `other` es lo que el asesor escribió cuando
- * ninguna de las catorce le quedaba, guardado de una sola manera para que
+ * ninguna de las opciones le quedaba, guardado de una sola manera para que
  * «CONTROL DE GESTION», «control de gestión» y «Control De Gestion» sean una
  * fila y no tres.
  *

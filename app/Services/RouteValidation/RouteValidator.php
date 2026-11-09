@@ -55,7 +55,12 @@ final class RouteValidator
             array_map(fn (RuleEvaluation $e): array => [
                 'rule_code' => $e->ruleCode,
                 'result' => $e->result,
-                'details' => $e->details === [] ? null : $e->details,
+                'details' => [
+                    ...$e->details,
+                    'severity' => $e->severity->value,
+                    'message' => $e->message,
+                    'waived' => $e->waived,
+                ],
                 'evaluated_at' => $evaluatedAt,
             ], $report->evaluations),
         );

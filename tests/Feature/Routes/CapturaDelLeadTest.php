@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Enums\LeadArea;
+use App\Models\Course;
 use App\Models\Funnel;
 use App\Models\Lead;
 use App\Models\LearningRoute;
@@ -36,10 +37,34 @@ function capturaDeLead(array $overrides = []): array
     return [
         'name' => 'Mariana Cruz',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => embudoDeCaptura(),
         ...$overrides,
     ];
 }
+
+it('ofrece los 64 cursos incluidos PPAP al editar la propuesta inicial', function () {
+    $this->actingAs(FunnelFactory::author())
+        ->post('/rutas/propuesta', capturaDeLead())
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->component('rutas/propuesta')
+            ->has('catalogo', 64)
+            ->where('catalogo', fn ($catalog): bool => collect($catalog)->contains(
+                fn ($course): bool => $course['nombre'] === 'PPAP' && $course['especialidad'] === 'Core Tools' && $course['horas'] === 10,
+            )));
+});
+
+it('genera una ruta inicial con PPAP agregado desde el catálogo', function () {
+    Queue::fake();
+    $capture = capturaDeLead();
+    $courses = Funnel::findOrFail($capture['funnel_id'])->routes()->firstOrFail()->orderedCourseIds();
+    $capture['course_ids'] = [...$courses, Course::where('slug', 'ppap')->sole()->id];
+
+    $this->actingAs(FunnelFactory::author())->postJson('/rutas', $capture)
+        ->assertOk()->assertJsonStructure(['url']);
+
+    expect(LearningRoute::sole()->itineraryCourseIds())->toContain(Course::where('slug', 'ppap')->sole()->id);
+});
 
 it('genera la ruta inicial sin teléfono', function () {
     Queue::fake();
@@ -113,14 +138,10 @@ it('pide el área escrita cuando el asesor eligió «otra»', function () {
         ->assertSessionHasErrors('area_other');
 });
 
-it('no exige el área: la captura sigue funcionando sin ella', function () {
-    Queue::fake();
-
+it('exige capturar el área del lead', function () {
     $this->actingAs(FunnelFactory::author())
-        ->post('/rutas', capturaDeLead())
-        ->assertRedirect();
-
-    expect(Lead::sole()->area)->toBeNull();
+        ->post('/rutas', capturaDeLead(['area' => '']))
+        ->assertSessionHasErrors('area');
 });
 
 it('deja el select elegido cuando el área llega por URL', function () {
@@ -130,15 +151,17 @@ it('deja el select elegido cuando el área llega por URL', function () {
             ->component('rutas/generar')
             ->where('precargado.area', 'rh')
             ->where('precargado.area_other', '')
-            ->has('areas', count(LeadArea::cases())));
+            ->has('areas', count(LeadArea::cases()) + 1)
+            ->where('areas.0.label', 'Administración y Finanzas')
+            ->where('areas.1.label', 'Almacén / inventarios'));
 });
 
 it('abre el campo abierto cuando el área de la URL no es de la lista', function () {
     $this->actingAs(FunnelFactory::author())
-        ->get('/?area=comercio+exterior')
+        ->get('/?area=Control+de+Gestion')
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->where('precargado.area', 'otro')
-            ->where('precargado.area_other', 'Comercio Exterior')
+            ->where('precargado.area_other', 'Control de Gestion')
             ->etc());
 });
 

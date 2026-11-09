@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use Illuminate\Support\Str;
+
 /**
  * El área en la que trabaja el lead.
  *
@@ -42,17 +44,19 @@ enum LeadArea: string
     case Proyectos = 'proyectos';
     case Sistemas = 'ti';
     case Estudiante = 'estudiante';
+    case Supervisor = 'supervisor';
+    case MejoraContinua = 'mejora_continua';
 
     /** Como se lee en la pantalla y como se guarda de vuelta al asesor. */
     public function label(): string
     {
         return match ($this) {
-            self::Calidad => 'Calidad',
-            self::Produccion => 'Producción / Manufactura',
+            self::Calidad => 'Calidad / auditoría',
+            self::Produccion => 'Maquiladora / manufactura',
             self::Mantenimiento => 'Mantenimiento',
-            self::Ingenieria => 'Ingeniería / Procesos',
-            self::Logistica => 'Logística y Almacén',
-            self::Compras => 'Compras / Abastecimiento',
+            self::Ingenieria => 'Ingeniería / diseño',
+            self::Logistica => 'Almacén / inventarios',
+            self::Compras => 'Compras / logística',
             self::Seguridad => 'Seguridad e Higiene (EHS)',
             self::RecursosHumanos => 'Recursos Humanos',
             self::Administracion => 'Administración y Finanzas',
@@ -60,7 +64,9 @@ enum LeadArea: string
             self::Direccion => 'Dirección / Gerencia',
             self::Proyectos => 'Proyectos',
             self::Sistemas => 'TI / Sistemas',
-            self::Estudiante => 'Estudiante o buscando empleo',
+            self::Estudiante => 'Estudiante / por egresar',
+            self::Supervisor => 'Supervisor / líder de línea',
+            self::MejoraContinua => 'Mejora continua',
         };
     }
 
@@ -79,20 +85,22 @@ enum LeadArea: string
     public function synonyms(): array
     {
         return match ($this) {
-            self::Calidad => ['calidad', 'control de calidad', 'aseguramiento de calidad', 'gestion de calidad', 'sgc', 'qa', 'qc', 'inspeccion', 'metrologia', 'laboratorio'],
-            self::Produccion => ['produccion', 'manufactura', 'operaciones', 'planta', 'piso de produccion', 'ensamble', 'maquinados', 'produccion manufactura'],
-            self::Mantenimiento => ['mantenimiento', 'mantto', 'confiabilidad', 'tpm', 'servicios generales'],
-            self::Ingenieria => ['ingenieria', 'procesos', 'ingenieria de procesos', 'ingenieria industrial', 'mejora continua', 'metodos', 'manufactura esbelta', 'diseno'],
-            self::Logistica => ['logistica', 'almacen', 'inventarios', 'cadena de suministro', 'supply chain', 'embarques', 'trafico', 'distribucion', 'materiales'],
-            self::Compras => ['compras', 'abastecimiento', 'adquisiciones', 'procurement', 'proveedores', 'desarrollo de proveedores'],
+            self::Calidad => ['calidad', 'control de calidad', 'aseguramiento de calidad', 'gestion de calidad', 'sgc', 'qa', 'qc', 'inspeccion', 'metrologia', 'auditoria', 'auditor lider', 'auditor interno', 'auditoria de procesos y analisis de inventarios', 'analista de control de calidad', 'laboratorio'],
+            self::Produccion => ['produccion', 'manufactura', 'maquiladora', 'maquiladora manufactura', 'industria alimentaria', 'alimentos', 'automotriz', 'operaciones', 'planta', 'piso de produccion', 'ensamble', 'maquinados', 'produccion manufactura'],
+            self::Mantenimiento => ['mantenimiento', 'mantto', 'confiabilidad', 'tpm', 'facilities', 'servicios generales'],
+            self::Ingenieria => ['ingenieria', 'procesos', 'ingenieria de procesos', 'ingenieria industrial', 'metodos', 'automatizacion', 'diseno', 'diseno mecanico'],
+            self::Logistica => ['almacen', 'inventarios', 'inventario', 'control de materiales', 'surtido', 'almacenista'],
+            self::Compras => ['compras', 'logistica', 'abastecimiento', 'adquisiciones', 'procurement', 'proveedores', 'desarrollo de proveedores', 'cadena de suministro', 'cadena de suministros', 'supply chain', 'comercio exterior', 'embarques', 'trafico', 'distribucion'],
             self::Seguridad => ['seguridad e higiene', 'seguridad', 'seguridad industrial', 'higiene', 'ehs', 'hse', 'sso', 'medio ambiente', 'proteccion civil'],
             self::RecursosHumanos => ['recursos humanos', 'rh', 'rrhh', 'capital humano', 'talento', 'capacitacion', 'reclutamiento'],
             self::Administracion => ['administracion', 'finanzas', 'administracion y finanzas', 'contabilidad', 'contraloria', 'costos', 'facturacion'],
             self::Ventas => ['ventas', 'comercial', 'mercadotecnia', 'marketing', 'servicio al cliente', 'atencion a clientes', 'postventa'],
             self::Direccion => ['direccion', 'gerencia', 'direccion general', 'alta direccion', 'gerente general', 'dueno', 'propietario', 'socio'],
             self::Proyectos => ['proyectos', 'gestion de proyectos', 'administracion de proyectos', 'pmo', 'project management'],
-            self::Sistemas => ['ti', 'it', 'sistemas', 'tecnologias de la informacion', 'informatica', 'soporte tecnico', 'desarrollo de software'],
+            self::Sistemas => ['ti', 'it', 'sistemas', 'tecnologias de la informacion', 'informatica', 'analisis de datos', 'analista de datos', 'ciberseguridad', 'soporte tecnico', 'desarrollo de software'],
             self::Estudiante => ['estudiante', 'buscando empleo', 'busco empleo', 'desempleado', 'sin empleo', 'recien egresado', 'egresado', 'practicante', 'becario'],
+            self::Supervisor => ['supervisor', 'supervisora', 'lider de linea', 'lider de turno', 'jefe de linea', 'jefa de linea', 'coordinador de operaciones'],
+            self::MejoraContinua => ['mejora continua', 'lean', 'kaizen', 'productividad', 'manufactura esbelta', 'excelencia operacional'],
         };
     }
 
@@ -113,12 +121,12 @@ enum LeadArea: string
     public function specializationSlugs(): array
     {
         return match ($this) {
-            self::Calidad => ['calidad', 'iso', 'problemas'],
-            self::Produccion => ['lean', 'kaizen', 'problemas'],
+            self::Calidad => ['calidad', 'iso', 'problemas', 'coretools', 'sixsigma'],
+            self::Produccion => ['lean', 'sixsigma', 'kaizen', 'problemas'],
             self::Mantenimiento => ['lean', 'kaizen', 'problemas'],
             self::Ingenieria => ['lean', 'sixsigma', 'problemas'],
-            self::Logistica => ['lean', 'kaizen', 'datos'],
-            self::Compras => ['kaizen', 'datos', 'calidad'],
+            self::Logistica => ['lean', 'datos', 'excel'],
+            self::Compras => ['datos', 'lean', 'excel'],
             self::Seguridad => ['kaizen', 'problemas', 'iso'],
             self::RecursosHumanos => ['soft', 'kaizen', 'excel'],
             self::Administracion => ['excel', 'datos', 'kaizen'],
@@ -127,19 +135,21 @@ enum LeadArea: string
             self::Proyectos => ['problemas', 'soft', 'lean'],
             self::Sistemas => ['datos', 'excel', 'problemas'],
             self::Estudiante => ['soft', 'excel', 'lean'],
+            self::Supervisor => ['soft', 'lean', 'problemas'],
+            self::MejoraContinua => ['lean', 'kaizen', 'sixsigma', 'problemas'],
         };
     }
 
     /**
      * ¿El área ya implica mando?
      *
-     * Dirección es la única que lo dice por sí sola. En las demás lo decide el
+     * Dirección y Supervisión lo dicen por sí solas. En las demás lo decide el
      * puesto —un supervisor de calidad manda gente y un inspector no— y eso sigue
      * saliendo de la ocupación.
      */
     public function leadsPeople(): bool
     {
-        return $this === self::Direccion;
+        return $this === self::Direccion || $this === self::Supervisor;
     }
 
     /**
@@ -149,9 +159,25 @@ enum LeadArea: string
      */
     public static function options(): array
     {
-        return array_map(
+        $options = array_map(
             fn (self $area): array => ['value' => $area->value, 'label' => $area->label()],
             self::cases(),
         );
+        $options[] = ['value' => 'otro', 'label' => 'Otra — la escribo'];
+
+        usort($options, function (array $a, array $b): int {
+            if ($a['value'] === 'otro') {
+                return $b['value'] === 'otro' ? 0 : 1;
+            }
+
+            if ($b['value'] === 'otro') {
+                return -1;
+            }
+
+            return [Str::ascii(Str::lower($a['label'])), $a['value']]
+                <=> [Str::ascii(Str::lower($b['label'])), $b['value']];
+        });
+
+        return $options;
     }
 }

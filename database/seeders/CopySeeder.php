@@ -6,6 +6,7 @@ namespace Database\Seeders;
 
 use App\Models\BannedPhrase;
 use App\Models\CopyBlock;
+use App\Services\Documents\InitialRouteScriptCopy;
 use Illuminate\Database\Seeder;
 
 /**
@@ -63,7 +64,7 @@ class CopySeeder extends Seeder
                     'body' => $slot['body'],
                     'claims' => $slot['claims'],
                     'applies_when' => $slot['applies_when'],
-                    'status' => 'borrador',
+                    'status' => $slot['status'] ?? 'borrador',
                 ],
             );
         }
@@ -117,14 +118,14 @@ class CopySeeder extends Seeder
                 // La frase que vuelve la ruta suya y no una plantilla. Los
                 // marcadores los sustituye CopyResolver con lo que el asesor
                 // capturó y con la especialización que el motor eligió: nada que
-                // inventar. Sin ocupación capturada no se imprime, y el documento
-                // cae en el bloque genérico de abajo.
+                // inventar. La ruta inicial no necesita grado ni cargo para
+                // presentar el objetivo sin incongruencias.
                 'slug' => 'objetivo.ruta-enfocada',
                 'scope' => 'intro_especializacion',
                 'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => 'Para tu puesto de {ocupacion}: empieza por {ancla} y sigue con lo que más la refuerza.',
+                'body' => 'Empieza por {ancla}, la ruta por la que preguntaste, y avanza con cursos de refuerzo elegidos según lo que nos compartiste. Cada curso cierra con su constancia oficial.',
                 'claims' => [
-                    'La ocupación es la que el asesor capturó del lead; la especialización ancla, la que el motor eligió (docs/ARQUITECTURA.md §8).',
+                    'La ruta es la que consultó el lead; los refuerzos se eligen con su ocupación y objetivo capturados.',
                 ],
             ],
             [
@@ -167,14 +168,14 @@ class CopySeeder extends Seeder
                 'slug' => 'cta.boton-whatsapp',
                 'scope' => 'cierre',
                 'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => 'Escríbeme por WhatsApp',
+                'body' => 'Conocer certificaciones y pagos',
                 'claims' => ['Etiqueta del enlace de vuelta al asesor. El canal es WhatsApp (docs/ARQUITECTURA.md §1).'],
             ],
             [
                 'slug' => 'cta.mensaje-whatsapp',
                 'scope' => 'cierre',
                 'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => 'Hola, soy {nombre}. Ya vi mi ruta formativa y quiero que la revisemos juntos.',
+                'body' => 'Hola, soy {nombre}. Ya vi mi ruta principal personalizada. Quiero conocer las certificaciones y las facilidades de pago para empezar.',
                 'claims' => ['Mensaje que el lead envía al asesor. No afirma nada del producto.'],
             ],
             [
@@ -227,7 +228,7 @@ class CopySeeder extends Seeder
                 'slug' => 'membresia.alcance',
                 'scope' => 'cierre',
                 'applies_when' => null,
-                'body' => 'Tu ruta es el inicio. Con la membresía se abren todas las especializaciones y te preparamos tu ruta de 12 meses.',
+                'body' => 'Esta ruta es solo el inicio. Tu membresía te da acceso al resto del catálogo: al terminarla, puedes aprovechar el tiempo que te quede de tus 12 meses de acceso para seguir aprendiendo y acreditando más cursos.',
                 'claims' => [
                     'El catálogo son 12 especializaciones con acceso completo por suscripción anual (docs/ARQUITECTURA.md §1).',
                     'Al cerrar la membresía el lead recibe la ruta anual de 12 meses; lo mismo dicen el guión del audio y el mensaje escrito (docs/ARQUITECTURA.md §5).',
@@ -252,7 +253,7 @@ class CopySeeder extends Seeder
                 'slug' => 'siguiente-paso.ruta-enfocada',
                 'scope' => 'cierre',
                 'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => '¿Lo platicamos? Respóndeme y vemos juntos las certificaciones y las facilidades de pago.',
+                'body' => 'Da el siguiente paso hacia tu objetivo. Responde a nuestra conversación y te cuento cómo obtener tus constancias y diplomas, qué certificaciones acompañan tu ruta y qué facilidades de pago tienes para empezar. Resolvemos tus dudas y elegimos juntos la opción que mejor se adapte a ti.',
                 'claims' => [
                     'El canal de vuelta es WhatsApp (docs/ARQUITECTURA.md §1).',
                     'Menciona facilidades de pago sin cifra, igual que el guión del audio: el precio lo dice el asesor (docs/ARQUITECTURA.md §4.5).',
@@ -283,10 +284,10 @@ class CopySeeder extends Seeder
                 'slug' => 'saber.modalidad',
                 'scope' => 'cierre',
                 'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => 'Estudias en línea y a tu ritmo: acceso 24/7, clases en video con instructores y evaluaciones con retroalimentación.',
+                'body' => 'Estudias en línea y a tu ritmo: acceso 24/7, clases en video con instructores y material de apoyo para reforzar todo aprendizaje.',
                 'claims' => [
                     'Cursos autogestivos con acceso 24/7 (docs/ARQUITECTURA.md §6).',
-                    '«Clases en video con instructores» y «Evaluaciones con retroalimentación», publicados en los planes de academy.dpsys.com.mx (consultado el 2026-09-24).',
+                    'Clases en video y material de apoyo confirmados por el usuario el 2026-11-08.',
                 ],
             ],
             [
@@ -326,8 +327,7 @@ class CopySeeder extends Seeder
             ],
             ...$this->catalogSlots(),
             ...$this->socialProofSlots(),
-            ...$this->audioScriptSlots(),
-            ...$this->writtenMessageSlots(),
+            ...InitialRouteScriptCopy::slots(),
         ];
     }
 
@@ -456,11 +456,9 @@ class CopySeeder extends Seeder
      *    texto en el segundo. `applies_when.especialidad` la liga a la
      *    especialidad de la que habla; sin ella es general.
      *
-     * Las semblanzas de instructores no están: el sitio no las publica y el dueño
-     * decidió dejarlas fuera. De los avales solo se imprime la DC-3, en la hoja de
-     * cierre; los demás esperan a que Contenido confirme qué cubre cada uno, porque
-     * un logo de Six Sigma junto a un curso Green Belt se puede leer como
-     * equivalencia (NO_CERT_EQUIVALENCE).
+     * Los respaldos y redes se publican con sus enlaces en config/dpsys.php.
+     * La hoja distingue el alcance de cada programa; no afirma equivalencias.
+     * Las fotografías de eventos fueron proporcionadas por el usuario.
      *
      * @return list<array<string, mixed>>
      */
@@ -471,13 +469,13 @@ class CopySeeder extends Seeder
 
         $slots = [
             'confianza.entradilla' => [
-                'Cursos de ingeniería en línea con constancia DC-3, y programas presenciales en planta para empresas.',
+                'Desde 2018 impulsamos el desarrollo de profesionales con formación en ingeniería. Una comunidad internacional, experiencia en empresas y respaldos que puedes consultar.',
                 null,
-                ['Membresía de cursos de ingeniería con DC-3 y plan Business con «Programas presenciales en sitio». '.$fuente],
+                ['Fundación en 2018: linkedin.com/company/desarrollo-profesional-sys/. Comunidad y experiencia empresarial: academy.dpsys.com.mx/home (2026-11-08).'],
             ],
             'confianza.cifra.comunidad' => ['+80,000 ingenieros', null, ['«+80,000 ingenieros» en la portada del sitio. '.$fuente]],
             'confianza.cifra.paises' => ['15+ países', null, ['«15+ países» en la portada del sitio. '.$fuente]],
-            'confianza.cifra.google' => ['5.0 en Google · 105 opiniones', null, ['«5.0 · Reseñas de Google · 105 opiniones». Actualizar si cambia. '.$fuente]],
+            'confianza.cifra.google' => ['2018 Fundación', null, ['Año de fundación publicado en linkedin.com/company/desarrollo-profesional-sys/. El indicador sustituye la calificación de Google que se retiró de la hoja institucional.']],
             'confianza.empresas' => [
                 'Pfizer, Hospital Santander, COPARMEX, APTIV, Nidec, LG, index, C&D Technologies, Trostel, IEnova, PEMEX, AMETEK, Panasonic, Caterpillar, Baxter',
                 null,
@@ -518,157 +516,6 @@ class CopySeeder extends Seeder
                 'applies_when' => $slot[1] === null ? $cuando : [...$cuando, 'especialidad' => $slot[1]],
                 'body' => $slot[0],
                 'claims' => $slot[2],
-            ],
-            array_keys($slots),
-            $slots,
-        );
-    }
-
-    /**
-     * El guión del audio que acompaña a la ruta inicial.
-     *
-     * Reescrito el 2026-09-23 para durar 45–60 s. El PDF ya demuestra que la ruta
-     * es suya; el audio conecta: devuelve lo que el lead contó, le dice que esto
-     * es apenas el inicio —con la membresía llega su ruta de los 12 meses— y lo
-     * invita a contestar para platicar certificaciones y facilidades de pago, sin
-     * cifra: el precio lo dice el asesor (docs/ARQUITECTURA.md §4.5). Los recomendados se
-     * cuentan pero no se nombran; el PDF los nombra.
-     *
-     * `*así*` es donde el asesor sube la voz; `{así}`, lo que sale de la captura o
-     * de la ruta. La variante `.dos`, `.uno`, `.ninguno` depende de cuántos cursos
-     * recomendó el motor por encima del embudo, para no prometer uno que el PDF
-     * no trae.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function audioScriptSlots(): array
-    {
-        $empatia = '*créeme que te entiendo*: cuando uno ya trae el día a día encima, lo último que quiere es perder el tiempo en cursos que no le sirven.';
-        $ruta = 'Por eso te armé algo *hecho a tu medida*: tu ruta de {ruta}, que arranca con {desde}';
-        $entrega = 'Todo viene en el documento que te acabo de mandar, cada curso con su constancia DC-3 ante la STPS.';
-        $claimsRuta = [
-            'La ruta arranca con el primer curso del embudo, en el orden curado; los recomendados se cuentan, el PDF los nombra.',
-            'Cada curso otorga constancia DC-3 oficial ante la STPS (docs/ARQUITECTURA.md §6).',
-        ];
-
-        return $this->scriptSlots('guion_audio', [
-            'guion.saludo' => [
-                '*¿Qué tal, {nombre}?* Te saluda {asesor}, de SyS.',
-                ['Saludo. No afirma nada del producto.'],
-            ],
-            'guion.conexion.con-contexto' => [
-                'Me quedé pensando en lo que me contaste: {contexto}. Y '.$empatia,
-                ['El contexto es lo que el asesor capturó de la conversación. No promete resultados.'],
-            ],
-            'guion.conexion.por-area' => [
-                'Estuve revisando lo que me compartiste de tu trabajo en {area}, y '.$empatia,
-                ['Variante sin contexto capturado: nombra el área del lead.'],
-            ],
-            'guion.conexion.por-ocupacion' => [
-                'Estuve revisando lo que me compartiste como {ocupacion}, y '.$empatia,
-                ['Variante sin contexto ni área de trabajo: nombra la ocupación del lead.'],
-            ],
-            'guion.ruta.dos' => [
-                $ruta.', y le sumé dos cursos más que te van a dar ventaja. '.$entrega,
-                $claimsRuta,
-            ],
-            'guion.ruta.uno' => [
-                $ruta.', y le sumé un curso más que te va a dar ventaja. '.$entrega,
-                $claimsRuta,
-            ],
-            'guion.ruta.ninguno' => [
-                $ruta.'. '.$entrega,
-                $claimsRuta,
-            ],
-            'guion.inicio' => [
-                'Pero ojo, {nombre}: *esto es apenas el inicio*. Al adquirir tu membresía te armo tu ruta completa para los 12 meses de tu acceso, con los {cursos} cursos abiertos para ti.',
-                [
-                    'Al cerrar la membresía el lead recibe la ruta anual completa de 12 meses (docs/ARQUITECTURA.md §1).',
-                    'La membresía da acceso completo al catálogo; la cifra de cursos se calcula (docs/ARQUITECTURA.md §1, §4.2).',
-                ],
-            ],
-            'guion.cierre' => [
-                'Échale un ojo con calma y *respóndeme por aquí*: quiero platicarte cómo funcionan las certificaciones y las facilidades de pago que tenemos para ti.',
-                ['Cierre. Menciona facilidades de pago sin cifra: el precio lo dice el asesor (docs/ARQUITECTURA.md §4.5).'],
-            ],
-        ]);
-    }
-
-    /**
-     * El mensaje escrito que sustituye al audio, decidido el 2026-09-23.
-     *
-     * Va pegado junto al PDF cuando el asesor no puede grabar. Tiene el mismo
-     * trabajo que el audio —conectar, decir que esto es apenas el comienzo e
-     * invitar a contestar— pero no lo transcribe: frases más cortas, negritas y
-     * emojis de WhatsApp, y el detalle se queda en el PDF. `*así*` sale como
-     * negrita en el texto que se pega.
-     *
-     * @return list<array<string, mixed>>
-     */
-    private function writtenMessageSlots(): array
-    {
-        $ruta = 'Sé que tu tiempo vale oro ⏳, así que te armé una *ruta de {ruta}* solo con lo que te sirve 📄';
-        $claimsRuta = [
-            'La ruta arranca con el primer curso del embudo, en el orden curado; los recomendados se cuentan, el PDF los nombra.',
-            'Cada curso otorga constancia DC-3 oficial ante la STPS (docs/ARQUITECTURA.md §6).',
-        ];
-
-        return $this->scriptSlots('mensaje_whatsapp', [
-            'mensaje.saludo' => [
-                '¡Hola, {nombre}! 👋 Soy {asesor}, de SyS.',
-                ['Saludo. No afirma nada del producto.'],
-            ],
-            'mensaje.conexion.con-contexto' => [
-                'Me quedé con lo que me contaste: {contexto}. '.$ruta,
-                ['El contexto es lo que el asesor capturó de la conversación. No promete resultados.'],
-            ],
-            'mensaje.conexion.por-area' => [
-                'Revisé lo que me compartiste de tu trabajo en {area}. '.$ruta,
-                ['Variante sin contexto capturado: nombra el área del lead.'],
-            ],
-            'mensaje.conexion.por-ocupacion' => [
-                'Revisé lo que me compartiste como {ocupacion}. '.$ruta,
-                ['Variante sin contexto ni área de trabajo: nombra la ocupación del lead.'],
-            ],
-            'mensaje.ruta.dos' => [
-                'Arrancas con *{desde}*, y te sumé dos cursos extra que te van a dar ventaja. Cada curso de tu ruta trae su constancia DC-3 ante la STPS ✅',
-                $claimsRuta,
-            ],
-            'mensaje.ruta.uno' => [
-                'Arrancas con *{desde}*, y te sumé un curso extra que te va a dar ventaja. Cada curso de tu ruta trae su constancia DC-3 ante la STPS ✅',
-                $claimsRuta,
-            ],
-            'mensaje.ruta.ninguno' => [
-                'Arrancas con *{desde}*, y cada curso trae su constancia DC-3 ante la STPS ✅',
-                $claimsRuta,
-            ],
-            'mensaje.inicio' => [
-                'Y esto es *apenas el comienzo* 🚀 Cuando actives tu membresía recibes tu ruta completa para los 12 meses de tu acceso, con los {cursos} cursos del catálogo a tu alcance.',
-                [
-                    'Al cerrar la membresía el lead recibe la ruta anual completa de 12 meses (docs/ARQUITECTURA.md §1).',
-                    'La membresía da acceso completo al catálogo; la cifra de cursos se calcula (docs/ARQUITECTURA.md §1, §4.2).',
-                ],
-            ],
-            'mensaje.cierre' => [
-                'Dale una revisada con calma y cuéntame qué te pareció 👇 Con gusto te platico cómo funcionan las certificaciones y las facilidades de pago.',
-                ['Cierre. Menciona facilidades de pago sin cifra: el precio lo dice el asesor (docs/ARQUITECTURA.md §4.5).'],
-            ],
-        ]);
-    }
-
-    /**
-     * @param  array<string, array{0: string, 1: list<string>}>  $slots
-     * @return list<array<string, mixed>>
-     */
-    private function scriptSlots(string $scope, array $slots): array
-    {
-        return array_map(
-            fn (string $slug, array $slot): array => [
-                'slug' => $slug,
-                'scope' => $scope,
-                'applies_when' => ['document_type' => 'ruta-enfocada'],
-                'body' => $slot[0],
-                'claims' => $slot[1],
             ],
             array_keys($slots),
             $slots,

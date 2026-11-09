@@ -9,6 +9,7 @@ use App\Models\CopyBlock;
 use App\Models\Course;
 use App\Models\DocumentType;
 use App\Models\Specialization;
+use App\Services\Documents\InitialRouteScriptCopy;
 use App\Services\RouteValidation\RuleInterpreterRegistry;
 use Database\Seeders\DatabaseSeeder;
 
@@ -54,7 +55,7 @@ it('registra la contención de AutoCAD como parcial, con su nota de auditoría',
 
     expect($niveles)->toHaveCount(3);
     expect($niveles->first()->pivot->containment_type)->toBe('parcial');
-    expect($niveles->sum('duration_hours'))->toBe(48)
+    expect($niveles->sum('duration_hours'))->toBe(36)
         ->and($completo->duration_hours)->toBe(36);
 });
 
@@ -67,9 +68,8 @@ it('siembra las frases de resultado en borrador, con texto literal del sitio', f
     expect(Course::where('outcome_phrase_status', 'aprobado')->count())->toBe(0);
 });
 
-it('deja en null las horas que el sitio no publica', function () {
-    expect(Course::whereNull('duration_hours')->pluck('slug')->sort()->values()->all())
-        ->toBe(['estrategias-de-negociacion', 'liderazgo-efectivo', 'mente-millonaria']);
+it('incluye las horas publicadas para todos los cursos en noviembre', function () {
+    expect(Course::whereNull('duration_hours')->count())->toBe(0);
 });
 
 it('etiqueta el clúster de empleabilidad con sus cuatro cursos', function () {
@@ -144,12 +144,11 @@ it('siembra los dos tipos de documento con su forma de entrega', function () {
     expect($anual->layers)->toBe(['itinerario', 'inventario']);
 });
 
-it('siembra el copy como borrador y nunca como aprobado', function () {
-    // El copy del documento se siembra redactado, no en blanco: un documento que
-    // solo enumera cursos no persuade. Lo que no puede pasar es que se dé por
-    // aprobado: aprobar es de Contenido, y el estado es lo que distingue una
-    // propuesta del sistema de un texto revisado por una persona.
-    expect(CopyBlock::where('status', 'aprobado')->count())->toBe(0);
+it('reserva el estado aprobado para los textos autorizados del complemento inicial', function () {
+    // El guion y el mensaje fueron proporcionados por el usuario. El resto del
+    // copy conserva su estado de borrador hasta recibir aprobación de Contenido.
+    expect(CopyBlock::where('status', 'aprobado')->orderBy('slug')->pluck('slug')->all())
+        ->toBe(collect(InitialRouteScriptCopy::slots())->pluck('slug')->sort()->values()->all());
 
     expect(CopyBlock::where('status', 'borrador')->whereNull('body')->count())->toBe(
         0,

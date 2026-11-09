@@ -38,6 +38,7 @@ function emitirPara(string $nombre, ?User $asesor = null): LearningRoute
     test()->actingAs($asesor ?? FunnelFactory::author())->post('/rutas', [
         'name' => $nombre,
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => $embudo,
     ]);
 
@@ -144,12 +145,13 @@ function emitirFinalPara(string $nombre, string $telefono): LearningRoute
         'full_name' => $nombre,
         'phone' => $telefono,
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoDeBandeja(),
         'plan' => 'expert_anual',
         'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
     ])->assertSessionHasNoErrors();
 
     return LearningRoute::query()->latest('id')->firstOrFail();
@@ -161,6 +163,7 @@ function emitirInicialCon(string $nombre, string $telefono): LearningRoute
         'name' => $nombre,
         'phone' => $telefono,
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoDeBandeja(),
     ])->assertSessionHasNoErrors();
 
@@ -305,12 +308,13 @@ it('liga la final al gancho aunque este se haya capturado sin teléfono', functi
         'full_name' => 'Joseline Sarahi Benavides Serrano',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => embudoDeBandeja(),
         'plan' => 'expert_anual',
         'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
     ])->assertSessionHasNoErrors();
 
     $final = LearningRoute::query()->latest('id')->firstOrFail();

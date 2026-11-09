@@ -1,8 +1,7 @@
 import { usePage } from '@inertiajs/react';
-import { ChartNoAxesCombined, FileText, Megaphone, Route } from 'lucide-react';
+import { FileText, Megaphone, Route } from 'lucide-react';
 import { SysHeader } from '@/components/sys-header';
 import { index as embudos } from '@/routes/funnels';
-import { dashboard as tableroKpis } from '@/routes/kpis';
 import { create as generar, index as rutas } from '@/routes/routes';
 import type { NavItem } from '@/types';
 
@@ -15,8 +14,6 @@ const navegacion: NavItem[] = [
     { title: 'Generar ruta', href: generar(), icon: Route },
     { title: 'Rutas', href: rutas(), icon: FileText },
     { title: 'Embudos', href: embudos(), icon: Megaphone },
-    // Los KPIs de ventas (2026-09-26): el tablero lo ve todo ventas.
-    { title: 'KPIs', href: tableroKpis(), icon: ChartNoAxesCombined },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

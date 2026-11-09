@@ -23,15 +23,15 @@ use Illuminate\Validation\Rule;
  * `ANNUAL_REQUIRES_MEMBERSHIP` lo comprueba después sobre el borrador.
  *
  * El plan va tipificado porque va impreso: era texto libre y el mismo plan llegaba
- * escrito de tres formas a la portada de tres leads. El importe no se imprime
- * —docs/ARQUITECTURA.md §4.5— pero sí se exige: una membresía asentada sin decir por cuánto se
- * cerró deja ese dato viviendo solo en la conversación de WhatsApp del asesor.
+ * escrito de tres formas a la portada de tres leads. El importe no se pide en
+ * este formulario ni se imprime —docs/ARQUITECTURA.md §4.5—; las correcciones
+ * conservan cualquier importe histórico en el expediente de la membresía.
  *
- * El teléfono se exige igual que en la ruta inicial, y no porque haya que
+ * El teléfono se exige en la ruta final, y no porque haya que
  * llamarle: es la llave con la que se reconoce al lead que ya recibió su gancho.
  * Sin él, el mismo miembro entra dos veces a la base y la conversión gancho →
  * membresía deja de poder seguirse. Lo mismo hace `external_id` cuando el lead
- * vino de Kommo.
+ * vino del CRM.
  */
 class StoreAnnualRouteRequest extends FormRequest
 {
@@ -50,7 +50,7 @@ class StoreAnnualRouteRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:255'],
             'phone' => ['required', ...$this->phoneRules()],
             'occupation' => ['required', 'string', 'max:255'],
-            'area' => ['nullable', 'string', 'max:80'],
+            'area' => ['required', 'string', 'max:80'],
             'area_other' => [
                 Rule::requiredIf(fn (): bool => $this->input('area') === AreaNormalizer::OTRO),
                 'nullable',
@@ -69,24 +69,14 @@ class StoreAnnualRouteRequest extends FormRequest
                 'string',
                 'max:120',
             ],
-            // Lo que se cobró. No se imprime en el documento —eso lo prohíbe
-            // docs/ARQUITECTURA.md §4.5— pero sin él la membresía queda asentada sin decir por
-            // cuánto se cerró, y ese dato solo existía en el chat del asesor.
-            'price' => ['required', 'numeric', 'min:0', 'max:999999.99'],
             'starts_on' => ['required', 'date'],
             // Un año, no «cualquier fecha posterior»: el documento se titula
             // «Doce meses» y el cronograma tiene doce columnas. Una vigencia de
             // seis o trece meses se imprimía igual como doce (decidido el
             // 2026-09-24). Se acepta el año exacto con o sin el último día.
             'ends_on' => ['required', 'date', 'after:starts_on', $this->oneYearTerm(...)],
-            // Lo que el lead dijo que puede estudiar. Decide cuántos cursos caben
-            // en su año y dónde termina cada mes, y va impreso.
-            'weekly_hours' => [
-                'required',
-                'integer',
-                'min:'.StudyPace::MIN_WEEKLY_HOURS,
-                'max:'.StudyPace::MAX_WEEKLY_HOURS,
-            ],
+            // Ritmo estándar de la ruta: 3 h durante 6 días cada semana.
+            'weekly_hours' => ['required', 'integer', Rule::in([StudyPace::DEFAULT_WEEKLY_HOURS])],
             'course_ids' => ['sometimes', 'array', 'max:64'],
             'course_ids.*' => ['integer', 'exists:courses,id'],
             // Los párrafos que ajustó a mano en la revisión.
@@ -128,7 +118,6 @@ class StoreAnnualRouteRequest extends FormRequest
             'funnel_id' => 'ruta por la que preguntó',
             'plan' => 'plan',
             'plan_other' => 'plan',
-            'price' => 'importe',
             'starts_on' => 'inicio de vigencia',
             'ends_on' => 'fin de vigencia',
             'weekly_hours' => 'horas por semana',
@@ -147,12 +136,10 @@ class StoreAnnualRouteRequest extends FormRequest
             'area_other.required' => 'Escribe el área, para que no quede sin clasificar.',
             'plan.required' => 'Va impreso en la portada, así que no puede quedar en blanco.',
             'plan_other.required' => 'Escribe cómo se llama el plan que se cerró.',
-            'price.required' => 'Es lo que se cobró. No se imprime en el documento; queda en el expediente del miembro.',
             'ends_on.after' => 'La vigencia no puede terminar antes de empezar.',
             'starts_on.required' => 'Van impresas y ordenan los doce meses.',
             'ends_on.required' => 'Van impresas y ordenan los doce meses.',
-            'weekly_hours.required' => 'Pregúntale cuántas horas a la semana puede estudiar: de ahí sale cuántos cursos caben en su año.',
-            'weekly_hours.max' => 'Más de 40 horas a la semana es un segundo empleo. Revisa el número con el lead.',
+            'weekly_hours.in' => 'El ritmo estándar de esta ruta es de 18 horas por semana.',
             ...$this->copyAdjustmentMessages(),
         ];
     }

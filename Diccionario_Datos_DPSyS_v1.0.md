@@ -162,12 +162,12 @@ Espécimen de referencia (Green Belt – Six Sigma, 9 módulos / 45 temas): Mini
 | Tabla | Campos |
 |---|---|
 | `asesores` | `id` · `nombre` · `email` UQ · `activo` |
-| `leads` | `id` · `nombre` · `telefono` · `email` · `kommo_id` (null, post-V1) · `origen` |
+| `leads` | `id` · `nombre` · `telefono` · `email` · `external_id` (null, post-V1) · `origen` |
 | `bitacora` | `id` · `asesor_id` · `ruta_id` · `accion` · `payload` `jsonb` · `creado_en` |
 | `planes` | `id` · `nombre` · `periodicidad` · `precio` · `moneda` · `beneficios` `jsonb` |
 | `avales` | `id` · `siglas` · `nombre` · `tipo` · `url_certificado` |
 
-Parámetros de URL soportados desde el día uno: `?nombre=&telefono=&especializacion=&kommo_id=`.
+Parámetros de URL soportados desde el día uno: `?nombre=&telefono=&especializacion=&external_id=`.
 
 ---
 

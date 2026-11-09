@@ -49,6 +49,7 @@ function capturaAdmin(array $overrides = []): array
         'name' => 'Mariana Cruz',
         'phone' => '4421185502',
         'occupation' => 'Ingeniera de procesos',
+        'area' => 'calidad',
         'funnel_id' => embudoAdmin(),
         ...$overrides,
     ];
@@ -168,6 +169,25 @@ it('no deja quitar los cursos de la campaña al corregir', function () {
         ->toContain(...$curados);
 });
 
+it('permite corregir la ruta por la que preguntó el lead', function () {
+    $ruta = rutaParaCorregir();
+    $alternativa = FunnelFactory::available(
+        ['dmaic', 'siete-herramientas-de-la-calidad', 'spc'],
+        'sixsigma',
+        ['slug' => 'alternativa-six-sigma'],
+    );
+
+    $this->actingAs(FunnelFactory::author())
+        ->put("/rutas/{$ruta->id}", capturaAdmin([
+            'funnel_id' => $alternativa->funnel_id,
+            'course_ids' => $alternativa->orderedCourseIds(),
+        ]))
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($ruta->refresh()->funnel_id)->toBe($alternativa->funnel_id);
+});
+
 it('corrige la ruta final sobre la misma membresía', function () {
     $embudo = embudoAdmin();
 
@@ -175,27 +195,30 @@ it('corrige la ruta final sobre la misma membresía', function () {
         'full_name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => $embudo,
         'plan' => 'expert_anual',
         'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
     ]);
 
     $anual = LearningRoute::query()->latest('id')->sole();
+    // Una membresía anterior puede conservar un importe que el formulario ya no pide.
+    $anual->membership->update(['price' => '4199.00']);
 
     $this->actingAs(FunnelFactory::author())->put("/rutas/{$anual->id}/final", [
         'full_name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Gerente de calidad',
+        'area' => 'calidad',
         'funnel_id' => $embudo,
         'plan' => 'expert_anual',
-        'price' => '4199.00',
         // La vigencia que le dictaron mal: va impresa y ordena los doce meses.
         'starts_on' => '2026-11-01',
         'ends_on' => '2027-10-31',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
     ])->assertRedirect()->assertSessionHasNoErrors();
 
     // La venta fue una: el expediente del miembro no debe contarla dos veces.
@@ -205,6 +228,7 @@ it('corrige la ruta final sobre la misma membresía', function () {
 
     expect($membresia->starts_on->toDateString())->toBe('2026-11-01')
         ->and($membresia->occupation)->toBe('Gerente de calidad')
+        ->and($membresia->price)->toBe('4199.00')
         ->and($anual->refresh()->revisions)->toBe(1)
         ->and($anual->membership_id)->toBe($membresia->id);
 });
@@ -219,12 +243,13 @@ it('abre la corrección del anual con la membresía asentada', function () {
         'full_name' => 'Mariana Cruz Aguilar',
         'phone' => '4421185502',
         'occupation' => 'Coordinadora de calidad',
+        'area' => 'calidad',
         'funnel_id' => $embudo,
         'plan' => 'expert_anual',
         'price' => '4199.00',
         'starts_on' => '2026-10-01',
         'ends_on' => '2027-09-30',
-        'weekly_hours' => 15,
+        'weekly_hours' => 18,
     ]);
 
     $anual = LearningRoute::query()->latest('id')->sole();
@@ -237,7 +262,6 @@ it('abre la corrección del anual con la membresía asentada', function () {
             ->where('precargado.nombre', 'Mariana Cruz Aguilar')
             ->where('precargado.occupation', 'Coordinadora de calidad')
             ->where('precargado.plan', 'expert_anual')
-            ->where('precargado.price', '4199.00')
             ->where('precargado.desde', '2026-10-01')
             ->where('precargado.hasta', '2027-09-30')
             ->where('editando.id', $anual->id));
@@ -253,20 +277,23 @@ it('no corrige un documento con el formulario del otro', function () {
             'full_name' => 'Mariana Cruz Aguilar',
             'phone' => '4421185502',
             'occupation' => 'Ingeniera de procesos',
+            'area' => 'calidad',
             'funnel_id' => $ruta->funnel_id,
             'plan' => 'expert_anual',
             'price' => '4199.00',
             'starts_on' => '2026-10-01',
             'ends_on' => '2027-09-30',
-            'weekly_hours' => 15,
+            'weekly_hours' => 18,
         ])
         ->assertNotFound();
 
     expect($ruta->refresh()->revisions)->toBe(0);
 });
 
-it('no renderiza una corrección que el validador detiene', function () {
+it('conserva el documento anterior si una corrección tiene conflictos', function () {
     $ruta = rutaParaCorregir();
+    $snapshot = $ruta->snapshot;
+    $estado = $ruta->status;
 
     // Los tres cursos de liderazgo se traslapan: recomendar dos juntos ya es lo
     // que LEADERSHIP_OVERLAP impide, y una ruta detenida no llega al PDF. Van dos
@@ -285,13 +312,13 @@ it('no renderiza una corrección que el validador detiene', function () {
     $this->actingAs(FunnelFactory::author())
         ->put("/rutas/{$ruta->id}", capturaAdmin([
             'course_ids' => [...$ruta->funnelRoute->orderedCourseIds(), ...array_slice($liderazgo, 0, 2)],
-        ]));
+        ]))->assertSessionHasErrors('course_ids');
 
     $ruta->refresh();
 
-    expect($ruta->status)->toBe(RouteStatus::Rejected)
-        ->and($ruta->pdf_path)->toBeNull()
-        ->and($ruta->revisions)->toBe(1);
+    expect($ruta->status)->toBe($estado)
+        ->and($ruta->snapshot)->toEqual($snapshot)
+        ->and($ruta->revisions)->toBe(0);
 });
 
 it('borra la ruta de la bandeja y del disco, y deja el expediente', function () {

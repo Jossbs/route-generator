@@ -16,7 +16,6 @@ use Illuminate\Support\Carbon;
  * @property string $name
  * @property string $email
  * @property string|null $whatsapp
- * @property bool $is_kpi_admin
  * @property Carbon|null $email_verified_at
  * @property string|null $password
  * @property string|null $remember_token
@@ -40,7 +39,6 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'is_kpi_admin' => 'boolean',
         ];
     }
 }

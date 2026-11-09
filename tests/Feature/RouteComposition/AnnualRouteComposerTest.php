@@ -60,15 +60,27 @@ it('abre el mes 1 con la especialización que el lead pidió', function (string 
 it('balancea las horas para que ningún mes doble a otro', function () {
     $draft = composeAnual('lean');
 
-    $hours = Course::whereIn('id', $draft->courseIds())->pluck('duration_hours', 'id');
+    $hours = Course::whereIn('id', array_map(fn (RouteItemDraft $item): int => $item->courseId, itinerary($draft)))
+        ->pluck('duration_hours', 'id');
 
-    $porMes = collect(itinerary($draft))
-        ->groupBy('month')
-        ->map(fn ($items): int => (int) $items->sum(fn ($i): int => $hours[$i->courseId] ?? 0));
+    $porMes = array_fill(1, 12, 0);
+    foreach (itinerary($draft) as $item) {
+        $start = $item->month;
+        $end = $item->monthEnd ?? $start;
+        $span = $end - $start + 1;
+        $duration = $hours[$item->courseId];
+
+        // Un curso largo también ocupa sus meses de continuación. Cargar todas
+        // sus horas al mes inicial daría una falsa impresión de desequilibrio.
+        for ($month = $start; $month <= $end; $month++) {
+            $porMes[$month] += intdiv($duration, $span) + ($month - $start < $duration % $span ? 1 : 0);
+        }
+    }
 
     // Un mes de noventa horas junto a uno de doce no es una recomendación creíble
     // para alguien que estudia después del trabajo.
-    expect($porMes->max())->toBeLessThanOrEqual((int) ($porMes->min() * 2.5));
+    expect(array_sum($porMes))->toBe((int) $hours->sum());
+    expect(max($porMes))->toBeLessThanOrEqual((int) (min($porMes) * 2.5));
 });
 
 it('recomienda un solo curso de cada grupo que se traslapa', function () {
@@ -94,13 +106,12 @@ it('lista en el inventario los cursos que el itinerario no recomienda', function
     $inventario = collect($draft->itemsInLayer(RouteLayer::Inventario))->pluck('courseId');
 
     // El inventario enumera la membresía completa: los 64 cursos, incluidos los
-    // traslapes que el itinerario descartó y los tres sin duración publicada.
+    // traslapes que el itinerario descartó.
     expect($inventario->unique())->toHaveCount(64);
 
-    $sinDuracion = Course::whereNull('duration_hours')->pluck('id');
-
-    expect($inventario->intersect($sinDuracion))->toHaveCount(3);
-    expect(collect(itinerary($draft))->pluck('courseId')->intersect($sinDuracion))->toBeEmpty();
+    $descartados = $inventario->diff(collect(itinerary($draft))->pluck('courseId'));
+    expect($descartados)->not->toBeEmpty();
+    expect($inventario)->toContain(Course::where('slug', 'ppap')->sole()->id);
 });
 
 it('marca el inventario como incluido y no como recomendación', function () {

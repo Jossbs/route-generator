@@ -10,6 +10,7 @@ use App\Models\Lead;
 use App\Models\LearningRoute;
 use App\Models\Specialization;
 use App\Models\User;
+use App\Services\Documents\RouteCompanions;
 use App\Services\Leads\MexicanPhone;
 use Carbon\CarbonImmutable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -46,6 +47,8 @@ use Throwable;
  */
 class RouteInboxController extends Controller
 {
+    public function __construct(private readonly RouteCompanions $companions) {}
+
     /** Quince leads caben en una pantalla de laptop sin que la página se vuelva un scroll. */
     private const POR_PAGINA = 15;
 
@@ -283,7 +286,7 @@ class RouteInboxController extends Controller
                 ->all(),
             // El mensaje escrito se pega en WhatsApp, así que se copia desde aquí.
             // El guión del audio no viaja: se lee en la ficha, no se copia.
-            'mensaje' => $inicial?->snapshot['mensaje']['texto'] ?? null,
+            'mensaje' => $inicial === null ? null : $this->companions->for($inicial, $lead)['mensaje']['texto'] ?? null,
             // Lo que el formulario de la final recibe por URL, para que el asesor
             // no vuelva a escribir lo que el lead ya dio en el gancho.
             'para_final' => $final === null ? array_filter([

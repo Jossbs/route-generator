@@ -151,18 +151,6 @@
     --color-chart-5: var(--chart-5);
 
     /*
-     * El módulo de KPIs. `kpi-real` es lo que se lleva y `kpi-ritmo` lo esperado
-     * a hoy: dos tonos de la marca validados como par para daltonismo en los dos
-     * modos. `kpi-bien` y `kpi-cerca` son de estado y siempre van con icono y
-     * palabra; lo que va atrás no tiene color propio (se decidió no usar rojo).
-     */
-    --color-kpi-real: var(--kpi-real);
-    --color-kpi-ritmo: var(--kpi-ritmo);
-    --color-kpi-bien: var(--kpi-bien);
-    --color-kpi-bien-texto: var(--kpi-bien-texto);
-    --color-kpi-cerca: var(--kpi-cerca);
-
-    /*
      * La altura del header, que es sticky. Todo lo que también se queda pegado
      * —el panel del validador— y todo salto de ancla tienen que restarla, así
      * que vive en una variable y no en un número repetido en tres archivos.
@@ -213,11 +201,6 @@
     --chart-3: #4b0055;
     --chart-4: #7b1fa2;
     --chart-5: #ff9800;
-    --kpi-real: #e91e63;
-    --kpi-ritmo: #7b1fa2;
-    --kpi-bien: #0ca30c;
-    --kpi-bien-texto: #006300;
-    --kpi-cerca: #fab219;
     --radius: 0.875rem;
 }
 
@@ -269,11 +252,6 @@
     --chart-3: #9fb8e8;
     --chart-4: #f5c27a;
     --chart-5: #a89fad;
-    --kpi-real: #d9577f;
-    --kpi-ritmo: #a07ad6;
-    --kpi-bien: #0ca30c;
-    --kpi-bien-texto: #3fc43f;
-    --kpi-cerca: #fab219;
 
     --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35);
     --shadow-cta: none;

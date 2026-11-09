@@ -1,6 +1,11 @@
 <?php
 
+use App\Services\Identity\SeededAdvisor;
+
 return [
+
+    // El anfitrión puede registrar su implementación sin editar el proveedor.
+    'current_advisor' => env('CURRENT_ADVISOR_CLASS', SeededAdvisor::class),
 
     /*
     |--------------------------------------------------------------------------

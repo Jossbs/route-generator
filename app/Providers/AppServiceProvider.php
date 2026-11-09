@@ -3,9 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Funnel;
-use App\Models\Membership;
 use App\Models\User;
-use App\Observers\MembershipSalesObserver;
 use App\Policies\FunnelPolicy;
 use App\Services\Documents\DocumentRenderer;
 use App\Services\Documents\GotenbergRenderer;
@@ -23,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use LogicException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -51,10 +50,19 @@ class AppServiceProvider extends ServiceProvider
 
         // El módulo no autentica: lo inserta un sistema que ya tiene su propio
         // acceso. Mientras ese sistema no exista, el asesor sale de la base.
-        // Enchufar el anfitrión es cambiar esta línea por su implementación.
-        $this->app->bind(CurrentAdvisor::class, fn (): SeededAdvisor => new SeededAdvisor(
-            (string) config('identity.development_advisor'),
-        ));
+        $this->app->bind(CurrentAdvisor::class, function ($app): CurrentAdvisor {
+            $resolver = (string) (config('identity.current_advisor') ?: SeededAdvisor::class);
+
+            if ($resolver === SeededAdvisor::class) {
+                return new SeededAdvisor((string) config('identity.development_advisor'));
+            }
+
+            if (! is_a($resolver, CurrentAdvisor::class, true)) {
+                throw new LogicException('CURRENT_ADVISOR_CLASS debe implementar '.CurrentAdvisor::class.'.');
+            }
+
+            return $app->make($resolver);
+        });
     }
 
     /**
@@ -83,14 +91,6 @@ class AppServiceProvider extends ServiceProvider
     protected function configureAuthorization(): void
     {
         Gate::policy(Funnel::class, FunnelPolicy::class);
-
-        // Capturar eventos, fijar metas, cerrar meses y configurar KPIs. El
-        // tablero no pasa por aquí: lo ve todo ventas.
-        Gate::define('manage-kpis', fn (User $user): bool => $user->is_kpi_admin);
-
-        // Cada membresía que registra el generador de rutas se sugiere como
-        // venta al módulo de KPIs.
-        Membership::observe(MembershipSalesObserver::class);
     }
 
     /**

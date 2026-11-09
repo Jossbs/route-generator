@@ -5,6 +5,8 @@ declare(strict_types=1);
 use App\Enums\RouteLayer;
 use App\Models\Course;
 use App\Services\Catalog\ComplexityRubric;
+use Database\Seeders\CatalogAnalysisSeeder;
+use Database\Seeders\CatalogSeeder;
 
 /*
  * La capa de análisis del catálogo contra el Diccionario de Datos v1.0.
@@ -41,6 +43,9 @@ function referenceRun(): array
 }
 
 it('reproduce el nivel de complejidad que calculó calc.py', function () {
+    // La corrida histórica se verifica con los datos de septiembre, no con las
+    // duraciones publicadas en noviembre que ahora usa la aplicación.
+    $this->seed([CatalogSeeder::class, CatalogAnalysisSeeder::class]);
     $reference = referenceRun();
     $normalize = fn (string $name): string => trim(preg_replace(
         '/[^a-z0-9]+/',
@@ -70,6 +75,7 @@ it('reproduce el nivel de complejidad que calculó calc.py', function () {
 });
 
 it('reproduce la distribución de niveles del Diccionario §3', function () {
+    $this->seed([CatalogSeeder::class, CatalogAnalysisSeeder::class]);
     // 10 · 29 · 22 · 3 en el Diccionario, sobre 64 cursos. Aquí son 61: los tres
     // micro-cursos sin horas quedan sin nivel, y su N1 en calc.py era artefacto
     // del marcador 1 lección / 1 hora que la corrida usó para no dividir entre cero.
@@ -83,9 +89,8 @@ it('reproduce la distribución de niveles del Diccionario §3', function () {
     expect($distribution)->toBe([1 => 7, 2 => 29, 3 => 22, 4 => 3]);
 });
 
-it('no le asigna nivel a los cursos sin duración publicada', function () {
-    expect(Course::whereNull('complexity_level')->pluck('slug')->sort()->values()->all())
-        ->toBe(['estrategias-de-negociacion', 'liderazgo-efectivo', 'mente-millonaria']);
+it('asigna nivel a los 64 cursos con duración publicada en noviembre', function () {
+    expect(Course::whereNull('complexity_level')->count())->toBe(0);
 });
 
 it('siembra las 64 descripciones cortas literales del sitio', function () {
@@ -94,18 +99,9 @@ it('siembra las 64 descripciones cortas literales del sitio', function () {
         ->toBe('Elimina desperdicios con el sistema de producción Toyota');
 });
 
-it('deja fuera del itinerario solo a los tres cursos sin duración', function () {
-    expect(Course::recommendable()->count())->toBe(61);
-
-    $soloInventario = Course::whereNotNull('allowed_layers')->get();
-
-    expect($soloInventario->pluck('slug')->sort()->values()->all())
-        ->toBe(['estrategias-de-negociacion', 'liderazgo-efectivo', 'mente-millonaria']);
-
-    $soloInventario->each(function (Course $course) {
-        expect($course->allowsLayer(RouteLayer::Itinerario))->toBeFalse();
-        expect($course->allowsLayer(RouteLayer::Inventario))->toBeTrue();
-    });
+it('permite recomendar todos los cursos con horas publicadas en noviembre', function () {
+    expect(Course::recommendable()->count())->toBe(64);
+    expect(Course::whereNotNull('allowed_layers')->count())->toBe(0);
 });
 
 it('mantiene el clúster de empleabilidad dentro del itinerario', function () {

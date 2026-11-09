@@ -10,8 +10,7 @@ use App\Services\Catalog\RouteTotals;
  *
  * Los tres paquetes «Completo» absorben a sus propios niveles, así que dentro de
  * una misma unidad de contenido manda la duración que el paquete declara. En
- * AutoCAD y SolidWorks la diferencia es de 12 h que el sitio no explica: se usa el
- * dato publicado del paquete, no se resuelve inventando.
+ * Se usa el dato publicado del paquete, sin contar de nuevo sus componentes.
  */
 
 function totalsFor(array $slugs): RouteTotals
@@ -20,8 +19,7 @@ function totalsFor(array $slugs): RouteTotals
 }
 
 it('reporta las horas del paquete y no la suma de sus niveles', function (string $package, array $components, int $expected) {
-    // El paquete declara 36 h; sus tres niveles suman 48. Prometer 48 sería
-    // prometer horas que la constancia no respalda.
+    // El paquete declara 36 h: añadir sus niveles no aumenta esas horas.
     expect(totalsFor([$package])->netHours)->toBe($expected);
     expect(totalsFor([$package, ...$components])->netHours)->toBe($expected);
 })->with([
@@ -32,7 +30,7 @@ it('reporta las horas del paquete y no la suma de sus niveles', function (string
 
 it('suma normal cuando los niveles van sin su paquete', function () {
     // Sin el paquete no hay nada que absorba: tres cursos, tres duraciones.
-    expect(totalsFor(['autocad-basico', 'autocad-intermedio', 'autocad-avanzado'])->netHours)->toBe(48);
+    expect(totalsFor(['autocad-basico', 'autocad-intermedio', 'autocad-avanzado'])->netHours)->toBe(36);
 });
 
 it('cuenta los cuatro cursos de un paquete como un solo programa', function () {
@@ -50,7 +48,8 @@ it('señala qué cursos quedaron absorbidos por un paquete presente', function (
 });
 
 it('no revienta con cursos sin duración publicada', function () {
-    // Tres micro-cursos no publican horas. Cero es honesto; inventar un número no.
+    // Simula un catálogo futuro con datos todavía no publicados.
+    Course::whereIn('slug', ['mente-millonaria', 'liderazgo-efectivo'])->update(['duration_hours' => null]);
     expect(totalsFor(['mente-millonaria', 'liderazgo-efectivo'])->netHours)->toBe(0);
 });
 

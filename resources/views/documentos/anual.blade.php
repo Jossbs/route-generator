@@ -1,7 +1,7 @@
 {{--
     La ruta final: el PDF que recibe quien ya cerró su membresía.
 
-    Esta vista sigue la plantilla de referencia ruta-final-sys.html, en hojas
+    Esta vista sigue la PDF de referencia Tu_ano_de_formacion_Rosbel_Salinas_DPSys.pdf, en hojas
     Carta: portada, mapa de los doce meses, membresía y «Empieza hoy». La
     información sigue saliendo del snapshot; aquí solo se decide cómo leerla en
     el papel.
@@ -23,7 +23,9 @@
 
     $subtituloCurso = static function (array $curso) use ($nivel): string {
         if (($curso['continua'] ?? false) === true) {
-            return 'Continúa · lo terminas este mes';
+            return ($curso['parte'] ?? 1) === ($curso['partes'] ?? 1)
+                ? 'Continúa · lo terminas este mes'
+                : 'Continúa · parte '.($curso['parte'] ?? 1).' de '.($curso['partes'] ?? 1);
         }
 
         $especialidad = trim((string) ($curso['especialidad'] ?? ''));
@@ -51,28 +53,17 @@
     <div class="ruta-final-doc">
         {{-- ========================= hoja 1 · portada ========================= --}}
         <section class="hoja ruta-final-page rf-portada">
-            <div class="rf-barra"></div>
             <div class="rf-portada-cuerpo">
-                <div class="rf-top">
-                    <div class="rf-marca">
-                        <svg class="rf-logo-sys" width="58" height="64" viewBox="0 0 100 110" aria-label="Logo SyS">
-                            <polygon class="rf-logo-hx" points="50,6 91,29.5 91,80.5 50,104 9,80.5 9,29.5"/>
-                            <polyline class="rf-logo-in" points="23,46 23,37 50,21.5 77,37 77,46"/>
-                            <polyline class="rf-logo-in" points="23,64 23,73 50,88.5 77,73 77,64"/>
-                            <text x="50" y="66" text-anchor="middle" font-size="34" transform="rotate(-8 50 58)">SyS</text>
-                        </svg>
-                        <span>Desarrollo<br>Profesional SyS</span>
-                    </div>
-                    <span class="rf-activa">Membresía activa</span>
-                </div>
+                @include('documentos._marca-anual')
 
                 <div class="rf-para">Preparada para</div>
-                <div class="rf-nom">{{ $nombre }}</div>
+                <div class="rf-nom{{ mb_strlen($nombre) > 35 ? ' largo' : '' }}">{{ $nombre }}</div>
                 @if ($ocupacion)
                     <div class="rf-puesto">{{ $ocupacion }}</div>
                 @endif
 
-                <h1>Tu ruta de<br>12 meses</h1>
+                <span class="rf-activa">● Membresía activa</span>
+                <h1>Tu ruta de<br><em>12 meses</em></h1>
                 @if ($bajada)
                     <p class="rf-bajada">{{ $bajada }}</p>
                 @endif
@@ -93,19 +84,42 @@
 
                 <div class="rf-firma-portada">
                     <span>Preparada por {{ $doc['asesor']['nombre'] ?? 'Desarrollo Profesional SyS' }} · {{ $fechaCorta }}</span>
-                    <span>01/{{ $pad($paginas) }}</span>
+                    <span>01 / {{ $pad($paginas) }}</span>
                 </div>
             </div>
+            <aside class="rf-vistazo">
+                <div class="rf-eyebrow">Tu año de un vistazo</div>
+                <h2>12 meses · 4 etapas</h2>
+                <div class="rf-panales">
+                    @foreach ($etapasRuta as $etapa)
+                        <div class="rf-panal-fila">
+                            <div class="rf-panal-etapa"><b>Etapa {{ $etapa['numero'] }}</b><span>Meses {{ $etapa['desde'] }}–{{ $etapa['hasta'] }}</span></div>
+                            <div class="rf-panal-meses">
+                                @foreach ($etapa['meses'] as $mes)
+                                    <div class="rf-hex{{ $mes['numero'] === 1 ? ' primero' : '' }}"><div><b>{{ $mes['numero'] }}</b><span>{{ $mes['etiqueta_corta'] }}</span></div></div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="rf-resumen-etapas">
+                    @foreach ($etapasRuta as $etapa)
+                        <div><b>{{ $etapa['numero'] }}</b><span>{{ $etapa['nombre'] }}</span><strong>{{ $etapa['horas'] }} h<small>{{ $etapa['cursos'] }} cursos</small></strong></div>
+                    @endforeach
+                </div>
+                <img class="rf-marca-agua" src="{{ asset('img/dpsys/logo-blanco.svg') }}" alt="">
+                <div class="rf-vistazo-pie">◆ &nbsp; Mes 1 · empieza aquí</div>
+            </aside>
         </section>
 
-        {{-- ====================== hoja 2 · meses 1–6 ======================= --}}
+        {{-- Mapa mensual: cada hoja conserva su encabezado y su folio. --}}
         @foreach ($hojasMeses as $indiceHoja => $etapasHoja)
         @php
             $mesesHoja = collect($etapasHoja)->flatMap(fn (array $etapa): array => $etapa['meses']);
             $ultimoMapa = $indiceHoja === count($hojasMeses) - 1;
         @endphp
         <section class="hoja ruta-final-page rf-interior rf-mapa-pagina">
-            <div class="enc"><span>DP SyS · Tu ruta de 12 meses</span><span>Meses {{ $mesesHoja->first()['numero'] }}–{{ $mesesHoja->last()['numero'] }}</span></div>
+            @include('documentos._encabezado-anual', ['seccion' => 'Meses '.$mesesHoja->first()['numero'].'–'.$mesesHoja->last()['numero'], 'activos' => $mesesHoja->pluck('numero')->all()])
             <div class="rf-eyebrow">{{ $indiceHoja === 0 ? 'Tu mapa del año' : 'Tu mapa del año · continuación' }}</div>
             <div class="rf-h2">Tu ruta, mes a mes</div>
             @if ($indiceHoja === 0)
@@ -136,7 +150,7 @@
                         @endphp
                         <div class="rf-mes{{ $numeroMes === 1 ? ' inicio' : '' }}{{ $esUltimo ? ' ultimo' : '' }}{{ $libre ? ' libre' : '' }}">
                             <div class="rf-nodo">{{ $numeroMes }}</div>
-                            <div>
+                            <div class="rf-mes-tarjeta">
                                 <div class="rf-mes-cab">
                                     <b>Mes {{ $numeroMes }}{{ ($mes['continuacion'] ?? false) ? ' · continúa' : '' }}</b>
                                     <span class="cal">{{ $mes['etiqueta'] }}</span>
@@ -169,10 +183,14 @@
 
             @if ($ultimoMapa)
             <div class="rf-meta">
-                <i>META</i>
-                <div>
+                <div class="rf-meta-titulo">
+                    <i>META</i>
                     <b>Al terminar tu año</b>
-                    <span>{{ $totales['cursos'] }} cursos · {{ $totales['horas_netas'] }} horas · {{ $totales['cursos'] }} constancias DC-3 ante la STPS</span>
+                </div>
+                <div class="rf-meta-cifras">
+                    <div><strong>{{ $totales['cursos'] }}</strong><span>cursos</span></div>
+                    <div><strong>{{ $totales['horas_netas'] }}</strong><span>horas</span></div>
+                    <div><strong>{{ $totales['cursos'] }}</strong><span>constancias DC-3<br>ante la STPS</span></div>
                 </div>
             </div>
             @if ($copy->body('cierre.ruta-anual'))
@@ -180,14 +198,14 @@
             @endif
 
             @endif
-            <div class="pie"><span>Desarrollo Profesional SyS</span><span>{{ $pad($indiceHoja + 2) }}/{{ $pad($paginas) }}{{ ! $ultimoMapa ? ' · sigue en la hoja '.($indiceHoja + 3) : '' }}</span></div>
+            <div class="pie"><span>Desarrollo Profesional SyS · academy.dpsys.com.mx</span><span>{{ $pad($indiceHoja + 2) }} / {{ $pad($paginas) }}{{ ! $ultimoMapa ? ' · sigue en la hoja '.($indiceHoja + 3) : '' }}</span></div>
         </section>
         @endforeach
 
-        {{-- ======================== hoja 4 · inventario ====================== --}}
+        {{-- Catálogo de la membresía: hojas calculadas según su contenido. --}}
         @foreach ($hojasInventario as $indice => $grupos)
             <section class="hoja ruta-final-page rf-interior rf-inventario-pagina">
-                <div class="enc"><span>DP SyS · Tu ruta de 12 meses</span><span>Tu membresía{{ $indice > 0 ? ' ('.($indice + 1).')' : '' }}</span></div>
+                @include('documentos._encabezado-anual', ['seccion' => 'Tu membresía'.($indice > 0 ? ' ('.($indice + 1).')' : '')])
                 @if ($indice === 0)
                     <div class="rf-eyebrow">Todo lo que tienes abierto</div>
                     <div class="rf-h2">Tu membresía</div>
@@ -196,10 +214,13 @@
                     @endif
                 @endif
 
+                @if ($indice === 0)
+                    <div class="rf-leyenda rf-leyenda-arriba"><span><i class="p"></i>En tu ruta</span><span><i></i>Disponible</span><span>↳ Ya incluido en su curso Completo</span></div>
+                @endif
                 <div class="rf-inv">
                     @foreach ($grupos as $grupo)
                         <div class="rf-inv-grupo">
-                            <h3>{{ $grupo['especialidad'] }}</h3>
+                            <h3><span>{{ $grupo['especialidad'] }}</span><small>{{ $grupo['en_plan'] }} de {{ $grupo['programas'] }} en tu ruta</small></h3>
                             <ul>
                                 @foreach ($grupo['cursos'] as $curso)
                                     @php
@@ -221,21 +242,19 @@
                     @endforeach
                 </div>
 
-                @if ($loop->last)
-                    <div class="rf-leyenda">
-                        <span><i class="p"></i>En tu ruta</span>
-                        <span><i></i>Disponible</span>
-                        <span>↳ Ya incluido en su curso Completo</span>
-                    </div>
-                @endif
+                <div class="rf-leyenda">
+                    <span><i class="p"></i>En tu ruta</span>
+                    <span><i></i>Disponible</span>
+                    <span>↳ Ya incluido en su curso Completo</span>
+                </div>
 
-                <div class="pie"><span>Desarrollo Profesional SyS</span><span>{{ $pad(2 + count($hojasMeses) + $indice) }}/{{ $pad($paginas) }}</span></div>
+                <div class="pie"><span>Desarrollo Profesional SyS · academy.dpsys.com.mx</span><span>{{ $pad(2 + count($hojasMeses) + $indice) }} / {{ $pad($paginas) }}</span></div>
             </section>
         @endforeach
 
-        {{-- ====================== hoja 5 · empieza hoy ======================= --}}
+        {{-- Cierre · empieza hoy --}}
         <section class="hoja ruta-final-page rf-interior rf-cierre">
-            <div class="enc"><span>DP SyS · Tu ruta de 12 meses</span><span>Para empezar</span></div>
+            @include('documentos._encabezado-anual', ['seccion' => 'Para empezar'])
             <div class="rf-eyebrow">Tu primera semana</div>
             <div class="rf-h2">Empieza hoy</div>
             @if ($vigencia)
@@ -261,7 +280,7 @@
             @endif
 
             @if ($copy->body('credencial.dc3'))
-                <div class="rf-dc3"><div class="sello">DC-3</div><p>{{ $copy->body('credencial.dc3') }}</p></div>
+                <div class="rf-dc3"><div class="sello">DC-3<small>STPS</small></div><div><h3>Tu credencial</h3><p>{{ $copy->body('credencial.dc3') }}</p></div></div>
             @endif
 
             @if (! empty($doc['asesor']['whatsapp']) && $copy->body('asesor.contacto-anual'))
@@ -272,14 +291,8 @@
                 </div>
             @endif
 
-            @if (! empty($doc['asesor']))
-                <div class="rf-firma-asesor">
-                    <i>{{ $iniciales }}</i>
-                    <div><b>{{ $doc['asesor']['nombre'] }}</b><span>Desarrollo Profesional SyS</span></div>
-                </div>
-            @endif
-
-            <div class="pie"><span>Desarrollo Profesional SyS</span><span>{{ $pad($paginas) }}/{{ $pad($paginas) }}</span></div>
+            <div class="rf-cierre-marca">@include('documentos._marca-anual')<span>academy.dpsys.com.mx</span></div>
+            <div class="pie"><span>Desarrollo Profesional SyS · academy.dpsys.com.mx</span><span>{{ $pad($paginas) }} / {{ $pad($paginas) }}</span></div>
         </section>
     </div>
 </x-documento>

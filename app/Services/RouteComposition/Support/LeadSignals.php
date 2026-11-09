@@ -6,6 +6,7 @@ namespace App\Services\RouteComposition\Support;
 
 use App\Enums\LeadArea;
 use App\Models\Lead;
+use App\Services\Leads\AreaNormalizer;
 use Illuminate\Support\Str;
 
 /**
@@ -21,14 +22,14 @@ use Illuminate\Support\Str;
  * Tres señales: el área, la industria y si el puesto manda gente.
  *
  * El área es la única que no se infiere —el asesor la elige de una lista de
- * catorce— y por eso manda sobre las otras dos cuando hay que elegir con qué se
+ * categorías del catálogo— y por eso manda sobre las otras dos cuando hay que elegir con qué se
  * acompaña la ruta principal. Las otras dos se leen del texto, que es tanto como
  * se puede inferir sin fabricar precisión: el catálogo tiene un solo arquetipo
  * sembrado.
  *
  * ### El área que no estaba en la lista
  *
- * Cuando el asesor escribe una en «Otra» y no se parece a ninguna de las catorce,
+ * Cuando el asesor escribe una en «Otra» y no se parece a ninguna categoría,
  * el área queda como texto y su preferencia no existe. Antes eso dejaba al motor
  * sin la señal más fuerte que tenía, y un lead de «Control de Gestión» recibía lo
  * mismo que uno sin área capturada. Ahora ese texto se lee junto con la ocupación
@@ -50,7 +51,7 @@ final readonly class LeadSignals
     /**
      * Los temas del catálogo tal como los nombra la gente.
      *
-     * Solo se consulta cuando el área capturada no es una de las catorce. El orden
+     * Solo se consulta cuando el área capturada no está en el catálogo. El orden
      * importa: se recorre de arriba abajo y las primeras coincidencias mandan, así
      * que lo específico va antes que lo general.
      *
@@ -78,17 +79,29 @@ final readonly class LeadSignals
         public string $occupation,
         public string $context,
         public ?LeadArea $area = null,
-        /** El área escrita a mano, cuando no era ninguna de las catorce. */
+        /** El área escrita a mano, cuando no era ninguna de las categorías. */
         public string $areaOther = '',
     ) {}
 
     public static function of(Lead $lead): self
     {
+        $area = $lead->area;
+        $areaOther = (string) ($lead->area_other ?? '');
+
+        // Leads capturados antes del vocabulario limpio pueden traer su área
+        // escrita en `area_other`. Resolverla aquí evita que variantes como
+        // «Área de calidad» reciban recomendaciones genéricas.
+        if ($area === null && $areaOther !== '') {
+            $captured = (new AreaNormalizer)->resolve(null, $areaOther);
+            $area = $captured->area;
+            $areaOther = $captured->other ?? '';
+        }
+
         return new self(
             occupation: (string) ($lead->occupation ?? ''),
             context: (string) ($lead->context ?? ''),
-            area: $lead->area,
-            areaOther: (string) ($lead->area_other ?? ''),
+            area: $area,
+            areaOther: $areaOther,
         );
     }
 
@@ -104,7 +117,7 @@ final readonly class LeadSignals
     /**
      * Las especializaciones que acompañan mejor a su área, en orden de preferencia.
      *
-     * Con una de las catorce, la lista es la que el área declara. Con un área
+     * Con una categoría del catálogo, la lista es la que el área declara. Con un área
      * escrita a mano, se leen los temas que aparezcan en lo que el asesor capturó.
      * Vacío solo cuando no hay ni área ni nada que leer: entonces deciden la
      * industria y el puesto, como antes de que el campo existiera.
@@ -117,7 +130,7 @@ final readonly class LeadSignals
             return $this->area->specializationSlugs();
         }
 
-        return $this->areaOther === '' ? [] : $this->topics();
+        return $this->topics();
     }
 
     /**

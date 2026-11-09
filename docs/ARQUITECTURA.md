@@ -19,7 +19,7 @@ Hoy los asesores de venta graban audios personalizados recomendando cursos. Eso 
 
 - DP SyS vende **una sola cosa**: suscripción anual de acceso completo a 64 cursos organizados en 12 especializaciones.
 - Los leads llegan por WhatsApp desde promociones en redes sociales.
-- Se gestionan en el CRM **Kommo**.
+- Se gestionan en el CRM del sistema anfitrión.
 - El lead suele expresar interés en **una** especialización. El asesor le presenta el paquete completo.
 - Planes publicados: $999 MXN/mes · **$4,199 MXN/año (Expert Anual)** · $5,999 Duo · Business a cotización.
   Estos precios **no se imprimen en el PDF**. Ver sección 4.
@@ -31,9 +31,9 @@ Difieren en momento, canal y contenido. No son variantes del mismo entregable.
 | | **Ruta enfocada** (gancho) | **Ruta anual completa** (cortesía) |
 |---|---|---|
 | Momento | antes de la venta | al cerrar la membresía |
-| Canal | **archivo PDF** que se adjunta en Kommo; el enlace con token queda como respaldo | **archivo PDF** que se descarga y se envía |
+| Canal | **archivo PDF** que se comparte con el lead; el enlace con token queda como respaldo | **archivo PDF** que se descarga y se envía |
 | Trazabilidad | solo si se entrega por el enlace: ahí sí se registra cada apertura | no, ahí termina nuestra visibilidad |
-| Composición | especialización ancla completa + 2 complementarias con 2-3 cursos cada una | recorrido de los 12 meses sobre el catálogo completo |
+| Composición | especialización principal completa + 3 cursos adicionales de refuerzo | recorrido de los 12 meses sobre el catálogo completo |
 | Capas | solo itinerario recomendado | itinerario recomendado **+** inventario de lo que incluye la membresía |
 | Datos del lead | los del formulario | nombre completo, ocupación, inicio y fin de vigencia |
 
@@ -99,10 +99,10 @@ Si el catálogo cambia en tres meses, el PDF enviado a un lead debe seguir siend
 **El render corre en cola.**
 Chromium tarda segundos. El asesor no debe ver una petición colgada.
 
-**Costura preparada para Kommo, sin construirla todavía.**
+**Costura preparada para CRM, sin construirla todavía.**
 - El lead es entidad propia, con campo `external_id` nullable.
 - El formulario acepta parámetros por URL desde el primer día.
-- Interfaz `LeadSource` con dos implementaciones posibles: formulario (se escribe ahora) y Kommo (no se escribe todavía).
+- Interfaz `LeadSource` con dos implementaciones posibles: formulario (se escribe ahora) y el CRM (no se escribe todavía).
 
 ---
 
@@ -159,24 +159,30 @@ El clúster de empleabilidad dentro de Soft Skills es el puente de persuasión m
 - Generación de los dos tipos de documento.
 - Los dos documentos entregados como **archivo PDF**, que se descarga solo al generarse. El enlace con token sigue emitiéndose para la ruta enfocada como respaldo —pesa menos que el archivo en el chat y es lo único que avisa si el lead lo abrió— pero ya no es el canal principal.
 - Bandeja de rutas generadas: para quién, qué documento, quién lo armó y cuándo. Existe para no volver a generar lo que ya se mandó, y administra lo que ya salió: cada renglón se abre, se corrige y se borra. Decidido el 2026-09-17.
-  - **Corregir** vuelve a emitir sobre el mismo renglón —datos del lead o de la membresía, más los cursos recomendados; el embudo y el tipo de documento no— y pisa el snapshot anterior. `learning_routes.revisions` cuenta las veces y la bandeja lo muestra donde antes iba el estado, porque el PDF que el lead tiene en su chat puede no ser el último.
+  - **Corregir** vuelve a emitir sobre el mismo renglón —datos del lead o de la membresía, cursos recomendados y embudo consultado; conserva el tipo de documento— y pisa el snapshot anterior. `learning_routes.revisions` cuenta las veces y la bandeja lo muestra donde antes iba el estado, porque el PDF que el lead tiene en su chat puede no ser el último.
   - **Borrar** es suave. Se va lo que está de cara al lead —el renglón, el enlace y el archivo— y se quedan `route_validations` y `usage_events`, que son la prueba de que las restricciones de la sección 4 se evaluaron antes de mandar algo.
   - **Un renglón por lead**, decidido el 2026-09-23: la ruta inicial y la final van lado a lado, y la final que falta se ve como «pendiente» con el botón que la genera prellenada. Ese botón manda el `lead`, y la final se emite sobre ese mismo lead aunque el gancho no tenga teléfono. Filtros: periodo (hoy, ayer, semana, mes, rango), etapa (esperando final / con membresía), asesor y especialidad. Pagina de 15 en 15.
   - El **estado** no va en la bandeja ni como columna ni como filtro: una ruta se emite y se renderiza en el mismo minuto, así que decía lo mismo en todos los renglones. Sigue en la base —lo usan la cola y el enlace público— y la ficha sí lo dice.
 - **Guión del audio** que acompaña a la ruta inicial, decidido el 2026-09-22. No tiene captura propia: `AudioScript` lo arma con la misma ruta, se congela en `snapshot.guion` y se muestra en la ficha. Su texto vive en `copy_blocks` con alcance `guion_audio` y pasa por el mismo escaneo de fraseo. No se copia ni se pega en ningún lado: se lee en la ficha de cada ruta inicial (2026-09-23).
-  - Desde el 2026-09-23 dura **45 a 60 segundos** y es complemento del PDF, no resumen: conecta con lo que el lead contó, nombra la ruta y su primer curso, **cuenta** los recomendados sin nombrarlos —el PDF los nombra—, dice que esto es apenas el inicio porque con la membresía llega la ruta de los 12 meses, e invita a contestar para platicar certificaciones y facilidades de pago.
-  - **Mensaje escrito** que sustituye al audio cuando el asesor no puede grabar, decidido el 2026-09-23. `WrittenMessage` lo arma con los mismos datos, pero no calca el guión: frases cortas, negritas y emojis de WhatsApp. Se congela en `snapshot.mensaje`, su copy vive con alcance `mensaje_whatsapp` y pasa por el mismo escaneo. En la ficha va en pestañas Audio | Mensaje, y en la bandeja el botón de copiar deja elegir cuál.
+  - Actualizado el 2026-11-08 con el texto autorizado: saludo del asesor, conexión con el perfil, duración y constancias de la ruta, acceso anual al catálogo y respuesta «¡Me gustó!» para conocer las facilidades de pago. El audio mantiene una referencia de **45 a 60 segundos**; las cifras se expresan en palabras.
+  - **Mensaje escrito:** versión breve autorizada del mismo contenido, con cifras y emojis. `WrittenMessage` usa el nombre y los totales del documento; evita afirmar que el lead contó algo cuando no hay contexto y adapta el audio para estudiantes. Las constancias corresponden al conteo de cursos, mientras que la duración sale de las horas netas y del mismo ritmo que el PDF (18 h/semana).
+  - Los textos viven en `copy_blocks` y se congelan al emitir. `RouteCompanions` presenta la versión vigente en las fichas y la bandeja de documentos anteriores usando sus datos congelados, sin modificar el snapshot, su hash ni el archivo PDF histórico.
+
+- **Revisión de la ruta inicial durante la edición (2026-11-08).** Los cambios de cursos, orden y textos se validan por JSON sin guardar ni reemplazar el borrador del asesor. Las horas netas y los programas se recalculan en el servidor con la misma contención de paquetes que el PDF. Las advertencias se muestran por separado y permiten continuar; los bloqueos identifican los cursos involucrados.
+  - La emisión interactiva exige una validación final antes de persistir. Un conflicto devuelve errores al editor y conserva textos, selección y orden. Si se estaba corrigiendo una ruta, también conserva el PDF anterior, el enlace, el snapshot y la revisión. Los servicios que registran intentos rechazados siguen disponibles para otros flujos.
+  - Cada validación nueva conserva mensaje y gravedad en sus detalles. Las fichas anteriores resuelven las advertencias desde el snapshot y las reglas del catálogo, evitando presentar un aviso como razón de rechazo.
+- **Áreas del lead (2026-11-08).** La captura usa categorías funcionales curadas y ordenadas alfabéticamente. Cada categoría declara las especialidades que prioriza; los valores históricos escritos a mano se vuelven a resolver contra ese catálogo al componer, para que las variantes comunes sigan dando recomendaciones específicas sin llenar el selector de cargos y duplicados. Una categoría que se agrega al enum entra automáticamente en el orden.
 - Persistencia de cada ruta generada como snapshot JSONB.
 - Bitácora de uso: generación, rechazo del validador y apertura del enlace por el lead.
 
 ### Fuera
 
-- **Acceso propio.** No hay login ni registro: el módulo se inserta en un sistema que ya tiene el suyo, y una segunda pantalla de acceso le pediría a la misma persona que entre dos veces. La identidad entra por la costura `CurrentAdvisor`, igual que Kommo entra por `LeadSource`: interfaz con dos implementaciones, de las que hoy solo se escribe la de desarrollo. Decidido el 2026-09-12.
+- **Acceso propio.** No hay login ni registro: el módulo se inserta en un sistema que ya tiene el suyo, y una segunda pantalla de acceso le pediría a la misma persona que entre dos veces. La identidad entra por la costura `CurrentAdvisor`, igual que CRM entra por `LeadSource`: interfaz con dos implementaciones, de las que hoy solo se escribe la de desarrollo. Decidido el 2026-09-12.
 - Pantallas de cuenta (perfil, contraseña, 2FA, passkeys). Son del sistema anfitrión. El único dato del asesor que este módulo necesita es su WhatsApp —`users.whatsapp`, al que enlaza el cierre del gancho—; mientras el anfitrión no lo administre, lo siembra `DEVELOPMENT_ADVISOR_WHATSAPP`. Sin número el documento no pinta el botón y el detalle de la ruta lo avisa.
-- Integración con Kommo (la costura sí, la implementación no).
+- Integración con el CRM (la costura sí, la implementación no).
 - Detección automática de arquetipo.
 - Interfaz de administración del catálogo.
-- Anclas de precio en el documento. El importe sí se captura desde el 2026-09-17, pero se queda en `memberships.price` y nunca entra al snapshot ni al PDF.
+- Anclas de precio en el documento. Desde el 2026-11-08 la captura de rutas no pide el importe; los valores históricos se conservan en `memberships.price` y nunca entran al snapshot ni al PDF.
 
 El disparo es **manual, iniciado por el asesor**. La decisión es deliberada: el riesgo de adopción pesa más que la complejidad técnica, y construir con los asesores desde el inicio permite iterar antes de automatizar.
 
@@ -185,6 +191,8 @@ El disparo es **manual, iniciado por el asesor**. La decisión es deliberada: el
 ## 6. Estado de los datos de contenido
 
 ### Resuelto (fuente: https://academy.dpsys.com.mx/cursos, consultado 2026-09-08)
+
+La publicación se volvió a cotejar el **2026-11-09**: conserva los **64 cursos y 12 especialidades**, incluido PPAP. Se corrigieron 41 duraciones y los tres cursos antes sin horas publicadas ya son recomendables. El [cotejo de noviembre](CATALOGO_2026_11_09.md) describe la fuente, la versión y la migración; la transcripción de septiembre se conserva como referencia histórica.
 
 - **Credencial**: constancia **DC-3 oficial ante la STPS** más diploma verificable. Publicado por DP SyS, no inferido.
 - **Modalidad**: cursos **autogestivos**, acceso 24/7 en línea. La ruta anual se redacta como **recomendación flexible de secuencia**, nunca como compromiso de fechas.
@@ -252,7 +260,7 @@ Tipos interpretados: `mutual_exclusion`, `role_restriction`, `distinct_content_c
 **`copy_blocks`** — `id, slug, scope ∈ {portada, intro_especializacion, cierre, frase_puente}, locale, body, claims JSONB, applies_when JSONB, status ∈ {pendiente, borrador, aprobado}`
 **`banned_phrases`** — `id, pattern, scope, reason, suggested_replacement, severity`
 
-Sin tabla `price_anchors` en v1: el PDF no imprime precios. El importe de cada venta se asienta en `memberships.price`, que es otra cosa: un ancla es un precio de lista que el documento exhibe; esto es lo que este miembro pagó, y se queda en su expediente.
+Sin tabla `price_anchors` en v1: el PDF no imprime precios. `memberships.price` conserva los importes históricos en el expediente del miembro; las emisiones nuevas desde el formulario dejan ese campo en `null`.
 
 ### Arquetipos
 
@@ -266,10 +274,10 @@ v1 siembra un solo arquetipo `general` con peso alto sobre `cluster:empleabilida
 
 **`document_types`** — `id, slug, name, delivery ∈ {enlace_rastreado, archivo_descargable}, requires_membership, layers JSONB, composition_policy JSONB, requires_tracking`
 
-**`leads`** — `id, name, phone, email, source ∈ {formulario, kommo}, external_id NULL, requested_specialization_id, archetype_id, advisor_id, status ∈ {prospecto, miembro}, raw_payload JSONB` · `unique(source, external_id)`
+**`leads`** — `id, name, phone, email, source ∈ {formulario, crm}, external_id NULL, requested_specialization_id, archetype_id, advisor_id, status ∈ {prospecto, miembro}, raw_payload JSONB` · `unique(source, external_id)`
 
 **`memberships`** — `id, lead_id, full_name, occupation, plan, plan_other, price, starts_on, ends_on, created_by`
-`plan` guarda un valor del enum `MembershipPlan` —los planes publicados— y `plan_other` lo negociado fuera de esa lista; van separados por la misma razón que `leads.area` y `area_other`. `price` es lo que se cobró, capturado por el asesor el 2026-09-17: **no viaja al snapshot**, porque el snapshot es lo que alimenta al PDF y el documento no imprime precios (§4.5). Es el registro de la venta, no un dato del documento.
+`plan` guarda un valor del enum `MembershipPlan` —los planes publicados— y `plan_other` lo negociado fuera de esa lista; van separados por la misma razón que `leads.area` y `area_other`. `price` conserva el importe histórico de la membresía: desde el 2026-11-08 el formulario no lo solicita y las correcciones conservan el valor existente. **No viaja al snapshot**, porque el snapshot es lo que alimenta al PDF y el documento no imprime precios (§4.5).
 
 **`learning_routes`** — `id, lead_id, membership_id NULL, parent_route_id NULL, document_type_id, advisor_id, anchor_specialization_id, archetype_id, status ∈ {draft, validated, rejected, rendering, rendered, failed}, catalog_version_id, snapshot JSONB, course_count, content_unit_count, revisions, revised_at NULL, access_token NULL, pdf_path, rendered_at, deleted_at NULL`
 `revisions` y `revised_at` son las correcciones: la ruta se rehace sobre su propio renglón y el contador es lo que evita que el snapshot pisado pase inadvertido. `deleted_at` es borrado suave, porque la ruta arrastra la prueba de su validación. `access_token` solo se emite para la ruta enfocada, y una corrección lo conserva: el lead puede tener el enlace desde el primer envío y lo que debe abrir es el documento corregido. `parent_route_id` liga el documento anual al gancho que lo originó, y con los timestamps da la conversión gancho → membresía como consulta, sin evento propio.
@@ -291,12 +299,14 @@ Es lo primero que uno escribe y falla en el caso real: si marcas *Excel Completo
 
 ### Algoritmo de composición
 
-**Ruta enfocada, con embudo** —que es el camino real— **todos** los cursos del embudo forman la ruta principal, en el orden en que Eje Cursos los curó. Son inamovibles: el asesor no puede quitarlos ni reordenarlos, y una petición que llegue recortada se completa antes de emitir. Que el embudo mezcle especialidades no cambia nada: cada una conserva su propio encabezado —lo exige `NO_HEADING_MERGE`— y las tres quedan igual de fijas. Encima, el motor recomienda **dos cursos más** —eran dos o tres hasta el 2026-09-22; bajaron a dos para coincidir con el guión del audio—, elegidos por el área, la industria y el puesto del lead; eso sí lo poda, lo cambia o lo acomoda el asesor, sin pasar de dos. Decidido el 2026-09-17.
+**Ruta enfocada, con embudo** —que es el camino real— **todos** los cursos del embudo forman la ruta principal, en el orden en que Eje Cursos los curó. Son inamovibles: el asesor no puede quitarlos ni reordenarlos, y una petición que llegue recortada se completa antes de emitir. Que el embudo mezcle especialidades no cambia nada: cada una conserva su propio encabezado —lo exige `NO_HEADING_MERGE`— y las tres quedan igual de fijas. Encima, el motor recomienda **tres cursos adicionales de refuerzo**, elegidos por el área, la industria, la ocupación y el objetivo del lead; el asesor puede retirarlos, sustituirlos o reordenarlos, sin pasar de tres. El PDF, el guion y el mensaje escrito usan la misma cantidad. Actualizado el 2026-11-08.
 
-**Ruta enfocada, sin embudo** — la especialización ancla completa, más las dos complementarias de mayor afinidad al arquetipo con sus 2-3 cursos de mayor peso. Resultado esperado: 8 a 14 programas.
+**Ruta enfocada, sin embudo** — la especialización principal completa, más tres cursos de refuerzo seleccionados con el mismo criterio del lead que en el camino con embudo. Cada especialización conserva su propio encabezado.
 
 **Ruta anual** — los 12 meses balanceados por horas, respetando secuencia pedagógica: fundamentos, luego herramientas, certificación al final. El mes 1 arranca con la especialización ancla que el lead pidió, para que sienta continuidad. Debajo, el inventario completo de lo que incluye su membresía.
-Desde el 2026-09-22 la captura pide **las horas por semana** que el lead puede estudiar (`memberships.weekly_hours`, 1 a 40, sin valor por defecto). Con ellas el motor elige qué cursos caben en el año —la ancla primero, luego las especialidades que pide su perfil (industria, área, puesto), después el resto por afinidad— y ningún mes pasa de ese ritmo; si lo elegido sobra, se reparte parejo en los doce. Un curso más largo que un mes abarca varios (`route_items.month_end`) y el PDF lo imprime como «meses 3–5» con «continúa» en los intermedios. El documento imprime el ritmo del lead en lugar de las 15 h de referencia. En la pantalla de los meses el asesor quita, agrega y **ordena** la secuencia; el motor solo decide dónde termina cada mes. Una lista que no cabe en el año la bloquea `ANNUAL_FITS_PACE` (tipo `pace_capacity`, no ignorable).
+Desde el 2026-11-08 el PDF final sigue la referencia `Tu_ano_de_formacion_Rosbel_Salinas_DPSys.pdf`: portada de dos paneles con doce meses y resumen de cuatro etapas, mapa mensual, inventario de membresía en dos columnas y cierre «Empieza hoy». Nombre, ocupación, plan, vigencia, horas semanales, cursos, fechas, cifras y folios se calculan para cada cliente. El número de hojas depende del contenido. Los cursos que cruzan meses se marcan como continuación; sus horas se reparten sin redondeos que alteren el total del año.
+Si el lead tiene una ruta inicial aprobada, el anual prioriza sus cursos concretos y los refuerzos emitidos antes de ampliar el recorrido por perfil. Los niveles de Excel, AutoCAD y SolidWorks se representan mediante su paquete Completo, sin duplicar horas. La propuesta reconoce al lead por identificador, teléfono o identificador externo sin guardar registros. El mismo criterio liga la emisión a su ruta inicial; las rutas rechazadas o borradas no sirven de origen. Si lo recomendado inicialmente excede la disponibilidad anual, la revisión muestra el bloqueo de capacidad para que el asesor ajuste la secuencia explícitamente.
+Desde el 2026-11-08 las nuevas rutas anuales usan un ritmo estándar de **18 horas por semana** (3 horas al día, seis días y uno de descanso). El formulario lo muestra como dato fijo y el servidor rechaza otro valor; el compositor elige los cursos que caben en el año y distribuye sus horas por mes sin rebasar ese ritmo. Si el itinerario requiere menos de la capacidad anual, se reparte parejo entre los doce meses. Los cursos largos pueden abarcar varios meses (`route_items.month_end`) y el PDF los imprime como «meses 3–5» con «continúa» en los intermedios. Los documentos históricos conservan las horas de su snapshot. En la pantalla de los meses el asesor quita, agrega y **ordena** la secuencia; el motor solo decide dónde termina cada mes. Una lista que no cabe en el año la bloquea `ANNUAL_FITS_PACE` (tipo `pace_capacity`, no ignorable).
 
 ---
 

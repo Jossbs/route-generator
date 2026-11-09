@@ -43,7 +43,7 @@ final class AreaNormalizer
 
     /**
      * `$knownOthers` son las áreas nuevas que ya se guardaron. Se piden solo
-     * cuando el texto no es de las catorce, para no consultar la base en cada
+     * cuando el texto no está en el catálogo, para no consultar la base en cada
      * captura.
      *
      * @param  (\Closure(): iterable<string>)|null  $knownOthers
@@ -64,7 +64,7 @@ final class AreaNormalizer
 
         // Sin lista, el texto puede venir por cualquiera de los dos campos: el
         // abierto cuando eligió «Otro», y `area` cuando la captura llegó por URL
-        // desde Kommo, donde nadie garantiza que mande uno de los catorce valores.
+        // desde el CRM, donde nadie garantiza que mande un valor del catálogo.
         $texto = trim((string) ($other ?? ''));
 
         if ($texto === '' && trim((string) $area) !== self::OTRO) {
@@ -113,7 +113,7 @@ final class AreaNormalizer
         return $mejor;
     }
 
-    /** ¿A cuál de las catorce corresponde este texto, si es que a alguna? */
+    /** ¿A cuál categoría del catálogo corresponde este texto, si es que a alguna? */
     public function recognize(string $texto): ?LeadArea
     {
         $clave = $this->key($texto);

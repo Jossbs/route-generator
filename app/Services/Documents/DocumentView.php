@@ -6,7 +6,6 @@ namespace App\Services\Documents;
 
 use App\Models\CopyBlock;
 use App\Models\LearningRoute;
-use App\Services\RouteComposition\Support\StudyPace;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
@@ -100,13 +99,17 @@ final class DocumentView
     /** La frase de ritmo que cierra el itinerario del gancho. */
     private const ALTO_RITMO = 30.0;
 
+    /** Título de grupo, con sus márgenes y separación de la primera especialidad. */
+    private const ALTO_GRUPO_PRINCIPAL = 40.0;
+
+    /** Incluye el contexto del lead, limitado a 240 caracteres en la plantilla. */
+    private const ALTO_GRUPO_REFUERZOS = 110.0;
+
+    /** Separación entre bloques de la lista flexible de la ruta inicial. */
+    private const ESPACIO_BLOQUE = 10.0;
+
     /** Cuántas reseñas lleva la hoja «Quiénes somos». */
     private const RESENAS = 2;
-
-    /** Debajo de esto la duración se dice en semanas: «dos meses» suena a más. */
-    private const SEMANAS_MAXIMAS = 8;
-
-    private const SEMANAS_POR_MES = 4.345;
 
     /**
      * Cuántos programas publica Core Tools: AMEF, PPAP, SPC y Plan de Control.
@@ -134,6 +137,20 @@ final class DocumentView
 
         $agrupados = $this->bySpecialization($itinerario);
 
+        if (! $anual) {
+            $reasons = new RecommendationReason;
+            $hasContext = filled($doc['lead']['contexto'] ?? null);
+            $itinerario = array_map(fn (array $course): array => [
+                ...$course,
+                'motivo_recomendacion' => ($course['rol'] ?? null) === 'complementaria'
+                    ? $reasons->for($course)
+                    : null,
+            ], $itinerario);
+            $principales = array_filter($itinerario, fn (array $c): bool => ($c['rol'] ?? null) !== 'complementaria');
+            $adicionales = array_filter($itinerario, fn (array $c): bool => ($c['rol'] ?? null) === 'complementaria');
+            $agrupados = [...$this->bySpecialization(array_values($principales)), ...$this->bySpecialization(array_values($adicionales))];
+        }
+
         $datos = [
             'doc' => $doc,
             'copy' => $this->copy,
@@ -153,7 +170,7 @@ final class DocumentView
             'vigencia' => $this->term($doc),
             'vigenciaCorta' => $this->shortTerm($doc),
             'ritmo' => $this->pace($doc),
-            'horasSemana' => $this->weeklyHours($doc),
+            'horasSemana' => RouteDuration::weeklyHours($doc),
             'enlaces' => $this->links($doc),
         ];
 
@@ -175,6 +192,9 @@ final class DocumentView
                 'tituloPortada' => $this->coverTitle($doc),
                 'hojasRuta' => $hojasRuta,
                 'confianza' => $this->socialProof($itinerario),
+                'contextoRefuerzos' => $hasContext
+                    ? Str::limit(trim((string) $doc['lead']['contexto']), 240)
+                    : null,
                 // Portada + itinerario + quiénes somos + siguiente paso. El folio
                 // lo necesita para decir «02 / 04»: sin el total, la portada sin
                 // número se leía como una página perdida.
@@ -224,11 +244,11 @@ final class DocumentView
         $pages = [];
         $page = [];
         $used = 0;
-        $limit = 700;
+        $limit = 710;
 
         foreach ($stages as $stage) {
             foreach ($stage['meses'] as $month) {
-                $chunks = array_chunk($month['cursos'], 10) ?: [[]];
+                $chunks = array_chunk($month['cursos'], 9) ?: [[]];
 
                 foreach ($chunks as $part => $courses) {
                     $closing = $month['numero'] === 12 && $part === count($chunks) - 1 ? 140 : 0;
@@ -239,7 +259,7 @@ final class DocumentView
                         $pages[] = $page;
                         $page = [];
                         $used = 0;
-                        $limit = 820;
+                        $limit = 835;
                         $sameStage = false;
                         $height = 106 + max(60, count($courses) * 48) + $closing;
                     }
@@ -400,7 +420,9 @@ final class DocumentView
                     'meses' => $tramo > 1 ? $numero.'–'.$fin : null,
                 ];
 
-                $meses[$mes]['horas'] += (int) round($horas / $tramo);
+                // Reparto entero sin perder ni duplicar horas al cruzar meses.
+                $meses[$mes]['horas'] += intdiv($horas, $tramo)
+                    + ($mes - $numero < $horas % $tramo ? 1 : 0);
             }
         }
 
@@ -441,7 +463,7 @@ final class DocumentView
 
         return $anual
             ? "Tu año de formación · {$nombre}"
-            : "Ruta formativa · {$nombre}";
+            : "Ruta principal personalizada · {$nombre}";
     }
 
     /** @param array<string, mixed> $doc */
@@ -583,7 +605,9 @@ final class DocumentView
 
         return $this->editable->default($slug, [
             'ocupacion' => $ocupacion,
-            'ancla' => $doc['ruta']['especialidad_principal'] ?? null,
+            'ancla' => $anual
+                ? ($this->rows($doc, 'itinerario')[0]['especialidad'] ?? $doc['ruta']['especialidad_principal'] ?? null)
+                : $this->coverTitle($doc),
         ]);
     }
 
@@ -604,13 +628,19 @@ final class DocumentView
     }
 
     /**
-     * El título de la portada inicial: el nombre del embudo que vio el lead, o la
-     * especialidad ancla si la ruta no salió de uno.
+     * El título de la portada inicial: la ruta consultada. Los snapshots antiguos
+     * recurren al nombre del embudo o a la especialización principal.
      *
      * @param  array<string, mixed>  $doc
      */
     private function coverTitle(array $doc): string
     {
+        $nombreRuta = trim((string) ($doc['ruta']['nombre'] ?? ''));
+
+        if ($nombreRuta !== '') {
+            return $nombreRuta;
+        }
+
         $embudo = trim((string) ($doc['embudo']['nombre_publico'] ?? ''));
 
         return $embudo !== '' ? $embudo : ($doc['ruta']['especialidad_principal'] ?? 'Tu ruta formativa');
@@ -628,76 +658,12 @@ final class DocumentView
      */
     private function pace(array $doc): ?string
     {
-        $duracion = $this->duration($doc);
+        $duracion = RouteDuration::for($doc);
 
         return $duracion === null ? null : $this->copy->body('ritmo.estudio', [
-            'horas_semana' => (string) $this->weeklyHours($doc),
+            'horas_semana' => (string) RouteDuration::weeklyHours($doc),
             'duracion' => $duracion,
         ]);
-    }
-
-    /**
-     * El ritmo con el que se estima la duración.
-     *
-     * En el anual es el del miembro: el asesor se lo preguntó y con él se
-     * cortaron los meses, así que el documento dice su número. En el gancho, y en
-     * los anuales emitidos antes de capturarlo, es el de referencia. En ningún
-     * caso es un compromiso: los cursos son autogestivos y el acceso es 24/7; es
-     * la cifra que le falta al lead para aterrizar «96 horas» en algo con lo que
-     * pueda organizarse.
-     *
-     * @param  array<string, mixed>  $doc
-     */
-    private function weeklyHours(array $doc): int
-    {
-        return StudyPace::orDefault(
-            isset($doc['membresia']['weekly_hours']) ? (int) $doc['membresia']['weekly_hours'] : null,
-        )->weeklyHours;
-    }
-
-    /**
-     * La duración de la ruta, dicha como se dice.
-     *
-     * En semanas mientras sean pocas —«seis semanas» compromete menos y suena a
-     * menos que «mes y medio»— y en meses a partir de ahí, redondeado al medio mes
-     * para no fingir una precisión que un ritmo estimado no tiene.
-     *
-     * @param  array<string, mixed>  $doc
-     */
-    private function duration(array $doc): ?string
-    {
-        $horas = (int) ($doc['ruta']['totales']['horas_netas'] ?? 0);
-
-        if ($horas <= 0) {
-            return null;
-        }
-
-        $semanas = (int) ceil($horas / $this->weeklyHours($doc));
-
-        if ($semanas <= 1) {
-            return 'una semana';
-        }
-
-        if ($semanas <= self::SEMANAS_MAXIMAS) {
-            return $semanas.' semanas';
-        }
-
-        $meses = $semanas / self::SEMANAS_POR_MES;
-        $enteros = (int) floor($meses);
-        $resto = $meses - $enteros;
-
-        if ($resto >= 0.75) {
-            $enteros++;
-            $resto = 0.0;
-        }
-
-        $medio = $resto >= 0.25;
-
-        if ($enteros === 1) {
-            return $medio ? 'mes y medio' : 'un mes';
-        }
-
-        return $medio ? $enteros.' meses y medio' : $enteros.' meses';
     }
 
     /**
@@ -918,6 +884,7 @@ final class DocumentView
                 ...$mes,
                 'cursos' => $cursos,
                 'etiqueta' => $this->monthCalendarLabel($numero, $doc),
+                'etiqueta_corta' => preg_replace('/(\d{2})(\d{2})$/', '$2', $this->monthCalendarLabel($numero, $doc)),
                 // Cuatro semanas dan una carga aproximada entendible sin
                 // prometer un calendario rígido para cursos autogestivos.
                 'semanas' => $horas > 0 ? max(1, (int) floor($horas / 4)) : null,
@@ -958,6 +925,12 @@ final class DocumentView
                 'desde' => $desde,
                 'hasta' => $hasta,
                 'meses' => array_slice($meses, $desde - 1, $hasta - $desde + 1),
+                'horas' => array_sum(array_column(array_slice($meses, $desde - 1, $hasta - $desde + 1), 'horas')),
+                // Un curso que continúa se cuenta en la etapa donde empieza.
+                'cursos' => count(array_filter(
+                    array_merge(...array_column(array_slice($meses, $desde - 1, $hasta - $desde + 1), 'cursos')),
+                    static fn (array $curso): bool => ! ($curso['continua'] ?? false),
+                )),
             ];
         }
 
@@ -995,6 +968,8 @@ final class DocumentView
 
         return array_map(fn (array $grupo): array => [
             ...$grupo,
+            'en_plan' => count(array_filter($grupo['cursos'], fn (array $curso): bool => ! ($curso['horas_absorbidas'] ?? false) && isset($enPlan[$curso['slug'] ?? '']))),
+            'programas' => count(array_filter($grupo['cursos'], fn (array $curso): bool => ! ($curso['horas_absorbidas'] ?? false))),
             'cursos' => array_map(
                 fn (array $curso): array => [...$curso, 'en_plan' => isset($enPlan[$curso['slug'] ?? ''])],
                 $grupo['cursos'],
@@ -1050,7 +1025,26 @@ final class DocumentView
             'pieFotos' => $fotos === [] ? null : $this->copy->body('confianza.pie-fotos', [
                 'empresas' => $this->enumerate(array_column($fotos, 'nombre')),
             ]),
-            'resenas' => $resenas,
+            'resenas' => array_map(function (array $resena): array {
+                $frases = preg_split('/(?<=[.!?])\s+/u', $resena['texto']) ?: [$resena['texto']];
+
+                return [...$resena, 'texto' => Str::words($frases[1] ?? $frases[0], 12, '…')];
+            }, $resenas),
+            'avales' => array_map(fn (array $aval): array => [
+                ...$aval,
+                'src' => $this->publicImage('img/dpsys/avales/'.$aval['logo'].'.png'),
+                'url' => 'https://drive.google.com/file/d/'.$aval['documento'].'/view',
+            ], config('dpsys.avales', [])),
+            'cofundadores' => array_map(fn (array $fundador): array => [
+                ...$fundador,
+                'src' => $this->publicImage('img/dpsys/cofundadores/'.$fundador['foto']),
+            ], config('dpsys.cofundadores', [])),
+            'galeria' => array_map(fn (array $foto): array => [
+                ...$foto,
+                'src' => $this->publicImage('img/dpsys/fotos/'.$foto['archivo'].'.jpg'),
+            ], config('dpsys.galeria', [])),
+            'redes' => config('dpsys.redes', []),
+            'fuentes' => config('dpsys.fuentes', []),
         ];
     }
 
@@ -1129,18 +1123,45 @@ final class DocumentView
         $usado = 0.0;
         $tope = $primera;
 
-        foreach ($bloques as $bloque) {
-            $alto = $this->blockHeight($bloque);
+        // Mantiene juntos los tres cursos de refuerzo. El paginador del navegador
+        // ya los trata como un paquete; hacerlo aquí también evita que Chromium
+        // mande el pie de una hoja a otra y deje una página vacía al imprimir por
+        // Gotenberg, que no dispara el evento beforeprint.
+        $paquetes = [];
 
-            if ($actual !== [] && $usado + $alto > $tope) {
+        foreach ($bloques as $bloque) {
+            $refuerzo = ($bloque['rol'] ?? null) === 'complementaria';
+            $ultimo = array_key_last($paquetes);
+
+            if ($refuerzo && $ultimo !== null && $paquetes[$ultimo]['refuerzo']) {
+                $paquetes[$ultimo]['bloques'][] = $bloque;
+                $paquetes[$ultimo]['alto'] += $this->blockHeight($bloque) + self::ESPACIO_BLOQUE;
+            } else {
+                $paquetes[] = [
+                    'refuerzo' => $refuerzo,
+                    'bloques' => [$bloque],
+                    'alto' => $this->blockHeight($bloque) + self::ESPACIO_BLOQUE,
+                ];
+            }
+        }
+
+        foreach ($paquetes as $paquete) {
+            $alto = $paquete['alto'];
+            $encabezado = $paquete['refuerzo'] ? self::ALTO_GRUPO_REFUERZOS : self::ALTO_GRUPO_PRINCIPAL;
+            $cambiaGrupo = $actual === []
+                || (($actual[array_key_last($actual)]['rol'] ?? null) === 'complementaria') !== $paquete['refuerzo'];
+            $altoConGrupo = $alto + ($cambiaGrupo ? $encabezado : 0);
+
+            if ($actual !== [] && $usado + $altoConGrupo > $tope) {
                 $hojas[] = $actual;
                 $actual = [];
                 $usado = 0.0;
                 $tope = $siguientes;
+                $altoConGrupo = $alto + $encabezado;
             }
 
-            $actual[] = $bloque;
-            $usado += $alto;
+            array_push($actual, ...$paquete['bloques']);
+            $usado += $altoConGrupo;
         }
 
         $hojas[] = $actual;
@@ -1163,6 +1184,12 @@ final class DocumentView
             $alto += filled($curso['frase_resultado'] ?? null)
                 ? self::ALTO_CURSO
                 : self::ALTO_CURSO_SIN_FRASE;
+
+            if (filled($curso['motivo_recomendacion'] ?? null)) {
+                // En los refuerzos el motivo sustituye la descripción corta.
+                // Cuenta el marbete, el texto envuelto y el aire de la tarjeta.
+                $alto += 24 + ceil(mb_strlen($curso['motivo_recomendacion']) / 88) * 17;
+            }
 
             if ((int) ($curso['orden'] ?? 0) === 1 && ($curso['capa'] ?? 'itinerario') === 'itinerario') {
                 $alto += self::ALTO_EMPIEZA;
