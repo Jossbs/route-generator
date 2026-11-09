@@ -20,13 +20,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdvisorSeeder::class,
-            CatalogVersionSeeder::class,
-            CatalogSeeder::class,
-            CatalogAnalysisSeeder::class,
-            DocumentTypeSeeder::class,
-            CopySeeder::class,
-            ArchetypeSeeder::class,
-            CatalogRuleSeeder::class,
+            ProductionCatalogSeeder::class,
         ]);
     }
 }

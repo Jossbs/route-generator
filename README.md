@@ -17,6 +17,8 @@ Las decisiones de dominio y de producto están en [docs/ARQUITECTURA.md](docs/AR
 
 La [guía de desarrollo](docs/DESARROLLO.md) describe cómo preparar cambios, verificarlos y subirlos en futuras iteraciones.
 
+La [guía de despliegue](docs/DESPLIEGUE.md) incluye imágenes de producción, Compose separado, HTTPS, integración de identidad, diagnóstico `deploy:check`, respaldos y restauración. El paquete se verifica con `sh tests/Deployment/containers.sh` en un entorno aislado.
+
 ## Desarrollo local
 
 Requisitos: PHP 8.5 con `pdo_pgsql`, Composer 2, Node 24, npm y Docker Compose. PHP 8.5 permite ejecutar las herramientas de desarrollo fijadas en `composer.lock`.
@@ -68,7 +70,7 @@ El timeout de Gotenberg debe ser menor que el del trabajo (60 y 90 segundos por 
 
 ## Integración y publicación
 
-El módulo no incorpora login propio: el sistema anfitrión debe proporcionar la identidad mediante `App\Services\Identity\CurrentAdvisor`. Los endpoints internos conservan `auth` y las políticas. Con `APP_ENV=production`, la identidad sembrada devuelve `null`; sin integración, los endpoints internos responden 503. Esto evita exponer una cuenta administrativa de desarrollo.
+El módulo no incorpora login propio: el sistema anfitrión debe proporcionar la identidad mediante `App\Services\Identity\CurrentAdvisor`, configurable en `CURRENT_ADVISOR_CLASS`. Los endpoints internos conservan `auth` y las políticas. Con `APP_ENV=production`, la identidad sembrada devuelve `null`; sin integración, los endpoints internos responden 503 y `php artisan deploy:check` falla. Esto evita exponer una cuenta administrativa de desarrollo.
 
 Para producción: configura `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL` con HTTPS, credenciales de PostgreSQL y una `APP_KEY` persistente; instala dependencias, ejecuta migraciones, compila assets y supervisa el worker. El document root es `public/`. PostgreSQL y Gotenberg deben quedar accesibles solo para la aplicación; los puertos del Compose incluido están pensados para desarrollo local.
 

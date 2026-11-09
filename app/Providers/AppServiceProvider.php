@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use LogicException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -49,10 +50,19 @@ class AppServiceProvider extends ServiceProvider
 
         // El módulo no autentica: lo inserta un sistema que ya tiene su propio
         // acceso. Mientras ese sistema no exista, el asesor sale de la base.
-        // Enchufar el anfitrión es cambiar esta línea por su implementación.
-        $this->app->bind(CurrentAdvisor::class, fn (): SeededAdvisor => new SeededAdvisor(
-            (string) config('identity.development_advisor'),
-        ));
+        $this->app->bind(CurrentAdvisor::class, function ($app): CurrentAdvisor {
+            $resolver = (string) (config('identity.current_advisor') ?: SeededAdvisor::class);
+
+            if ($resolver === SeededAdvisor::class) {
+                return new SeededAdvisor((string) config('identity.development_advisor'));
+            }
+
+            if (! is_a($resolver, CurrentAdvisor::class, true)) {
+                throw new LogicException('CURRENT_ADVISOR_CLASS debe implementar '.CurrentAdvisor::class.'.');
+            }
+
+            return $app->make($resolver);
+        });
     }
 
     /**

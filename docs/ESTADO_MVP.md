@@ -45,6 +45,15 @@ Tras retirar el módulo de métricas y actualizar la edición de rutas y los doc
 
 Las muestras ficticias de PDF y sus capturas quedan en `/tmp/route-generator-review/` durante esta sesión. Sus bases temporales se eliminaron al terminar; no se ejecutaron estas migraciones sobre los datos de desarrollo.
 
+## Preparación de despliegue del 8 de noviembre de 2026
+
+- Imágenes PHP 8.5/Nginx y Compose de producción separado, con PostgreSQL y Gotenberg privados, worker supervisado y almacenamiento compartido.
+- `composer ci:check`: **545 pruebas aprobadas, 2,577 aserciones**; TypeScript, formato/lint, Pint y PHPStan aprobados.
+- Prueba Docker aislada: migraciones, catálogo sin cuentas de desarrollo, acceso interno cerrado sin anfitrión, diagnóstico, PDF mediante cola real, respaldo y restauración de la ruta y su archivo. Los recursos temporales se eliminaron al terminar.
+- Operación documentada en [DESPLIEGUE.md](DESPLIEGUE.md): instalación, HTTPS, actualización con mantenimiento, respaldo y recuperación. `deploy:check` devuelve un fallo si falta la identidad del anfitrión u otro requisito de producción.
+
+La infraestructura está preparada. El dominio, los secretos persistentes y la integración real de `CurrentAdvisor` deben configurarse antes de habilitar acceso; no se añadió un login propio ni una cuenta genérica de producción.
+
 ## Pendientes que requieren datos o decisiones del negocio
 
 Estos pendientes ya figuran en `docs/ARQUITECTURA.md` y no se resolvieron inventando información:
