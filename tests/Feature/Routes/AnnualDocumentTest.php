@@ -332,8 +332,12 @@ it('imprime los doce meses aunque el asesor haya ajustado la lista', function ()
         ->toContain('Tu ruta, mes a mes')
         ->toContain('Todo lo que tienes abierto');
 
-    preg_match_all('#<div class="rf-mes(?: |")#', $html, $meses);
-    expect($meses[0])->toHaveCount(12);
+    // Un mes denso puede tener una tarjeta adicional de continuación al paginar.
+    // Se comprueban los doce encabezados iniciales, sin contar esa continuación.
+    preg_match_all('#<b>Mes (\d+)</b>#', $html, $meses);
+    $numeros = array_map(intval(...), $meses[1]);
+    sort($numeros);
+    expect($numeros)->toBe(range(1, 12));
 });
 
 /*

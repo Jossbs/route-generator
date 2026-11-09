@@ -139,8 +139,10 @@ it('pinta el itinerario del anual una sola vez', function () {
         ->not->toContain('Tu plan en una página')
         ->not->toContain('class="mes-card"');
 
-    preg_match_all('#<div class="rf-mes(?: |")#', $html, $meses);
-    expect($meses[0])->toHaveCount(12);
+    preg_match_all('#<b>Mes (\d+)</b>#', $html, $meses);
+    $numeros = array_map(intval(...), $meses[1]);
+    sort($numeros);
+    expect($numeros)->toBe(range(1, 12));
 });
 
 it('cuelga cada nivel absorbido de su paquete en el inventario', function () {

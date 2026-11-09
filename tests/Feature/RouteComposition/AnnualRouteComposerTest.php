@@ -60,7 +60,8 @@ it('abre el mes 1 con la especialización que el lead pidió', function (string 
 it('balancea las horas para que ningún mes doble a otro', function () {
     $draft = composeAnual('lean');
 
-    $hours = Course::whereIn('id', $draft->courseIds())->pluck('duration_hours', 'id');
+    $hours = Course::whereIn('id', array_map(fn (RouteItemDraft $item): int => $item->courseId, itinerary($draft)))
+        ->pluck('duration_hours', 'id');
 
     $porMes = array_fill(1, 12, 0);
     foreach (itinerary($draft) as $item) {
