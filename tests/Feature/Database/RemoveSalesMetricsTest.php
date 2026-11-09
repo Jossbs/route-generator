@@ -81,10 +81,11 @@ it('elimina el esquema anterior con sus datos y conserva usuarios y membresías'
     expect($copy->fresh()?->price)->toBe('4299.00');
 });
 
-it('retira las pantallas y los comandos del módulo', function () {
+it('retira las pantallas, comandos y configuración del módulo', function () {
     foreach (['/kpis', '/kpis/eventos', '/kpis/metas', '/kpis/cierres', '/kpis/configuracion', '/kpis/resumen.csv', '/kpis/reporte.pdf'] as $path) {
         $this->get($path)->assertNotFound();
     }
 
-    expect(array_keys(Artisan::all()))->not->toContain('kpis:importar', 'kpis:resumen');
+    expect(array_keys(Artisan::all()))->not->toContain('kpis:importar', 'kpis:resumen')
+        ->and(config('kpis'))->toBeNull();
 });

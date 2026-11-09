@@ -520,16 +520,6 @@ body.marcar [data-copy][data-estado="borrador"]::after{background:var(--ambar); 
 .hoja.anual .h-sec h2{font-family:var(--cond); font-weight:700; text-transform:none;
   font-size:2.3rem; letter-spacing:.005em}
 
-/* ---- anual: las cifras del plan, las únicas del documento ---- */
-.kpis{display:grid; grid-template-columns:repeat(4,1fr); border:1.5px solid var(--vino);
-  margin:12px 0 6mm}
-.kpis div{padding:8px 12px; border-right:1px solid var(--borde-2)}
-.kpis div:last-child{border-right:0}
-.kpis b{display:block; font-family:var(--cond); font-weight:700; font-size:1.7rem; line-height:1.1;
-  color:var(--vino); font-variant-numeric:tabular-nums}
-.kpis span{font-family:var(--cond); font-weight:600; font-size:.8rem; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--gris)}
-
 /* ---- anual: el cronograma ----
    Renglones de alto fijo y nombres en una línea: el corte de hojas en
    DocumentView cuenta renglones, no estima cuántos nombres envuelven. */
@@ -591,9 +581,6 @@ body.marcar [data-copy][data-estado="borrador"]::after{background:var(--ambar); 
   .pa-ficha{grid-template-columns:1fr; margin-top:22px}
   .pa-ficha div:nth-child(odd){border-right:0}
   .pa-ficha div:nth-last-child(2){border-bottom:1px solid var(--borde-2)}
-  .kpis{grid-template-columns:1fr 1fr}
-  .kpis div:nth-child(2){border-right:0}
-  .kpis div:nth-child(-n+2){border-bottom:1px solid var(--borde-2)}
   .crono{overflow-x:auto}
   .cr-fila,.cr-grupo{min-width:620px}
   .cr-nom{width:170px}
