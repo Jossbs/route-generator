@@ -27,7 +27,6 @@ class DatabaseSeeder extends Seeder
             CopySeeder::class,
             ArchetypeSeeder::class,
             CatalogRuleSeeder::class,
-            KpiSeeder::class,
         ]);
     }
 }

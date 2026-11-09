@@ -3,9 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Funnel;
-use App\Models\Membership;
 use App\Models\User;
-use App\Observers\MembershipSalesObserver;
 use App\Policies\FunnelPolicy;
 use App\Services\Documents\DocumentRenderer;
 use App\Services\Documents\GotenbergRenderer;
@@ -83,14 +81,6 @@ class AppServiceProvider extends ServiceProvider
     protected function configureAuthorization(): void
     {
         Gate::policy(Funnel::class, FunnelPolicy::class);
-
-        // Capturar eventos, fijar metas, cerrar meses y configurar KPIs. El
-        // tablero no pasa por aquí: lo ve todo ventas.
-        Gate::define('manage-kpis', fn (User $user): bool => $user->is_kpi_admin);
-
-        // Cada membresía que registra el generador de rutas se sugiere como
-        // venta al módulo de KPIs.
-        Membership::observe(MembershipSalesObserver::class);
     }
 
     /**
