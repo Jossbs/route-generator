@@ -23,7 +23,9 @@ final class WrittenMessage extends RouteScript
     /** Los bloques, en el orden en que se leen, con su nombre para el asesor. */
     private const BLOQUES = [
         'saludo' => 'Saludo',
+        'conexion' => 'Su perfil',
         'ruta' => 'Su ruta',
+        'inicio' => 'Su membresía',
         'pago' => 'Facilidades de pago',
         'cierre' => 'Cierre',
     ];

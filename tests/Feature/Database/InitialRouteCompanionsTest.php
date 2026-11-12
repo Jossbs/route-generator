@@ -17,7 +17,7 @@ it('actualiza instalaciones existentes y retira las variantes anteriores del gui
         'status' => 'aprobado',
     ]);
 
-    $migration = require database_path('migrations/2026_11_08_130000_update_initial_route_companions.php');
+    $migration = require database_path('migrations/2026_11_11_100000_update_initial_route_companions_copy.php');
     $migration->up();
     $migration->up();
 

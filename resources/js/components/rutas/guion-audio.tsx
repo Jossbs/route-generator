@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import type { GuionDeAudio, MensajeEscrito } from '@/types/rutas';
 
 /** Lo que dura un audio que se escucha completo. Ver App\Services\Documents\AudioScript. */
-const SEGUNDOS_MIN = 45;
+const SEGUNDOS_MIN = 40;
 const SEGUNDOS_MAX = 60;
 
 /**
