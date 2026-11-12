@@ -1,5 +1,13 @@
-import { ChevronDown, ChevronUp, Lock, Plus, Undo2, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import {
+    ArrowLeftRight,
+    ChevronDown,
+    ChevronUp,
+    Lock,
+    Plus,
+    Undo2,
+    X,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,12 +29,7 @@ type Props = {
      * principal y todo se ordena, cruzando meses si hace falta.
      */
     orden?: OrdenDeLaRuta;
-    /**
-     * Ya no cabe otro recomendado. En la ruta inicial son tres, los mismos que el
-     * asesor menciona en el audio: para cambiar uno, primero se quita otro. La
-     * ruta final no lo pasa y no tiene tope.
-     */
-    lleno?: boolean;
+    onReemplazar?: (cursoId: number, curso: CursoDelCatalogo) => void;
 };
 
 function horasDe(valor: number | null): string {
@@ -57,7 +60,7 @@ function seccionDe(
     return indice === primeroRecomendado && indice > 0
         ? {
               titulo: 'Lo que le recomiendo',
-              nota: 'Por su área y por lo que te dijo. Aquí sí decides tú: quita, agrega o acomoda.',
+              nota: 'Por su área y por lo que te dijo. Aquí decides tú: agrega, reemplaza, quita y ordena.',
           }
         : null;
 }
@@ -109,31 +112,49 @@ export function BloquesPropuesta({
     onToggle,
     onAgregar,
     orden,
-    lleno = false,
+    onReemplazar,
 }: Props) {
     const [buscando, setBuscando] = useState(false);
     const [busqueda, setBusqueda] = useState('');
+    const [reemplazando, setReemplazando] = useState<{
+        id: number;
+        nombre: string;
+    } | null>(null);
+    const selector = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (buscando)
+            selector.current?.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+    }, [buscando, reemplazando]);
 
     const enLaRuta = useMemo(
-        () => new Set(bloques.flatMap((b) => b.cursos.map((c) => c.id))),
-        [bloques],
+        () =>
+            new Set(
+                bloques
+                    .flatMap((b) => b.cursos.map((c) => c.id))
+                    .filter((id) => !fuera.includes(id)),
+            ),
+        [bloques, fuera],
     );
 
-    const principal = bloques.find((bloque) => bloque.principal);
-
-    // Lo que queda por recomendar: ni lo que ya está en la hoja, ni nada de la
-    // especialidad principal. Esa va completa desde el primer momento, así que
-    // ninguno de sus cursos puede volver a aparecer en otro bloque.
+    const normalizar = (texto: string) =>
+        texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
     const candidatos = catalogo
         .filter((curso) => !enLaRuta.has(curso.id))
-        .filter(
-            (curso) =>
-                !orden || curso.especialidad_id !== principal?.especialidad_id,
-        )
         .filter((curso) =>
-            curso.nombre.toLowerCase().includes(busqueda.trim().toLowerCase()),
-        )
-        .slice(0, 25);
+            normalizar(`${curso.nombre} ${curso.especialidad ?? ''}`).includes(
+                normalizar(busqueda.trim()),
+            ),
+        );
+    const movibles = bloques
+        .flatMap((bloque) => bloque.cursos)
+        .filter((curso) => !curso.fijo && !fuera.includes(curso.id))
+        .map((curso) => curso.id);
 
     const quitados = bloques
         .flatMap((b) => b.cursos)
@@ -154,7 +175,7 @@ export function BloquesPropuesta({
 
                 return (
                     <section
-                        key={`${bloque.mes}:${bloque.principal}:${bloque.especialidad_id}`}
+                        key={`${bloque.mes}:${bloque.principal}:${bloque.especialidad_id}:${bloque.cursos[0]?.id}`}
                         className="space-y-2"
                     >
                         {/* En la ruta inicial, las dos partes del documento. En los
@@ -209,8 +230,14 @@ export function BloquesPropuesta({
                                 </Badge>
                             )}
                             <span className="text-muted-foreground text-xs">
-                                {bloque.cursos_en_la_especialidad} cursos
-                                incluidos en su membresía
+                                {
+                                    catalogo.filter(
+                                        (curso) =>
+                                            curso.especialidad_id ===
+                                            bloque.especialidad_id,
+                                    ).length
+                                }{' '}
+                                cursos incluidos en su membresía
                             </span>
 
                             {orden && !bloque.principal && (
@@ -271,6 +298,7 @@ export function BloquesPropuesta({
                                 // Lo que vino de la campaña no se quita ni se mueve,
                                 // sin importar en qué bloque haya caído.
                                 const fijo = curso.fijo === true;
+                                const posicion = movibles.indexOf(curso.id);
 
                                 return (
                                     <li
@@ -283,7 +311,11 @@ export function BloquesPropuesta({
                                         <span className="flex min-w-0 flex-1 items-center gap-3 max-sm:basis-full">
                                             {orden && (
                                                 <span className="text-muted-foreground w-5 shrink-0 text-right text-xs tabular-nums">
-                                                    {fila + 1}
+                                                    {onReemplazar && !fijo
+                                                        ? posicion < 0
+                                                            ? '—'
+                                                            : posicion + 1
+                                                        : fila + 1}
                                                 </span>
                                             )}
                                             <span
@@ -303,6 +335,26 @@ export function BloquesPropuesta({
                                                 ` · meses ${bloque.mes}–${curso.mes_fin}`}
                                         </span>
 
+                                        {onReemplazar && !fijo && !quitado && (
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                aria-label={`Reemplazar ${curso.nombre}`}
+                                                onClick={() => {
+                                                    setReemplazando({
+                                                        id: curso.id,
+                                                        nombre: curso.nombre,
+                                                    });
+                                                    setBusqueda('');
+                                                    setBuscando(true);
+                                                }}
+                                            >
+                                                <ArrowLeftRight className="size-4" />{' '}
+                                                Reemplazar
+                                            </Button>
+                                        )}
+
                                         {orden && !fijo && (
                                             <>
                                                 <Button
@@ -312,9 +364,10 @@ export function BloquesPropuesta({
                                                     className="size-8"
                                                     disabled={
                                                         orden.ocupado ||
-                                                        (fila === 0 &&
-                                                            (!orden.cruzaBloques ||
-                                                                indice === 0))
+                                                        quitado ||
+                                                        (orden.cruzaBloques
+                                                            ? posicion <= 0
+                                                            : fila === 0)
                                                     }
                                                     aria-label={`Subir ${curso.nombre}`}
                                                     onClick={() =>
@@ -334,14 +387,15 @@ export function BloquesPropuesta({
                                                     className="size-8"
                                                     disabled={
                                                         orden.ocupado ||
-                                                        (fila ===
-                                                            bloque.cursos
-                                                                .length -
-                                                                1 &&
-                                                            (!orden.cruzaBloques ||
-                                                                indice ===
-                                                                    bloques.length -
-                                                                        1))
+                                                        quitado ||
+                                                        (orden.cruzaBloques
+                                                            ? posicion ===
+                                                              movibles.length -
+                                                                  1
+                                                            : fila ===
+                                                              bloque.cursos
+                                                                  .length -
+                                                                  1)
                                                     }
                                                     aria-label={`Bajar ${curso.nombre}`}
                                                     onClick={() =>
@@ -365,15 +419,7 @@ export function BloquesPropuesta({
                                                 variant="ghost"
                                                 size="icon"
                                                 className="size-8"
-                                                disabled={
-                                                    orden?.ocupado ||
-                                                    (quitado && lleno)
-                                                }
-                                                title={
-                                                    quitado && lleno
-                                                        ? 'Ya van los tres recomendados: quita uno para devolver este'
-                                                        : undefined
-                                                }
+                                                disabled={orden?.ocupado}
                                                 aria-label={
                                                     quitado
                                                         ? `Devolver ${curso.nombre}`
@@ -405,17 +451,37 @@ export function BloquesPropuesta({
                 </p>
             )}
 
-            {lleno ? (
-                <p className="text-muted-foreground text-sm">
-                    Ya van los tres recomendados, que son los que le vas a
-                    mencionar en el audio. Para cambiar uno, quítalo primero.
-                </p>
-            ) : buscando ? (
-                <div className="space-y-2 rounded-lg border p-3">
+            {buscando ? (
+                <div ref={selector} className="space-y-2 rounded-lg border p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className="text-sm font-medium">
+                            {reemplazando
+                                ? `Reemplazar «${reemplazando.nombre}»`
+                                : 'Agregar un curso adicional'}
+                        </p>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                                setBuscando(false);
+                                setReemplazando(null);
+                                setBusqueda('');
+                            }}
+                        >
+                            Cancelar
+                        </Button>
+                    </div>
+                    {reemplazando && (
+                        <p className="text-muted-foreground text-xs">
+                            El curso que elijas ocupará el mismo lugar. El
+                            actual se conserva hasta que elijas su reemplazo.
+                        </p>
+                    )}
                     <Input
                         autoFocus
                         aria-label="Buscar un curso del catálogo"
-                        placeholder="Buscar un curso del catálogo"
+                        placeholder="Buscar por curso o especialidad"
                         value={busqueda}
                         onChange={(event) => setBusqueda(event.target.value)}
                     />
@@ -426,7 +492,13 @@ export function BloquesPropuesta({
                                     type="button"
                                     className="hover:bg-accent focus-visible:ring-ring/50 flex w-full items-start gap-2 rounded-md px-2 py-2 text-left text-sm transition-colors outline-none focus-visible:ring-[3px]"
                                     onClick={() => {
-                                        onAgregar(curso);
+                                        if (reemplazando && onReemplazar)
+                                            onReemplazar(
+                                                reemplazando.id,
+                                                curso,
+                                            );
+                                        else onAgregar(curso);
+                                        setReemplazando(null);
                                         setBuscando(false);
                                         setBusqueda('');
                                     }}
@@ -445,13 +517,26 @@ export function BloquesPropuesta({
                             </li>
                         ))}
                     </ul>
+                    {candidatos.length === 0 && (
+                        <p
+                            role="status"
+                            className="text-muted-foreground p-2 text-sm"
+                        >
+                            No hay cursos disponibles con esa búsqueda. Los
+                            cursos que ya están seleccionados no se repiten.
+                        </p>
+                    )}
                 </div>
             ) : (
                 <Button
                     type="button"
                     variant="outline"
                     className="max-sm:w-full"
-                    onClick={() => setBuscando(true)}
+                    onClick={() => {
+                        setReemplazando(null);
+                        setBusqueda('');
+                        setBuscando(true);
+                    }}
                 >
                     <Plus className="size-4" />
                     Agregar otro curso

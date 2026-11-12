@@ -47,17 +47,6 @@ type PageProps = {
 };
 
 /**
- * Cuántos recomienda el motor, y también el techo.
- *
- * Son tres, nunca más: es lo que el asesor puede defender uno por uno en la
- * conversación, y los que el guión del audio le presenta al lead. Ver
- * App\Services\RouteComposition\Support\RecommendedTopUp.
- */
-const MINIMO_RECOMENDADOS = 3;
-
-const MAXIMO_RECOMENDADOS = 3;
-
-/**
  * El paso que convierte al asesor en autor del documento.
  *
  * Nada se ha guardado todavía: lo que se genera al final es lo que quedó en esta
@@ -83,6 +72,7 @@ export default function RutaPropuesta() {
         finales,
         alternar,
         agregar,
+        reemplazar,
         orden,
     } = useRutaEditable(bloques);
     const [generando, setGenerando] = useState(false);
@@ -239,27 +229,11 @@ export default function RutaPropuesta() {
                     </div>
                 </div>
 
-                {/*
-                 * Menos de tres recomendados deja al documento siendo la campaña
-                 * tal cual. No bloquea —el asesor sabe algo que el motor no— pero
-                 * tampoco pasa callado: quitar de más es fácil y nadie lo nota
-                 * hasta que el lead lo abre.
-                 */}
-                {bloqueos.length === 0 &&
-                    recomendados < MINIMO_RECOMENDADOS && (
-                        <div className="bg-muted/60 text-muted-foreground mb-6 flex items-start gap-2 rounded-xl p-4 text-sm">
-                            <Info className="mt-0.5 size-4 shrink-0" />
-                            <span>
-                                {recomendados === 0
-                                    ? 'No queda ningún curso recomendado.'
-                                    : `Quedan ${recomendados} cursos recomendados.`}{' '}
-                                Con menos de {MINIMO_RECOMENDADOS} el documento
-                                es la campaña tal cual, sin nada que demuestre
-                                que miraste su caso: agrega alguno o devuelve
-                                los que quitaste.
-                            </span>
-                        </div>
-                    )}
+                <p className="text-muted-foreground mb-6 text-sm">
+                    Los adicionales son una propuesta inicial. Puedes agregar,
+                    reemplazar, quitar y ordenar los que consideres adecuados,
+                    sin un número obligatorio.
+                </p>
 
                 {bloqueos.length > 0 && (
                     <div
@@ -344,7 +318,7 @@ export default function RutaPropuesta() {
                         onToggle={alternar}
                         onAgregar={agregar}
                         orden={orden}
-                        lleno={recomendados >= MAXIMO_RECOMENDADOS}
+                        onReemplazar={reemplazar}
                     />
 
                     <ParrafosEditables

@@ -202,7 +202,7 @@ it('escanea el mensaje igual que el documento', function () {
     expect(LearningRoute::count())->toBe(0);
 });
 
-it('conserva el límite de recomendados de la ruta inicial', function () {
+it('personaliza el audio con más de tres adicionales elegidos por el asesor', function () {
     Queue::fake();
     $curados = FunnelFactory::available(['lean-manufacturing'], 'lean');
     $extra = Course::query()
@@ -219,9 +219,11 @@ it('conserva el límite de recomendados de la ruta inicial', function () {
             'funnel_id' => $curados->funnel_id,
             'course_ids' => [...$curados->orderedCourseIds(), ...$extra],
         ])
-        ->assertSessionHasErrors('course_ids');
+        ->assertSessionHasNoErrors()->assertRedirect();
 
-    expect(LearningRoute::count())->toBe(0);
+    $route = LearningRoute::sole();
+    expect($route->itineraryCourseIds())->toBe([...$curados->orderedCourseIds(), ...$extra])
+        ->and($route->snapshot['guion']['texto'])->toContain(RouteDuration::number($route->course_count).' constancias DC-3 ante la STPS');
 });
 
 it('muestra el guión en la ficha y deja copiar el mensaje desde la bandeja', function () {

@@ -75,6 +75,7 @@ final class PresetDraftBuilder
         array $justificationsByCourseId = [],
         ?array $curatedCourseIds = null,
         ?RuleWaivers $waivers = null,
+        bool $advisorCanChooseExtras = false,
     ): RouteDraft {
         $courses = $this->courses($courseIds);
         $anchorId = $anchorSpecializationId ?? $courses->first()?->specialization_id;
@@ -97,6 +98,7 @@ final class PresetDraftBuilder
             declaredCourseCount: $totals->courseCount,
             declaredContentUnitCount: $totals->contentUnitCount,
             waivers: $waivers,
+            advisorCanChooseExtras: $advisorCanChooseExtras,
         );
     }
 
@@ -158,7 +160,7 @@ final class PresetDraftBuilder
                 role: $this->role($course, $anchorId, $curados),
                 position: $index + 1,
                 month: $monthsByCourseId[$course->id] ?? null,
-                justification: $justificationsByCourseId[$course->id] ?? $justification,
+                justification: $justificationsByCourseId[$course->id] ?? ($curados !== null && ! isset($curados[$course->id]) ? 'Seleccionado por el asesor.' : $justification),
             ))
             ->all());
     }

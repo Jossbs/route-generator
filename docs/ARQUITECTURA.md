@@ -108,6 +108,9 @@ Chromium tarda segundos. El asesor no debe ver una petición colgada.
 
 ## 4. Restricciones de dominio — críticas
 
+En la revisión de la ruta inicial, el asesor decide la selección y el orden de los cursos adicionales (ajuste del 11 de noviembre de 2026). Las reglas pedagógicas de traslapes y secuencia, y las restricciones de rol o capa que afecten a esos adicionales, se conservan como avisos auditados. Esta excepción se aplica al documento inicial con campaña y adicionales; no modifica la curación de embudos, la ruta anual ni los bloqueos propios de la campaña, de texto, conteo o aislamiento de encabezados. La propuesta automática de tres adicionales es un punto de partida, sin mínimo ni máximo editorial para la selección del asesor.
+
+
 Estas restricciones vienen de auditar el catálogo real. Violarlas produce documentos que **destruyen la credibilidad del asesor frente al lead**. Son bloqueantes, no advertencias.
 
 Cada una corresponde a una fila de `catalog_rules` y a un caso de prueba obligatorio.

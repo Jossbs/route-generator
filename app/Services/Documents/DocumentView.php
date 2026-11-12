@@ -155,7 +155,7 @@ final class DocumentView
             ], $itinerario);
             $principales = array_filter($itinerario, fn (array $c): bool => ($c['rol'] ?? null) !== 'complementaria');
             $adicionales = array_filter($itinerario, fn (array $c): bool => ($c['rol'] ?? null) === 'complementaria');
-            $agrupados = [...$this->bySpecialization(array_values($principales)), ...$this->bySpecialization(array_values($adicionales))];
+            $agrupados = [...$this->bySpecialization(array_values($principales)), ...$this->bySpecialization(array_values($adicionales), consecutivos: true)];
         }
 
         $datos = [
@@ -356,15 +356,24 @@ final class DocumentView
      * @param  list<array<string, mixed>>  $rows
      * @return list<array<string, mixed>>
      */
-    private function bySpecialization(array $rows): array
+    private function bySpecialization(array $rows, bool $consecutivos = false): array
     {
         $bloques = [];
+        $anterior = null;
+        $tramo = 0;
 
         foreach ($rows as $row) {
             $clave = $row['especialidad'] ?? 'Sin especialidad';
+            if ($consecutivos) {
+                if ($anterior !== $clave) {
+                    $tramo++;
+                }
+                $anterior = $clave;
+                $clave = $tramo.':'.$clave;
+            }
 
             $bloques[$clave] ??= [
-                'especialidad' => $clave,
+                'especialidad' => $row['especialidad'] ?? 'Sin especialidad',
                 'rol' => $row['rol'] ?? null,
                 'rol_etiqueta' => $this->roleLabel($row['rol'] ?? null),
                 'cursos' => [],
@@ -1130,22 +1139,39 @@ final class DocumentView
         $usado = 0.0;
         $tope = $primera;
 
-        // Mantiene juntos los tres cursos de refuerzo. El paginador del navegador
-        // ya los trata como un paquete; hacerlo aquí también evita que Chromium
-        // mande el pie de una hoja a otra y deje una página vacía al imprimir por
-        // Gotenberg, que no dispara el evento beforeprint.
+        // Tres tarjetas de refuerzo por hoja mantienen legible el documento.
+        // El asesor puede elegir más: cada continuación conserva su título y orden.
+        $fragmentos = [];
+        foreach ($bloques as $bloque) {
+            if (($bloque['rol'] ?? null) !== 'complementaria') {
+                $fragmentos[] = $bloque;
+
+                continue;
+            }
+            foreach (array_chunk($bloque['cursos'], 3) as $cursos) {
+                $netos = array_filter($cursos, fn (array $curso): bool => ! ($curso['horas_absorbidas'] ?? false));
+                $fragmentos[] = [
+                    ...$bloque, 'cursos' => $cursos,
+                    'programas' => count($netos),
+                    'horas' => array_sum(array_column($netos, 'horas')),
+                ];
+            }
+        }
         $paquetes = [];
 
-        foreach ($bloques as $bloque) {
+        foreach ($fragmentos as $bloque) {
             $refuerzo = ($bloque['rol'] ?? null) === 'complementaria';
             $ultimo = array_key_last($paquetes);
 
-            if ($refuerzo && $ultimo !== null && $paquetes[$ultimo]['refuerzo']) {
+            if ($refuerzo && $ultimo !== null && $paquetes[$ultimo]['refuerzo']
+                && $paquetes[$ultimo]['cursos'] + count($bloque['cursos']) <= 3) {
                 $paquetes[$ultimo]['bloques'][] = $bloque;
+                $paquetes[$ultimo]['cursos'] += count($bloque['cursos']);
                 $paquetes[$ultimo]['alto'] += $this->blockHeight($bloque) + self::ESPACIO_BLOQUE;
             } else {
                 $paquetes[] = [
                     'refuerzo' => $refuerzo,
+                    'cursos' => count($bloque['cursos']),
                     'bloques' => [$bloque],
                     'alto' => $this->blockHeight($bloque) + self::ESPACIO_BLOQUE,
                 ];
@@ -1159,7 +1185,9 @@ final class DocumentView
                 || (($actual[array_key_last($actual)]['rol'] ?? null) === 'complementaria') !== $paquete['refuerzo'];
             $altoConGrupo = $alto + ($cambiaGrupo ? $encabezado : 0);
 
-            if ($actual !== [] && $usado + $altoConGrupo > $tope) {
+            $refuerzosEnHoja = array_sum(array_map(fn (array $bloque): int => ($bloque['rol'] ?? null) === 'complementaria' ? count($bloque['cursos']) : 0, $actual));
+            $continuaRefuerzo = $paquete['refuerzo'] && $refuerzosEnHoja + $paquete['cursos'] > 3;
+            if ($actual !== [] && ($usado + $altoConGrupo > $tope || $continuaRefuerzo)) {
                 $hojas[] = $actual;
                 $actual = [];
                 $usado = 0.0;

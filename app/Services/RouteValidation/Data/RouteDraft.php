@@ -29,6 +29,7 @@ final readonly class RouteDraft
         public ?int $declaredCourseCount = null,
         public ?int $declaredContentUnitCount = null,
         public ?RuleWaivers $waivers = null,
+        public bool $advisorCanChooseExtras = false,
     ) {}
 
     /**

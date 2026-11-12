@@ -65,6 +65,7 @@
             "npm run check",
             "npm run types:check",
             "npm run test:reading",
+            "npm run test:recommendations",
             "@test"
         ],
         "types:check": [

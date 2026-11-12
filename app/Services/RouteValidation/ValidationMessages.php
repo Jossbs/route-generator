@@ -15,6 +15,10 @@ final class ValidationMessages
 {
     public function message(RuleEvaluation $evaluation): string
     {
+        if ($evaluation->details['advisor_recommendation'] ?? false) {
+            return $evaluation->message ?? 'Revisa los adicionales según el objetivo del lead; puedes continuar.';
+        }
+
         if ($evaluation->ruleCode === 'LEADERSHIP_OVERLAP') {
             $names = array_values(array_unique(array_filter(array_column($evaluation->details['conflicting'] ?? [], 'course'), 'is_string')));
 

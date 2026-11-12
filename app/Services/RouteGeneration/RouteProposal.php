@@ -119,6 +119,7 @@ final class RouteProposal
                 justificationsByCourseId: $sumados,
                 curatedCourseIds: $curados,
                 waivers: $funnelRoute->ruleWaivers(),
+                advisorCanChooseExtras: $esGancho,
             );
 
         $report = $this->generator->review($draft, $documentType, $copyOverrides);
@@ -278,6 +279,8 @@ final class RouteProposal
     {
         $bloques = [];
         $enLaEspecialidad = [];
+        $especialidadAnterior = null;
+        $tramo = 0;
 
         foreach ($items as $item) {
             $course = $courses->get($item->courseId);
@@ -291,6 +294,13 @@ final class RouteProposal
             // leen distinto. La especialidad conserva su título en las dos.
             $fijo = $esGancho && $item->role !== RouteItemRole::Complementaria;
             $clave = $item->month.':'.($fijo ? 'p' : 'r').':'.$item->specializationId;
+            if ($esGancho && ! $fijo) {
+                if ($especialidadAnterior !== $item->specializationId) {
+                    $tramo++;
+                }
+                $especialidadAnterior = $item->specializationId;
+                $clave .= ':'.$tramo;
+            }
 
             $bloques[$clave] ??= [
                 'especialidad_id' => $item->specializationId,

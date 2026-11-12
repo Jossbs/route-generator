@@ -20,7 +20,7 @@ use App\Services\RouteComposition\Data\CompositionPolicy;
  * que son la muestra de lo que el lead no sabía que venía dentro de su membresía.
  *
  * Se proponen tres cursos de refuerzo según la ocupación y el objetivo del lead.
- * El asesor puede sustituirlos o retirarlos durante la revisión.
+ * El asesor puede sustituirlos, retirarlos o agregar más durante la revisión.
  *
  * Los del embudo no cuentan aquí aunque sean de otra especialidad. Antes sí
  * contaban, y un embudo con seis cursos de tres ramas salía sin una sola
@@ -29,7 +29,7 @@ use App\Services\RouteComposition\Data\CompositionPolicy;
  */
 final class RecommendedTopUp
 {
-    /** Cuántos propone el motor, y el techo de lo que el asesor puede dejar. */
+    /** Cuántos propone el motor; no limita la selección del asesor. */
     public const OBJETIVO = 3;
 
     /** Menos de esto no es una sección, es un renglón suelto. */

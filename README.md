@@ -70,6 +70,14 @@ La migración `2026_11_08_100000_remove_sales_metrics_module` elimina las tablas
 
 El timeout de Gotenberg debe ser menor que el del trabajo (60 y 90 segundos por defecto). `DB_QUEUE_RETRY_AFTER` debe superar el timeout del trabajo (120 segundos por defecto). Tras desplegar cambios, reinicia los workers con `php artisan queue:restart`.
 
+## Edición de adicionales
+
+La propuesta inicial conserva completa la campaña y sugiere tres adicionales como punto de partida. El asesor puede dejar más, menos o ninguno, agregar cualquier curso disponible que no esté seleccionado —incluidos otros de la especialidad principal— y usar **Reemplazar** para sustituir un adicional sin perder su posición. Las flechas ordenan los adicionales entre especialidades. La secuencia elegida se conserva al generar, corregir, reabrir y mostrar el documento; una especialidad puede reaparecer bajo su propio título cuando el asesor intercala sus cursos.
+
+En esta revisión, los traslapes, niveles, prerrequisitos y restricciones de presentación que involucran adicionales se muestran como avisos con los cursos afectados. El asesor decide si continúa, y esa decisión queda registrada en la validación. Los conflictos propios de la campaña, la integridad de los conteos y las restricciones del texto siguen bloqueando. El editor y validador de embudos y la ruta anual conservan sus reglas. El audio se calcula con los cursos y horas del documento final.
+
+Las pruebas del borrador se ejecutan con `npm run test:recommendations` y forman parte de `composer ci:check`.
+
 ## Seguimiento del enlace
 
 En la ficha de cada ruta inicial, comparte **Enlace con seguimiento** o su mensaje para WhatsApp. El botón de vista previa abre la versión interna sin registrar una visita del lead. El panel **Seguimiento del enlace** muestra visitas con actividad, avance máximo, sección más lejana, tiempo activo por sección, última actividad y clics en membresía, conversación y respaldos. **Actualizar** consulta los datos más recientes; los navegadores envían los acumulados cada diez segundos y al ocultar o cerrar la pestaña. Las sugerencias de seguimiento son reglas locales, sin servicios de IA ni analítica de pago.

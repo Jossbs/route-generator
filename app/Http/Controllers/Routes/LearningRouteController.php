@@ -186,6 +186,7 @@ class LearningRouteController extends Controller
                 $capture,
                 $request->user(),
                 DocumentType::query()->where('slug', DocumentTypeSeeder::ENFOCADA)->sole(),
+                $this->courseIds($request),
             );
         } catch (CompositionException $e) {
             throw ValidationException::withMessages(['funnel_id' => $e->getMessage()]);

@@ -70,19 +70,24 @@
         let page = newPage();
         const height = 279.3 * 96 / 25.4;
         const packets = [];
+        let extraCourses = 0;
         for (const block of blocks) {
-            if (block.dataset.rutaTipo === 'refuerzo' && packets.at(-1)?.[0].dataset.rutaTipo === 'refuerzo') {
+            const count = block.querySelectorAll('.curso').length;
+            if (block.dataset.rutaTipo === 'refuerzo' && packets.at(-1)?.[0].dataset.rutaTipo === 'refuerzo' && extraCourses + count <= 3) {
                 packets.at(-1).push(block);
             } else {
                 packets.push([block]);
+                extraCourses = 0;
             }
+            if (block.dataset.rutaTipo === 'refuerzo') extraCourses += count;
         }
         for (const packet of packets) {
             const previousCount = page.querySelectorAll('.bloque').length;
             const list = page.querySelector('.ruta-lista');
             const previousChildren = [...list.children];
             packet.forEach(block => append(page, block.cloneNode(true)));
-            if (previousCount && page.getBoundingClientRect().height > height + 0.25) {
+            const extraCount = page.querySelectorAll('.bloque[data-ruta-tipo="refuerzo"] .curso').length;
+            if (previousCount && (page.getBoundingClientRect().height > height + 0.25 || extraCount > 3)) {
                 list.replaceChildren(...previousChildren);
                 page = newPage();
                 packet.forEach(block => append(page, block.cloneNode(true)));

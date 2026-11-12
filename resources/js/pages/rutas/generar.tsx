@@ -564,10 +564,10 @@ export default function GenerarRuta({
                                             {elegido
                                                 ? esFinal
                                                     ? `${elegido.especialidad ?? 'Su rama'} abre el mes 1, para que sienta continuidad.`
-                                                    : `Sus ${elegido.cursos} cursos van completos y sin moverse. Encima te propongo 2 más —los que le vas a mencionar en el audio— y esos sí los ajustas en el siguiente paso.`
+                                                    : `Sus ${elegido.cursos} cursos van completos y sin moverse. Encima te propongo adicionales como punto de partida. En el siguiente paso puedes agregar, reemplazar, quitar y ordenar los que consideres adecuados.`
                                                 : esFinal
                                                   ? 'Abre el mes 1, para que sienta continuidad.'
-                                                  : 'Sus cursos van completos y sin moverse. Encima te propongo 2 más —los que le vas a mencionar en el audio— y esos sí los ajustas en el siguiente paso.'}
+                                                  : 'Sus cursos van completos y sin moverse. Encima te propongo adicionales como punto de partida. En el siguiente paso puedes agregar, reemplazar, quitar y ordenar los que consideres adecuados.'}
                                         </p>
                                         <InputError
                                             message={errors.funnel_id}

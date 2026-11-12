@@ -290,14 +290,11 @@ it('no corrige un documento con el formulario del otro', function () {
     expect($ruta->refresh()->revisions)->toBe(0);
 });
 
-it('conserva el documento anterior si una corrección tiene conflictos', function () {
+it('acepta los adicionales elegidos al corregir aunque tengan traslapes', function () {
     $ruta = rutaParaCorregir();
     $snapshot = $ruta->snapshot;
-    $estado = $ruta->status;
+    $token = $ruta->access_token;
 
-    // Los tres cursos de liderazgo se traslapan: recomendar dos juntos ya es lo
-    // que LEADERSHIP_OVERLAP impide, y una ruta detenida no llega al PDF. Van dos
-    // y no tres porque ese es el techo de recomendados desde el 2026-09-22.
     $liderazgo = Course::query()
         ->whereIn('slug', [
             'liderazgo-para-ingenieros',
@@ -312,13 +309,14 @@ it('conserva el documento anterior si una corrección tiene conflictos', functio
     $this->actingAs(FunnelFactory::author())
         ->put("/rutas/{$ruta->id}", capturaAdmin([
             'course_ids' => [...$ruta->funnelRoute->orderedCourseIds(), ...array_slice($liderazgo, 0, 2)],
-        ]))->assertSessionHasErrors('course_ids');
+        ]))->assertSessionHasNoErrors()->assertRedirect();
 
     $ruta->refresh();
 
-    expect($ruta->status)->toBe($estado)
-        ->and($ruta->snapshot)->toEqual($snapshot)
-        ->and($ruta->revisions)->toBe(0);
+    expect($ruta->snapshot)->not->toEqual($snapshot)
+        ->and($ruta->access_token)->toBe($token)
+        ->and($ruta->itineraryCourseIds())->toBe([...$ruta->funnelRoute->orderedCourseIds(), ...array_slice($liderazgo, 0, 2)])
+        ->and($ruta->revisions)->toBe(1);
 });
 
 it('borra la ruta de la bandeja y del disco, y deja el expediente', function () {

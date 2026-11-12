@@ -21,6 +21,7 @@ use App\Services\RouteGeneration\Exceptions\RouteRejected;
 use App\Services\RouteValidation\Data\RouteDraft;
 use App\Services\RouteValidation\Data\ValidationReport;
 use App\Services\RouteValidation\RouteValidator;
+use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -158,6 +159,7 @@ final class RouteGenerator
             justificationsByCourseId: $input->justificationsByCourseId,
             curatedCourseIds: $input->funnelRoute?->orderedCourseIds(),
             waivers: $input->funnelRoute?->ruleWaivers(),
+            advisorCanChooseExtras: $input->funnelRoute !== null && $input->documentType->slug === DocumentTypeSeeder::ENFOCADA,
         ), $input->documentType, $input->copyOverrides);
     }
 
@@ -196,6 +198,7 @@ final class RouteGenerator
             declaredCourseCount: $draft->declaredCourseCount,
             declaredContentUnitCount: $draft->declaredContentUnitCount,
             waivers: $draft->waivers,
+            advisorCanChooseExtras: $draft->advisorCanChooseExtras,
         );
     }
 

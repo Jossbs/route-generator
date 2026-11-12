@@ -9,7 +9,8 @@
         "check": "vp check",
         "check:fix": "vp check --fix",
         "types:check": "tsc --noEmit",
-        "test:reading": "node tests/Frontend/document-reading.test.mjs"
+        "test:reading": "node tests/Frontend/document-reading.test.mjs",
+        "test:recommendations": "node tests/Frontend/ruta-editable.test.mjs"
     },
     "dependencies": {
         "@inertiajs/react": "^3.0.0",

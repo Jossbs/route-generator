@@ -6,13 +6,10 @@ namespace App\Http\Requests\Routes;
 
 use App\Http\Requests\Routes\Concerns\NormalizesLeadCapture;
 use App\Http\Requests\Routes\Concerns\ValidatesCopyAdjustments;
-use App\Models\Funnel;
 use App\Services\Leads\AreaNormalizer;
-use App\Services\RouteComposition\Support\RecommendedTopUp;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 /**
  * La captura de la ruta inicial.
@@ -66,41 +63,6 @@ class StoreLearningRouteRequest extends FormRequest
             'course_ids.*' => ['integer', 'exists:courses,id'],
             // Los párrafos que ajustó a mano en la revisión.
             ...$this->copyAdjustmentRules(DocumentTypeSeeder::ENFOCADA),
-        ];
-    }
-
-    /**
-     * El techo de recomendados también se cuida aquí, no solo en la pantalla.
-     *
-     * Son tres porque el guión del audio le presenta al lead «tres cursos más»: un
-     * cuarto en el PDF sería un curso que el asesor no mencionó. Lo del embudo
-     * no cuenta, va completo siempre.
-     *
-     * @return list<callable(Validator): void>
-     */
-    public function after(): array
-    {
-        return [
-            function (Validator $validator): void {
-                $ids = $this->input('course_ids');
-
-                if (! is_array($ids) || $validator->errors()->isNotEmpty()) {
-                    return;
-                }
-
-                $curados = Funnel::query()->find($this->integer('funnel_id'))
-                    ?->primaryRoute()->with('items')->first()
-                    ?->orderedCourseIds() ?? [];
-
-                $extra = array_diff(array_map(intval(...), $ids), $curados);
-
-                if (count(array_unique($extra)) > RecommendedTopUp::OBJETIVO) {
-                    $validator->errors()->add(
-                        'course_ids',
-                        'Son tres cursos recomendados como máximo: los mismos que le mencionas en el audio.',
-                    );
-                }
-            },
         ];
     }
 

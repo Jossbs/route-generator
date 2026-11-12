@@ -24,7 +24,10 @@ use Illuminate\Support\Collection;
  */
 final class RouteValidator
 {
-    public function __construct(private readonly RuleInterpreterRegistry $registry) {}
+    public function __construct(
+        private readonly RuleInterpreterRegistry $registry,
+        private readonly AdvisorRecommendationPolicy $recommendations,
+    ) {}
 
     public function validate(RouteDraft $draft): ValidationReport
     {
@@ -35,6 +38,7 @@ final class RouteValidator
                 ->get($rule->code, $rule->type)
                 ->evaluate($rule, $context))
             ->map(fn (RuleEvaluation $e): RuleEvaluation => $draft->waivers?->covers($e) === true ? $e->waive() : $e)
+            ->map(fn (RuleEvaluation $e): RuleEvaluation => $this->recommendations->apply($draft, $e))
             ->all());
 
         return new ValidationReport($evaluations);

@@ -15,21 +15,25 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia;
 use Tests\Support\FunnelFactory;
 
-function editableInitialCapture(): array
+function editableInitialCapture(bool $conflictoEnCampana = false): array
 {
-    $funnel = FunnelFactory::available(['siete-herramientas-de-la-calidad', 'liderazgo-para-ingenieros'], 'calidad');
+    $curados = ['siete-herramientas-de-la-calidad', 'liderazgo-para-ingenieros'];
+    if ($conflictoEnCampana) {
+        $curados[] = 'liderazgo-para-lideres-y-supervisores';
+    }
+    $funnel = FunnelFactory::available($curados, 'calidad');
 
     return [
         'name' => 'Mariana Benavides',
         'occupation' => 'Ingeniera de calidad',
         'area' => 'calidad',
         'funnel_id' => $funnel->funnel_id,
-        'course_ids' => [
+        'course_ids' => array_values(array_unique([
             ...$funnel->orderedCourseIds(),
             courseId('green-belt-six-sigma'),
             courseId('yellow-belt-six-sigma'),
             courseId('liderazgo-para-lideres-y-supervisores'),
-        ],
+        ])),
         'ajustes' => ['objetivo.ruta-enfocada' => 'Una ruta para mejorar mis procesos y fortalecer mi desarrollo profesional.'],
     ];
 }
@@ -39,12 +43,13 @@ it('revisa los cursos editados sin guardar y distingue conflictos de advertencia
 
     $this->actingAs(FunnelFactory::author())->postJson('/rutas/validacion', $capture)
         ->assertOk()
-        ->assertJsonCount(1, 'bloqueos')
-        ->assertJsonPath('bloqueos.0.codigo', 'LEADERSHIP_OVERLAP')
-        ->assertJsonPath('advertencias.0.codigo', 'PREREQUISITE_SUGGESTED')
+        ->assertJsonPath('bloqueos', [])
+        ->assertJsonCount(2, 'advertencias')
+        ->assertJsonPath('advertencias.0.codigo', 'LEADERSHIP_OVERLAP')
+        ->assertJsonPath('advertencias.1.codigo', 'PREREQUISITE_SUGGESTED')
         ->assertJsonPath('totales.cursos', 5)
         ->assertJsonPath('totales.horas_netas', 91)
-        ->assertJsonPath('bloqueos.0.mensaje', fn (string $message): bool => str_contains($message, 'Liderazgo para Ingenieros') && str_contains($message, 'Liderazgo para Líderes y Supervisores'));
+        ->assertJsonPath('advertencias.0.mensaje', fn (string $message): bool => str_contains($message, 'Liderazgo para Ingenieros') && str_contains($message, 'Liderazgo para Líderes y Supervisores'));
 
     expect(Lead::count())->toBe(0)->and(LearningRoute::count())->toBe(0);
 });
@@ -83,7 +88,7 @@ it('recalcula horas netas y programas sin contar dos veces un curso completo', f
 
 it('vuelve a validar al generar e impide guardar un borrador conflictivo', function () {
     Queue::fake();
-    $capture = editableInitialCapture();
+    $capture = editableInitialCapture(true);
 
     $this->actingAs(FunnelFactory::author())->postJson('/rutas', $capture)
         ->assertUnprocessable()->assertJsonValidationErrors('course_ids');
@@ -104,6 +109,8 @@ it('conserva el PDF, los datos y el enlace cuando se rechaza una corrección', f
     $route->update(['status' => RouteStatus::Rendered, 'pdf_path' => 'documentos/original.pdf']);
     Storage::disk('local')->put($route->pdf_path, '%PDF-original');
     $original = $route->getAttributes();
+    // Un conflicto de la campaña sigue bloqueando; no se atribuye al asesor.
+    $route->funnelRoute->items()->create(['course_id' => courseId('liderazgo-para-lideres-y-supervisores'), 'position' => 3]);
     Queue::fake();
 
     $this->putJson('/rutas/'.$route->id, [...$capture, 'name' => 'Nombre que no debe guardarse'])
@@ -129,7 +136,7 @@ it('revisa también los textos y deja corregirlos en el mismo borrador', functio
 });
 
 it('explica los rechazos anteriores sin confundir advertencias con bloqueos', function () {
-    $capture = editableInitialCapture();
+    $capture = editableInitialCapture(true);
     $advisor = FunnelFactory::author();
     $route = app(RouteIssuer::class)->issueFocused(LeadCapture::fromArray($capture), $advisor, $capture['course_ids'])->route;
 
@@ -148,7 +155,7 @@ it('explica los rechazos anteriores sin confundir advertencias con bloqueos', fu
 });
 
 it('conserva la gravedad registrada aunque cambie el catálogo después', function () {
-    $capture = editableInitialCapture();
+    $capture = editableInitialCapture(true);
     $advisor = FunnelFactory::author();
     $route = app(RouteIssuer::class)->issueFocused(LeadCapture::fromArray($capture), $advisor, $capture['course_ids'])->route;
     CatalogRule::where('code', 'LEADERSHIP_OVERLAP')->update(['severity' => 'warning']);
