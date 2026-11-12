@@ -134,8 +134,7 @@ class AnnualRouteController extends Controller
             RenderRouteDocument::dispatch($result->route->id, $result->route->snapshot_hash, $result->route->revisions);
         }
 
-        // Igual que el gancho: el archivo baja solo en cuanto la cola lo termina.
-        return to_route('routes.show', $result->route)->with('descargar', true);
+        return to_route('routes.show', $result->route);
     }
 
     /**
@@ -174,7 +173,7 @@ class AnnualRouteController extends Controller
             RenderRouteDocument::dispatch($result->route->id, $result->route->snapshot_hash, $result->route->revisions);
         }
 
-        return to_route('routes.show', $result->route)->with('descargar', true);
+        return to_route('routes.show', $result->route);
     }
 
     /**

@@ -10,7 +10,7 @@ import {
     RefreshCw,
     ShieldX,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Heading from '@/components/heading';
 import { GuionAudio } from '@/components/rutas/guion-audio';
 import {
@@ -61,7 +61,6 @@ type PageProps = {
     sinWhatsApp: boolean;
     documentoUrl: string;
     pdf: PdfDeRuta;
-    autoDescarga: boolean;
     puedeEmitirAnual: boolean;
     anualEmitido: number | null;
 };
@@ -97,7 +96,6 @@ export default function RutaDetalle() {
         sinWhatsApp,
         documentoUrl,
         pdf,
-        autoDescarga,
         puedeEmitirAnual,
         anualEmitido,
     } = usePage<PageProps>().props;
@@ -106,11 +104,6 @@ export default function RutaDetalle() {
     const [, copiarTexto] = useClipboard();
     const [reintentando, setReintentando] = useState(false);
 
-    // Recién generada: el asesor viene de decir «generar», así que el archivo baja
-    // solo. Se recuerda al montar porque el aviso de sesión se pierde en el primer
-    // refresco, y lo que decide no es el estado de ahora sino de dónde se llegó.
-    const reciente = useRef(autoDescarga);
-    const yaBajo = useRef(false);
     const [intentos, setIntentos] = useState(0);
 
     const rechazada = ruta.estado === 'rejected';
@@ -128,8 +121,6 @@ export default function RutaDetalle() {
 
     const reintentar = () => {
         setIntentos(0);
-        yaBajo.current = false;
-        reciente.current = true;
         router.post(
             documentoPdf(ruta.id).url,
             {},
@@ -165,16 +156,6 @@ export default function RutaDetalle() {
 
         return () => window.clearTimeout(reloj);
     }, [armando, intentos]);
-
-    useEffect(() => {
-        if (pdf.listo && reciente.current && !yaBajo.current) {
-            yaBajo.current = true;
-            descargar();
-        }
-        // `descargar` solo lee refs y props ya capturados: volver a correr esto
-        // cuando cambia la identidad de la función descargaría dos veces.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [pdf.listo]);
 
     return (
         <AppLayout>
@@ -414,8 +395,8 @@ export default function RutaDetalle() {
 
                         {armando && intentos < INTENTOS && (
                             <p className="text-muted-foreground text-sm">
-                                Tarda unos segundos. En cuanto esté, se descarga
-                                solo.
+                                Tarda unos segundos. En cuanto esté listo,
+                                podrás descargarlo con el botón.
                             </p>
                         )}
 

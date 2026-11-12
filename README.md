@@ -62,7 +62,7 @@ Para dos suites simultáneas, crea otra base y usa `DB_DATABASE=route_generator_
 
 ## Operación del MVP
 
-Una emisión aprobada queda `validated`, se encola y pasa a `rendered` al guardar el archivo. Hay tres intentos, con esperas de 5 y 15 segundos. Si todos fallan, la ficha permite reintentar o abrir la vista imprimible. El enlace público de una ruta inicial validada sigue disponible cuando falla la conversión del PDF.
+Una emisión aprobada queda `validated`, se encola y pasa a `rendered` al guardar el archivo. Generar, corregir o reintentar prepara el PDF sin descargarlo automáticamente; el asesor lo obtiene desde **Descargar el PDF** en la ficha. Hay tres intentos, con esperas de 5 y 15 segundos. Si todos fallan, la ficha permite reintentar o abrir la vista imprimible. El enlace público de una ruta inicial validada sigue disponible cuando falla la conversión del PDF.
 
 Los trabajos llevan hash y revisión; un trabajo antiguo no modifica una corrección posterior. El bloqueo de la fila serializa renders, correcciones y borrados. Una ruta rechazada no se imprime ni se descarga. Los archivos viven en un disco privado y el borrado conserva la auditoría mediante soft delete.
 

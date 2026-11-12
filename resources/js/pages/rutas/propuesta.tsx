@@ -350,8 +350,8 @@ export default function RutaPropuesta() {
                             : !puedeGenerar
                               ? 'Revisa los avisos antes de generar.'
                               : editando
-                                ? 'El PDF anterior se reemplaza y el nuevo se descarga solo.'
-                                : 'Se descarga solo en cuanto esté, listo para compartirlo con el lead.'}
+                                ? 'El PDF anterior se reemplaza y queda disponible para descargarlo.'
+                                : 'La ruta queda guardada. Puedes compartir el enlace o descargar el PDF desde su ficha.'}
                     </span>
                 </div>
             </div>

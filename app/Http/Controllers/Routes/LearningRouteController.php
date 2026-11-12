@@ -295,16 +295,12 @@ class LearningRouteController extends Controller
             RenderRouteDocument::dispatch($result->route->id, $result->route->snapshot_hash, $result->route->revisions);
         }
 
-        // La ficha a la que se llega recién generada descarga el PDF sola, en
-        // cuanto la cola lo termina. El asesor viene de decir «generar»; pedirle
-        // además que encuentre un botón es pedirle un paso que ya dio.
+        // La ficha muestra el enlace y permite descargar el PDF cuando se solicite.
         if ($request->expectsJson()) {
-            $request->session()->flash('descargar', true);
-
             return response()->json(['url' => route('routes.show', $result->route)]);
         }
 
-        return to_route('routes.show', $result->route)->with('descargar', true);
+        return to_route('routes.show', $result->route);
     }
 
     /**
@@ -341,15 +337,11 @@ class LearningRouteController extends Controller
             RenderRouteDocument::dispatch($result->route->id, $result->route->snapshot_hash, $result->route->revisions);
         }
 
-        // Se corrigió para volver a mandarlo: el archivo baja solo, igual que
-        // cuando se emitió la primera vez.
         if ($request->expectsJson()) {
-            $request->session()->flash('descargar', true);
-
             return response()->json(['url' => route('routes.show', $result->route)]);
         }
 
-        return to_route('routes.show', $result->route)->with('descargar', true);
+        return to_route('routes.show', $result->route);
     }
 
     /**
@@ -390,7 +382,7 @@ class LearningRouteController extends Controller
     /**
      * La entrega: el enlace, el mensaje y lo que el documento todavía no dice.
      */
-    public function show(Request $request, LearningRoute $route, CopyResolver $copy, RouteCompanions $companions, ValidationMessages $messages, DocumentReading $reading): Response
+    public function show(LearningRoute $route, CopyResolver $copy, RouteCompanions $companions, ValidationMessages $messages, DocumentReading $reading): Response
     {
         $route->load([
             'advisor',
@@ -467,7 +459,6 @@ class LearningRouteController extends Controller
                 'url' => route('routes.pdf', $route),
                 'nombre' => $route->downloadName(),
             ],
-            'autoDescarga' => $request->session()->get('descargar', false) === true,
             'puedeEmitirAnual' => $route->documentType->slug === DocumentTypeSeeder::ENFOCADA
                 && $route->status !== RouteStatus::Rejected,
             'anualEmitido' => $route->lead->learningRoutes()

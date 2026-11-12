@@ -312,8 +312,8 @@ export default function RutaMeses() {
                             : secuencia.length === 0
                               ? 'Quitaste todo: el itinerario no puede ir vacío.'
                               : editando
-                                ? 'El PDF anterior se reemplaza y el nuevo se descarga solo.'
-                                : 'El PDF se descarga solo en cuanto está listo.'}
+                                ? 'El PDF anterior se reemplaza y queda disponible para descargarlo.'
+                                : 'El PDF queda disponible para descargarlo desde la ficha.'}
                     </span>
                 </div>
             </div>

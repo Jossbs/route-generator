@@ -108,20 +108,20 @@ it('no ofrece un archivo que no existe', function () {
         ->assertNotFound();
 });
 
-it('deja que la ficha sepa si el archivo ya está y si acaba de generarse', function () {
+it('ofrece la descarga manual del PDF sin activar descargas automáticas', function () {
     Http::fake(['*/forms/chromium/convert/html' => Http::response('%PDF-1.7 fingido')]);
 
     $ruta = rutaEmitida();
 
-    // Se llega redirigido desde la emisión, así que la ficha trae el aviso que
-    // dispara la descarga sola.
+    // Una sesión antigua no debe volver a activar la descarga al abrir la ficha.
     $this->actingAs(FunnelFactory::author())
         ->withSession(['descargar' => true])
         ->get("/rutas/{$ruta->id}")
         ->assertInertia(fn (AssertableInertia $page) => $page
             ->component('rutas/detalle')
             ->where('pdf.listo', true)
-            ->where('autoDescarga', true)
+            ->where('pdf.url', route('routes.pdf', $ruta))
+            ->missing('autoDescarga')
             ->etc());
 });
 
