@@ -62,7 +62,7 @@ function documentoDe(string $slugDocumento, string $anclaSlug, ?RouteDraft $draf
 /** Las hojas del documento, como las escribe la plantilla. */
 function hojasDe(string $html): array
 {
-    preg_match_all('#<section class="hoja[^"]*">(.*?)</section>#s', $html, $m);
+    preg_match_all('#<section class="hoja[^"]*"[^>]*>(.*?)</section>#s', $html, $m);
 
     return $m[1];
 }

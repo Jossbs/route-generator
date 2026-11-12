@@ -29,10 +29,10 @@
     $pad = fn (int $n): string => str_pad((string) $n, 2, '0', STR_PAD_LEFT);
 @endphp
 
-<x-documento :titulo="$titulo" :imprimible="$imprimible" :inicial="true">
+<x-documento :reading-endpoint="$readingEndpoint ?? null" :titulo="$titulo" :imprimible="$imprimible" :inicial="true">
 <div class="ruta-inicial-doc">
 
-    <section class="hoja portada">
+    <section class="hoja portada" data-reading-section="portada">
         <div class="fondo"></div>
         <img class="pt-agua" src="{{ asset('img/dpsys/logo-blanco.svg') }}" alt="" aria-hidden="true">
         <div class="inner">
@@ -75,7 +75,7 @@
 
     @foreach ($hojasRuta as $indice => $bloques)
         @php $folio++; @endphp
-        <section class="hoja inicial-ruta">
+        <section class="hoja inicial-ruta" data-reading-section="ruta">
             @include('documentos._encabezado', [
                 'seccion' => $indice === 0 ? 'Tu ruta' : 'Tu ruta ('.($indice + 1).')',
             ])
@@ -135,7 +135,7 @@
     @endif
 
     @php $folio++; @endphp
-    <section class="hoja inicial-cierre">
+    <section class="hoja inicial-cierre" data-reading-section="siguiente-paso">
         @include('documentos._encabezado', ['seccion' => 'Siguiente paso'])
 
         <div class="cuerpo">
@@ -173,10 +173,10 @@
                     @if ($enlaces)
                         <div class="cta-botones">
                             @if (($enlaces['membresia'] ?? null) && $copy->body('cta.boton-membresia'))
-                                <a class="pri" href="{{ $enlaces['membresia'] }}">{{ $copy->body('cta.boton-membresia') }}</a>
+                                <a class="pri" data-reading-click="membresia" href="{{ $enlaces['membresia'] }}">{{ $copy->body('cta.boton-membresia') }}</a>
                             @endif
                             @if (($enlaces['conversacion'] ?? null) && $copy->body('cta.boton-whatsapp'))
-                                <a href="{{ $enlaces['conversacion'] }}">{{ $copy->body('cta.boton-whatsapp') }}</a>
+                                <a data-reading-click="conversacion" href="{{ $enlaces['conversacion'] }}">{{ $copy->body('cta.boton-whatsapp') }}</a>
                             @endif
                         </div>
 

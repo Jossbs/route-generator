@@ -4,7 +4,6 @@ import {
     Copy,
     Download,
     ExternalLink,
-    Eye,
     FileText,
     Info,
     Pencil,
@@ -14,6 +13,10 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import Heading from '@/components/heading';
 import { GuionAudio } from '@/components/rutas/guion-audio';
+import {
+    SeguimientoLectura,
+    type LecturaDocumento,
+} from '@/components/rutas/seguimiento-lectura';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +55,7 @@ type PageProps = {
     mensaje: MensajeEscrito | null;
     rechazos: Rechazo[];
     advertencias: Rechazo[];
+    lectura: LecturaDocumento;
     aperturas: { fecha: string | null }[];
     copyPendiente: string[];
     sinWhatsApp: boolean;
@@ -88,7 +92,7 @@ export default function RutaDetalle() {
         mensaje,
         rechazos,
         advertencias,
-        aperturas,
+        lectura,
         copyPendiente,
         sinWhatsApp,
         documentoUrl,
@@ -262,21 +266,112 @@ export default function RutaDetalle() {
                     </section>
                 )}
 
-                {/*
-                 * La entrega. El archivo es lo que se comparte con el lead, así que va
-                 * primero y con nombre: el asesor tiene que reconocerlo entre los
-                 * veinte que tiene en Descargas.
-                 */}
+                {ruta.enlace && (
+                    <section className="bg-card space-y-4 rounded-xl border p-5">
+                        <div>
+                            <h2 className="font-subtitle text-lg font-bold">
+                                Enlace con seguimiento
+                            </h2>
+                            <p className="text-muted-foreground mt-1 text-sm">
+                                Es el mismo documento abierto en el navegador.
+                                Registra las secciones vistas, el avance y los
+                                botones que utiliza.
+                            </p>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="enlace">Enlace para el lead</Label>
+                            <div className="flex min-w-0 gap-2 max-sm:flex-wrap">
+                                <Input
+                                    id="enlace"
+                                    readOnly
+                                    value={ruta.enlace}
+                                    className="min-w-0 flex-1 font-mono text-xs max-sm:w-full max-sm:flex-none"
+                                />
+                                <Button
+                                    variant="outline"
+                                    className="shrink-0 max-sm:flex-1"
+                                    onClick={() =>
+                                        copiar(ruta.enlace ?? '', 'enlace')
+                                    }
+                                >
+                                    {copiado === 'enlace' ? (
+                                        <Check className="size-4" />
+                                    ) : (
+                                        <Copy className="size-4" />
+                                    )}
+                                    Copiar
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    className="shrink-0"
+                                    aria-label="Vista previa del documento"
+                                    asChild
+                                >
+                                    <a
+                                        href={documentoUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <ExternalLink className="size-4" />
+                                    </a>
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="mensaje">
+                                Mensaje para WhatsApp
+                            </Label>
+                            <Textarea
+                                id="mensaje"
+                                readOnly
+                                rows={3}
+                                className="resize-none"
+                                value={mensajeWhatsApp(
+                                    lead.nombre,
+                                    ruta.enlace,
+                                )}
+                            />
+                            <div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        copiar(
+                                            mensajeWhatsApp(
+                                                lead.nombre,
+                                                ruta.enlace ?? '',
+                                            ),
+                                            'mensaje',
+                                        )
+                                    }
+                                >
+                                    {copiado === 'mensaje' ? (
+                                        <Check className="size-4" />
+                                    ) : (
+                                        <Copy className="size-4" />
+                                    )}
+                                    Copiar mensaje
+                                </Button>
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {ruta.enlace && <SeguimientoLectura lectura={lectura} />}
+
+                {/* El PDF conserva la descarga para quien necesita el archivo. */}
                 {!rechazada && (
                     <section className="bg-card shadow-card space-y-4 rounded-xl border p-5">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="min-w-0">
                                 <h2 className="font-subtitle text-lg font-bold">
-                                    El PDF para mandarle
+                                    El PDF para descargar
                                 </h2>
                                 <p className="text-muted-foreground mt-1 text-sm">
-                                    Compártelo en la conversación con el lead.
-                                    Se llama{' '}
+                                    Si compartes el archivo, su lectura queda
+                                    fuera del seguimiento. Se llama{' '}
                                     <span className="text-foreground [overflow-wrap:anywhere]">
                                         {pdf.nombre}
                                     </span>
@@ -358,110 +453,6 @@ export default function RutaDetalle() {
                  */}
                 {!rechazada && (guion || mensaje) && (
                     <GuionAudio guion={guion} mensaje={mensaje} />
-                )}
-
-                {/*
-                 * El enlace sigue existiendo debajo del archivo, no en su lugar:
-                 * sirve cuando el PDF pesa para el chat, y es lo único que avisa si
-                 * el lead lo abrió.
-                 */}
-                {ruta.enlace && (
-                    <section className="bg-card space-y-4 rounded-xl border p-5">
-                        <div>
-                            <h2 className="font-subtitle text-lg font-bold">
-                                Si prefieres mandarle un enlace
-                            </h2>
-                            <p className="text-muted-foreground mt-1 text-sm">
-                                Es el mismo documento abierto en el navegador.
-                                Este sí avisa cuándo lo abre.
-                            </p>
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="enlace">Enlace para el lead</Label>
-                            <div className="flex min-w-0 gap-2 max-sm:flex-wrap">
-                                <Input
-                                    id="enlace"
-                                    readOnly
-                                    value={ruta.enlace}
-                                    className="min-w-0 flex-1 font-mono text-xs max-sm:w-full max-sm:flex-none"
-                                />
-                                <Button
-                                    variant="outline"
-                                    className="shrink-0 max-sm:flex-1"
-                                    onClick={() =>
-                                        copiar(ruta.enlace ?? '', 'enlace')
-                                    }
-                                >
-                                    {copiado === 'enlace' ? (
-                                        <Check className="size-4" />
-                                    ) : (
-                                        <Copy className="size-4" />
-                                    )}
-                                    Copiar
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    className="shrink-0"
-                                    aria-label="Abrir el enlace"
-                                    asChild
-                                >
-                                    <a
-                                        href={ruta.enlace}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        <ExternalLink className="size-4" />
-                                    </a>
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="grid gap-2">
-                            <Label htmlFor="mensaje">
-                                Mensaje para WhatsApp
-                            </Label>
-                            <Textarea
-                                id="mensaje"
-                                readOnly
-                                rows={3}
-                                className="resize-none"
-                                value={mensajeWhatsApp(
-                                    lead.nombre,
-                                    ruta.enlace,
-                                )}
-                            />
-                            <div>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        copiar(
-                                            mensajeWhatsApp(
-                                                lead.nombre,
-                                                ruta.enlace ?? '',
-                                            ),
-                                            'mensaje',
-                                        )
-                                    }
-                                >
-                                    {copiado === 'mensaje' ? (
-                                        <Check className="size-4" />
-                                    ) : (
-                                        <Copy className="size-4" />
-                                    )}
-                                    Copiar mensaje
-                                </Button>
-                            </div>
-                        </div>
-
-                        <div className="text-muted-foreground flex items-center gap-2 text-sm">
-                            <Eye className="size-4 shrink-0" />
-                            {aperturas.length === 0
-                                ? 'El lead todavía no lo abre.'
-                                : `Abierto ${aperturas.length} ${aperturas.length === 1 ? 'vez' : 'veces'}.`}
-                        </div>
-                    </section>
                 )}
 
                 {/*

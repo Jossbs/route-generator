@@ -20,6 +20,7 @@ use App\Models\Funnel;
 use App\Models\LearningRoute;
 use App\Services\Documents\CopyResolver;
 use App\Services\Documents\DocumentFiles;
+use App\Services\Documents\DocumentReading;
 use App\Services\Documents\EditableCopy;
 use App\Services\Documents\RouteCompanions;
 use App\Services\Leads\AreaNormalizer;
@@ -388,7 +389,7 @@ class LearningRouteController extends Controller
     /**
      * La entrega: el enlace, el mensaje y lo que el documento todavía no dice.
      */
-    public function show(Request $request, LearningRoute $route, CopyResolver $copy, RouteCompanions $companions, ValidationMessages $messages): Response
+    public function show(Request $request, LearningRoute $route, CopyResolver $copy, RouteCompanions $companions, ValidationMessages $messages, DocumentReading $reading): Response
     {
         $route->load([
             'advisor',
@@ -443,6 +444,7 @@ class LearningRouteController extends Controller
             'mensaje' => $scripts['mensaje'],
             'rechazos' => $issues['bloqueos'],
             'advertencias' => $issues['advertencias'],
+            'lectura' => $reading->summary($route),
             'aperturas' => $route->usageEvents
                 ->where('event', UsageEventType::AbiertaPorLead)
                 ->map(fn ($event): array => ['fecha' => $event->created_at->toIso8601String()])

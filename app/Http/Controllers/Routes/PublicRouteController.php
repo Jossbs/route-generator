@@ -11,6 +11,8 @@ use App\Models\LearningRoute;
 use App\Services\Documents\DocumentView;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 
 /**
  * El gancho, tal como lo abre el lead desde WhatsApp.
@@ -19,8 +21,9 @@ use Illuminate\Http\Request;
  * el documento se arma desde el snapshot, así que sigue diciendo lo mismo que
  * decía el día que se mandó, aunque el catálogo haya cambiado desde entonces.
  *
- * Cada apertura se asienta en la bitácora. Es la única señal de vuelta que hay:
- * el gancho se entrega por enlace y ahí termina la visibilidad.
+ * El acceso se conserva en la bitácora histórica. La visita con actividad,
+ * las secciones y el avance se reciben aparte desde el navegador; una petición
+ * de vista previa del chat no se presenta como una visita con actividad.
  */
 class PublicRouteController extends Controller
 {
@@ -33,11 +36,17 @@ class PublicRouteController extends Controller
 
         $this->log($request, $route);
 
-        return $documents->for($route);
+        return $documents->for($route)->with('readingEndpoint', URL::temporarySignedRoute(
+            'routes.reading', now()->addDay(), [
+                'token' => $token,
+                'visit' => (string) Str::uuid(),
+                'revision' => $route->revisions,
+            ],
+        ));
     }
 
     /**
-     * La IP se guarda cifrada, nunca en claro: sirve para distinguir aperturas y
+     * La IP se guarda como hash, nunca en claro: sirve para distinguir aperturas y
      * para nada más.
      */
     private function log(Request $request, LearningRoute $route): void

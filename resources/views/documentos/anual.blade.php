@@ -49,10 +49,10 @@
     };
 @endphp
 
-<x-documento :titulo="$titulo" :imprimible="$imprimible">
+<x-documento :reading-endpoint="$readingEndpoint ?? null" :titulo="$titulo" :imprimible="$imprimible">
     <div class="ruta-final-doc">
         {{-- ========================= hoja 1 · portada ========================= --}}
-        <section class="hoja ruta-final-page rf-portada">
+        <section class="hoja ruta-final-page rf-portada" data-reading-section="portada">
             <div class="rf-portada-cuerpo">
                 @include('documentos._marca-anual')
 
@@ -118,7 +118,7 @@
             $mesesHoja = collect($etapasHoja)->flatMap(fn (array $etapa): array => $etapa['meses']);
             $ultimoMapa = $indiceHoja === count($hojasMeses) - 1;
         @endphp
-        <section class="hoja ruta-final-page rf-interior rf-mapa-pagina">
+        <section class="hoja ruta-final-page rf-interior rf-mapa-pagina" data-reading-section="mapa">
             @include('documentos._encabezado-anual', ['seccion' => 'Meses '.$mesesHoja->first()['numero'].'–'.$mesesHoja->last()['numero'], 'activos' => $mesesHoja->pluck('numero')->all()])
             <div class="rf-eyebrow">{{ $indiceHoja === 0 ? 'Tu mapa del año' : 'Tu mapa del año · continuación' }}</div>
             <div class="rf-h2">Tu ruta, mes a mes</div>
@@ -204,7 +204,7 @@
 
         {{-- Catálogo de la membresía: hojas calculadas según su contenido. --}}
         @foreach ($hojasInventario as $indice => $grupos)
-            <section class="hoja ruta-final-page rf-interior rf-inventario-pagina">
+            <section class="hoja ruta-final-page rf-interior rf-inventario-pagina" data-reading-section="membresia">
                 @include('documentos._encabezado-anual', ['seccion' => 'Tu membresía'.($indice > 0 ? ' ('.($indice + 1).')' : '')])
                 @if ($indice === 0)
                     <div class="rf-eyebrow">Todo lo que tienes abierto</div>
@@ -253,7 +253,7 @@
         @endforeach
 
         {{-- Cierre · empieza hoy --}}
-        <section class="hoja ruta-final-page rf-interior rf-cierre">
+        <section class="hoja ruta-final-page rf-interior rf-cierre" data-reading-section="empieza-hoy">
             @include('documentos._encabezado-anual', ['seccion' => 'Para empezar'])
             <div class="rf-eyebrow">Tu primera semana</div>
             <div class="rf-h2">Empieza hoy</div>

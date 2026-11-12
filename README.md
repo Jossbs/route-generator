@@ -70,6 +70,16 @@ La migración `2026_11_08_100000_remove_sales_metrics_module` elimina las tablas
 
 El timeout de Gotenberg debe ser menor que el del trabajo (60 y 90 segundos por defecto). `DB_QUEUE_RETRY_AFTER` debe superar el timeout del trabajo (120 segundos por defecto). Tras desplegar cambios, reinicia los workers con `php artisan queue:restart`.
 
+## Seguimiento del enlace
+
+En la ficha de cada ruta inicial, comparte **Enlace con seguimiento** o su mensaje para WhatsApp. El botón de vista previa abre la versión interna sin registrar una visita del lead. El panel **Seguimiento del enlace** muestra visitas con actividad, avance máximo, sección más lejana, tiempo activo por sección, última actividad y clics en membresía, conversación y respaldos. **Actualizar** consulta los datos más recientes; los navegadores envían los acumulados cada diez segundos y al ocultar o cerrar la pestaña. Las sugerencias de seguimiento son reglas locales, sin servicios de IA ni analítica de pago.
+
+El registro usa la aplicación y PostgreSQL existentes, sin suscripciones adicionales, identificadores persistentes ni nuevas dependencias. Una vista previa del chat sin JavaScript no cuenta como visita con actividad. Se requiere al menos un segundo de visibilidad para registrar una sección; el tiempo se pausa al ocultar la pestaña, imprimir o pasar treinta segundos sin interacción. Las señales indican contenido visible, no comprensión ni intención de compra; un enlace reenviado registra a quien lo abra. La lectura de un PDF descargado no se puede medir.
+
+Los enlaces existentes empiezan a registrar actividad desde esta actualización; las visitas anteriores no tienen detalle de lectura. Cada corrección conserva el historial en `document_visits`, y la ficha resume únicamente la revisión actual. El receptor público exige una URL firmada por visita, caduca a las 24 horas y aplica un límite por IP. Una nueva apertura genera otra visita; las rutas borradas o rechazadas dejan de aceptar actividad. Si JavaScript o la red están bloqueados, el documento sigue disponible, pero el recorrido puede quedar incompleto.
+
+La instalación necesita la migración `2026_11_11_110000_create_document_visits_table`. Las pruebas del navegador simulado se ejecutan con `npm run test:reading` y forman parte de `composer ci:check`.
+
 ## Integración y publicación
 
 El módulo no incorpora login propio: el sistema anfitrión debe proporcionar la identidad mediante `App\Services\Identity\CurrentAdvisor`, configurable en `CURRENT_ADVISOR_CLASS`. Los endpoints internos conservan `auth` y las políticas. Con `APP_ENV=production`, la identidad sembrada devuelve `null`; sin integración, los endpoints internos responden 503 y `php artisan deploy:check` falla. Esto evita exponer una cuenta administrativa de desarrollo.

@@ -1,4 +1,4 @@
-<section class="hoja confianza-sys">
+<section class="hoja confianza-sys" data-reading-section="confianza">
     @include('documentos._encabezado', ['seccion' => 'Quiénes somos'])
     <div class="cuerpo">
         <div class="h-sec"><span class="kicker">Conócenos</span><h2>Quiénes somos</h2></div>
@@ -25,7 +25,7 @@
             <h4>Certificaciones y acreditaciones</h4>
             <div class="conf-avales">
                 @foreach ($confianza['avales'] as $aval)
-                    <a href="{{ $aval['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="Consultar respaldo: {{ $aval['nombre'] }}">
+                    <a data-reading-click="respaldo" href="{{ $aval['url'] }}" target="_blank" rel="noopener noreferrer" aria-label="Consultar respaldo: {{ $aval['nombre'] }}">
                         @if ($aval['src'])<img src="{{ $aval['src'] }}" alt="{{ $aval['nombre'] }}">@endif
                         <span>{{ $aval['etiqueta'] }}</span><small>Ver respaldo ↗</small>
                     </a>

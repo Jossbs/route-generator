@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Routes\AnnualRouteController;
+use App\Http\Controllers\Routes\DocumentReadingController;
 use App\Http\Controllers\Routes\LearningRouteController;
 use App\Http\Controllers\Routes\PublicRouteController;
 use App\Http\Controllers\Routes\RouteDocumentController;
 use App\Http\Controllers\Routes\RouteInboxController;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,10 +22,9 @@ use Illuminate\Support\Facades\Route;
  * otra vez. Va un paso adentro y no en la raíz a propósito; consultar es lo que se
  * hace de vez en cuando, generar es lo que se hace todo el día.
  *
- * La entrega es el PDF —`rutas/{route}/pdf`, que es lo que se comparte con el lead—.
- * El enlace sigue existiendo debajo, por si el archivo pesa para el chat, y es lo
- * único que da señal de vuelta: `/r/{token}` es lo único fuera de `auth`, porque
- * quien lo abre es el lead.
+ * El enlace `/r/{token}` permite seguir la lectura del documento sin sesión.
+ * Cada visita recibe una URL temporal firmada para enviar su actividad.
+ * La descarga de PDF queda disponible como archivo independiente.
  */
 
 Route::middleware(['auth'])->group(function () {
@@ -62,3 +63,10 @@ Route::middleware(['auth'])->group(function () {
 });
 
 Route::get('r/{token}', [PublicRouteController::class, 'show'])->name('routes.public');
+
+// URL temporal firmada por visita; el navegador envía acumulados al mismo origen.
+Route::post('r/{token}/lectura/{visit}', DocumentReadingController::class)
+    ->whereUuid('visit')
+    ->withoutMiddleware([PreventRequestForgery::class])
+    ->middleware(['signed', 'throttle:120,1'])
+    ->name('routes.reading');

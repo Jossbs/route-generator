@@ -165,7 +165,7 @@ it('rotula en la portada el alcance de la ruta anual', function () {
     $html = $this->actingAs(FunnelFactory::author())->get('/rutas/'.$ruta->id.'/documento')->getContent();
 
     $cursos = collect($ruta->snapshot['ruta']['cursos'])->where('capa', 'itinerario')->pluck('slug')->unique()->count();
-    preg_match('#<section class="hoja[^\"]*">(.*?)</section>#s', $html, $portada);
+    preg_match('#<section class="hoja[^\"]*"[^>]*>(.*?)</section>#s', $html, $portada);
 
     // La portada distingue la ruta curada del acceso completo al catálogo sin
     // convertir el documento de cortesía en una pieza de venta.
@@ -346,7 +346,7 @@ it('reserva espacio para el contexto y mantiene los refuerzos juntos en una hoja
         'context' => 'Quiero mejorar el control de procesos, reducir desperdicios y desarrollar habilidades para liderar a mi equipo.',
     ]));
 
-    preg_match_all('#<section class="hoja inicial-ruta">(.*?)</section>#s', $html, $hojas);
+    preg_match_all('#<section class="hoja inicial-ruta"[^>]*>(.*?)</section>#s', $html, $hojas);
 
     expect($hojas[1])->toHaveCount(2);
     expect($hojas[1][0])->toContain('Especialización principal')->not->toContain('class="cu-motivo"');
@@ -361,7 +361,7 @@ it('reserva espacio para el contexto y mantiene los refuerzos juntos en una hoja
 it('presenta una sola hoja institucional con respaldos verificables y redes oficiales', function () {
     [, $html] = redisenoGancho(redisenoCaptura());
 
-    expect(substr_count($html, '<section class="hoja confianza-sys">'))->toBe(1);
+    expect(substr_count($html, '<section class="hoja confianza-sys"'))->toBe(1);
     expect($html)->toContain('Desde 2018 impulsamos el desarrollo')
         ->toContain('Certificaciones y acreditaciones')
         ->toContain('alcance según el programa')

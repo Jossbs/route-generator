@@ -9,7 +9,7 @@
     consulta al catálogo: el documento que el lead recibió en septiembre tiene que
     seguir diciendo lo mismo en enero.
 --}}
-@props(['titulo', 'imprimible' => false, 'inicial' => false])
+@props(['titulo', 'imprimible' => false, 'inicial' => false, 'readingEndpoint' => null])
 <!doctype html>
 <html lang="es">
 <head>
@@ -35,5 +35,8 @@
 <main class="doc">
     {{ $slot }}
 </main>
+@if ($readingEndpoint)
+    <script src="{{ asset('js/document-reading.js') }}" data-endpoint="{{ $readingEndpoint }}" defer></script>
+@endif
 </body>
 </html>
