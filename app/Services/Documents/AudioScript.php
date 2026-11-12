@@ -13,9 +13,9 @@ use App\Models\Lead;
  * Desde el 2026-09-22 se arma con la ruta, en el mismo momento, y dice lo mismo
  * que el PDF que el lead va a abrir.
  *
- * El texto autorizado el 2026-11-08 conecta la ruta con la duración estimada,
- * las constancias que puede obtener y el acceso anual de la membresía. Cierra
- * invitando a responder «¡Me gustó!» para conocer las facilidades de pago.
+ * El texto autorizado el 2026-11-11 conecta la ruta con la duración estimada,
+ * las constancias que puede obtener y los 12 meses de membresía. Cierra
+ * preguntando su opinión y ofreciendo opciones de pago o detalles de certificación.
  *
  * Se guarda en el snapshot como todo lo demás: si mañana Contenido reescribe un
  * bloque, el guión de un audio que ya se grabó sigue siendo el que se leyó.
@@ -26,16 +26,16 @@ final class AudioScript extends RouteScript
     public const PALABRAS_POR_MINUTO = 170;
 
     /** Lo que dura un audio que complementa al PDF sin competir con él. */
-    public const SEGUNDOS_MIN = 45;
+    public const SEGUNDOS_MIN = 40;
 
     public const SEGUNDOS_MAX = 60;
 
     /** Los bloques, en el orden en que se leen, con su nombre para el asesor. */
     private const BLOQUES = [
         'saludo' => 'Saludo',
-        'conexion' => 'Lo que te contó',
+        'conexion' => 'Su perfil',
         'ruta' => 'Su ruta',
-        'inicio' => 'Apenas el inicio',
+        'inicio' => 'Su membresía',
         'pago' => 'Facilidades de pago',
         'cierre' => 'Cierre',
     ];

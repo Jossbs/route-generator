@@ -58,20 +58,20 @@ it('personaliza el texto autorizado con las mismas cifras que el PDF', function 
     expect($route->status)->toBe(RouteStatus::Validated)
         ->and($route->snapshotIsIntact())->toBeTrue()
         ->and($guion['texto'])
-        ->toStartWith('Mariana, ¿qué tal? Soy Eje Cursos, de Desarrollo Profesional SyS.')
-        ->toContain('Tu ruta no es un catálogo: la armé con lo que me contaste, para que cada curso te sirva en tu trabajo.')
-        ->toContain('Imagínate en '.RouteDuration::for($payload, spoken: true))
+        ->toStartWith('¡Hola, Mariana! ¿Cómo estás? Te saluda Eje Cursos, asesora de Desarrollo Profesional SyS.')
+        ->toContain('La preparé tomando en cuenta tu perfil y seleccionando los cursos que considero más adecuados para tu desarrollo profesional.')
+        ->toContain('Con esta ruta, en aproximadamente '.RouteDuration::for($payload, spoken: true))
         ->toContain(RouteDuration::number($count).' constancias DC-3 ante la STPS')
-        ->toContain('sesenta y cuatro cursos abiertos todo el año')
-        ->toContain('por mucho menos de lo que pagarías curso por curso')
-        ->toContain('escríbeme “¡Me gustó!”')
+        ->toContain('sesenta y cuatro cursos con sus certificaciones durante 12 meses, sin pagar cada uno por separado.')
+        ->toContain('También contamos con diferentes facilidades de pago.')
+        ->toContain('Me gustaría conocer tu opinión, Mariana. ¿Qué te pareció la ruta? ¿Te comparto las opciones de pago o prefieres que te explique más sobre las certificaciones?')
         ->not->toMatch('/\{[a-z_]+\}/')
-        ->and($guion['menciones_nombre'])->toBe(1)
+        ->and($guion['menciones_nombre'])->toBe(2)
         ->and(array_column($guion['bloques'], 'clave'))
         ->toBe(['saludo', 'conexion', 'ruta', 'inicio', 'pago', 'cierre']);
 });
 
-it('mantiene el audio de referencia entre 45 y 60 segundos', function (array $overrides) {
+it('mantiene el audio de referencia entre 40 y 60 segundos', function (array $overrides) {
     $guion = emitirConGuion($overrides)->snapshot['guion'];
 
     expect($guion['segundos'])
@@ -84,16 +84,17 @@ it('mantiene el audio de referencia entre 45 y 60 segundos', function (array $ov
 ]);
 
 it('reproduce las cifras del ejemplo y las cambia para otra ruta', function () {
-    $route = emitirConGuion(['name' => 'Joss', 'context' => 'Quiere mejorar su perfil']);
+    $route = emitirConGuion(['name' => 'Inge', 'context' => 'Quiere mejorar su perfil']);
     $payload = $route->snapshot;
-    $payload['ruta']['totales'] = ['cursos' => 10, 'programas' => 10, 'horas_netas' => 225];
+    $payload['asesor']['nombre'] = 'Joseline';
+    $payload['ruta']['totales'] = ['cursos' => 8, 'programas' => 8, 'horas_netas' => 126];
 
     $audio = app(AudioScript::class)->for($payload, $route->lead);
     $message = app(WrittenMessage::class)->for($payload, $route->lead);
 
-    expect($audio['texto'])->toContain('Imagínate en tres meses con diez constancias DC-3')
-        ->and($message['texto'])->toStartWith('Joss, tu ruta ya está lista 🎯 La armé con lo que me contaste.')
-        ->toContain('En 3 meses puedes tener 10 constancias DC-3');
+    expect($audio['texto'])->toContain('Con esta ruta, en aproximadamente siete semanas podrías obtener ocho constancias DC-3 ante la STPS.')
+        ->and($message['texto'])->toStartWith('¡Inge, tu *ruta de capacitación personalizada* ya está lista! 🎯')
+        ->toContain('🎓 En *7 semanas podrías obtener 8 constancias DC-3 ante la STPS*.');
 
     $payload['lead']['nombre'] = 'Ana Lucía';
     $payload['asesor']['nombre'] = 'Daniela';
@@ -102,12 +103,12 @@ it('reproduce las cifras del ejemplo y las cambia para otra ruta', function () {
     $audio = app(AudioScript::class)->for($payload, $route->lead);
     $message = app(WrittenMessage::class)->for($payload, $route->lead);
 
-    expect($audio['texto'])->toStartWith('Ana Lucía, ¿qué tal? Soy Daniela, de Desarrollo Profesional SyS.')
-        ->toContain('una semana con una constancia DC-3')
-        ->toContain('sesenta y tres cursos abiertos')
-        ->not->toContain('Joss', 'diez constancias', 'sesenta y cuatro')
-        ->and($message['texto'])->toContain('1 constancia DC-3', '63 cursos todo el año')
-        ->not->toContain('10 constancias', '64 cursos');
+    expect($audio['texto'])->toStartWith('¡Hola, Ana Lucía! ¿Cómo estás? Te saluda Daniela, asesora de Desarrollo Profesional SyS.')
+        ->toContain('una semana podrías obtener una constancia DC-3')
+        ->toContain('sesenta y tres cursos con sus certificaciones durante 12 meses')
+        ->not->toContain('Joseline', 'ocho constancias', 'sesenta y cuatro')
+        ->and($message['texto'])->toContain('1 constancia DC-3', '63 cursos + certificaciones durante 12 meses')
+        ->not->toContain('8 constancias', '64 cursos');
 });
 
 it('resalta los datos personales y las cifras para quien graba', function () {
@@ -124,17 +125,17 @@ it('no atribuye una conversación cuando no hay contexto capturado', function ()
     $route = emitirConGuion();
 
     expect($route->snapshot['guion']['texto'])
-        ->toContain('la armé pensando en tu perfil')
+        ->toContain('La preparé tomando en cuenta tu perfil')
         ->not->toContain('lo que me contaste')
         ->and($route->snapshot['mensaje']['texto'])
-        ->toContain('La armé pensando en tu perfil.');
+        ->toContain('La preparé considerando tu perfil y las certificaciones que pueden ayudarte a alcanzar tus objetivos profesionales.');
 });
 
 it('adapta el audio a estudiantes sin atribuirles un trabajo', function () {
     $texto = emitirConGuion(['area' => 'estudiante', 'occupation' => 'Estudiante de ingeniería'])
         ->snapshot['guion']['texto'];
 
-    expect($texto)->toContain('en tu desarrollo profesional')
+    expect($texto)->toContain('para tu desarrollo profesional')
         ->not->toContain('en tu trabajo');
 });
 
@@ -150,16 +151,16 @@ it('recalcula las constancias y la duración si se retiran recomendados', functi
         ->not->toContain('3 meses y medio', '10 constancias DC-3');
 });
 
-it('arma el mensaje autorizado en cuatro párrafos listos para WhatsApp', function () {
+it('arma el mensaje autorizado en seis párrafos listos para WhatsApp', function () {
     $message = emitirConGuion(['context' => 'Quiere liderar el área de mejora continua.'])->snapshot['mensaje'];
 
     expect($message['texto'])
-        ->toStartWith('Mariana, tu ruta ya está lista 🎯 La armé con lo que me contaste.')
-        ->toContain('tu membresía te abre 64 cursos todo el año')
-        ->toContain('Y tenemos facilidades para que el pago no te detenga.')
-        ->toEndWith('👉 Si te gustó y quieres empezar hoy, respóndeme “¡Me gustó!” y te mando las facilidades y todos los detalles')
-        ->and(explode("\n\n", $message['texto']))->toHaveCount(4)
-        ->and(array_column($message['bloques'], 'clave'))->toBe(['saludo', 'ruta', 'pago', 'cierre']);
+        ->toStartWith('¡Mariana, tu *ruta de capacitación personalizada* ya está lista! 🎯')
+        ->toContain('📚 Además, tu membresía incluye *64 cursos + certificaciones durante 12 meses*, sin pagar cada curso por separado.')
+        ->toContain('💳 También contamos con facilidades de pago para que puedas comenzar tu capacitación.')
+        ->toEndWith('👉 *¿Qué te pareció la ruta que preparé para ti?* 😊 ¿Te gustaría conocer las facilidades de pago o más detalles sobre las certificaciones?')
+        ->and(explode("\n\n", $message['texto']))->toHaveCount(6)
+        ->and(array_column($message['bloques'], 'clave'))->toBe(['saludo', 'conexion', 'ruta', 'inicio', 'pago', 'cierre']);
 });
 
 it('muestra el complemento nuevo en rutas anteriores sin alterar su snapshot', function () {

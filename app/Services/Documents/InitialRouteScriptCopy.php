@@ -4,28 +4,30 @@ declare(strict_types=1);
 
 namespace App\Services\Documents;
 
-/** Textos autorizados para acompañar la ruta inicial, 8 de noviembre de 2026. */
+/** Textos autorizados para acompañar la ruta inicial, 11 de noviembre de 2026. */
 final class InitialRouteScriptCopy
 {
-    public const VERSION = '2026-11-08';
+    public const VERSION = '2026-11-11';
 
     /** @return list<array<string, mixed>> */
     public static function slots(): array
     {
         $audio = [
-            'saludo' => '*{nombre}, ¿qué tal?* Soy {asesor}, de Desarrollo Profesional SyS.',
-            'conexion' => 'Tu ruta no es un catálogo: {conexion_audio}, para que cada curso te sirva {aplicacion}.',
-            'ruta' => 'Imagínate en *{duracion_audio}* con *{constancias_audio}* ante la STPS en tu expediente. (pausa) Eso es lo que te pone por delante cuando llega un ascenso o una mejor oferta.',
-            'inicio' => 'Y es apenas el arranque: tu membresía te deja {catalogo_audio} todo el año, por mucho menos de lo que pagarías curso por curso.',
-            'pago' => 'Para que el pago no sea lo que te detenga, tenemos facilidades.',
-            'cierre' => 'Si te gustó tu ruta y quieres empezar hoy mismo, escríbeme *“¡Me gustó!”* y te mando las facilidades de pago y todos los detalles de tu membresía.',
+            'saludo' => '¡Hola, *{nombre}*! ¿Cómo estás? Te saluda {asesor}, asesora de Desarrollo Profesional SyS.',
+            'conexion' => 'Te comento que ya tengo lista tu ruta de capacitación. La preparé tomando en cuenta tu perfil y seleccionando los cursos que considero más adecuados para tu desarrollo profesional.',
+            'ruta' => 'Con esta ruta, en aproximadamente *{duracion_audio}* podrías obtener *{constancias_audio}* ante la STPS.',
+            'inicio' => 'Además, algo importante es que tu membresía no se limita a estos cursos. Tendrás acceso a {catalogo_audio} con sus certificaciones durante 12 meses, sin pagar cada uno por separado.',
+            'pago' => 'También contamos con diferentes facilidades de pago.',
+            'cierre' => 'Me gustaría conocer tu opinión, *{nombre}*. ¿Qué te pareció la ruta? ¿Te comparto las opciones de pago o prefieres que te explique más sobre las certificaciones?',
         ];
 
         $message = [
-            'saludo' => '{nombre}, tu ruta ya está lista 🎯 {conexion_mensaje}.',
-            'ruta' => 'En {duracion} puedes tener {constancias} ante la STPS, y tu membresía te abre {catalogo} todo el año, por mucho menos de lo que pagarías curso por curso 📈',
-            'pago' => 'Y tenemos facilidades para que el pago no te detenga.',
-            'cierre' => '👉 Si te gustó y quieres empezar hoy, respóndeme “¡Me gustó!” y te mando las facilidades y todos los detalles',
+            'saludo' => '¡{nombre}, tu *ruta de capacitación personalizada* ya está lista! 🎯',
+            'conexion' => 'La preparé considerando tu perfil y las certificaciones que pueden ayudarte a alcanzar tus objetivos profesionales.',
+            'ruta' => '🎓 En *{duracion} podrías obtener {constancias} ante la STPS*.',
+            'inicio' => '📚 Además, tu membresía incluye *{catalogo} + certificaciones durante 12 meses*, sin pagar cada curso por separado.',
+            'pago' => '💳 También contamos con facilidades de pago para que puedas comenzar tu capacitación.',
+            'cierre' => '👉 *¿Qué te pareció la ruta que preparé para ti?* 😊 ¿Te gustaría conocer las facilidades de pago o más detalles sobre las certificaciones?',
         ];
 
         $slots = [];
@@ -38,7 +40,7 @@ final class InitialRouteScriptCopy
                     'applies_when' => ['document_type' => 'ruta-enfocada'],
                     'body' => $body,
                     'claims' => [
-                        'Texto proporcionado y autorizado por el usuario el 2026-11-08.',
+                        'Texto proporcionado y autorizado por el usuario el 2026-11-11.',
                         'Duración estimada con las horas netas y el mismo ritmo de estudio del PDF; no es un plazo garantizado.',
                         'Las constancias corresponden al total de cursos de la ruta; el acceso anual usa el total del catálogo congelado.',
                     ],
@@ -61,6 +63,6 @@ final class InitialRouteScriptCopy
             }
         }
 
-        return [...$slugs, 'mensaje.inicio'];
+        return $slugs;
     }
 }

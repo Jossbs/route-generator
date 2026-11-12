@@ -48,7 +48,7 @@ abstract class RouteScript
             'constancias' => $count === null ? null : ($count === 1 ? '1 constancia DC-3' : $count.' constancias DC-3'),
             'constancias_audio' => $count === null ? null : ($count === 1 ? 'una constancia DC-3' : RouteDuration::number($count).' constancias DC-3'),
             'catalogo' => $catalog === null ? null : $catalog.($catalog === 1 ? ' curso' : ' cursos'),
-            'catalogo_audio' => $catalog === null ? null : ($catalog === 1 ? 'un curso abierto' : RouteDuration::number($catalog).' cursos abiertos'),
+            'catalogo_audio' => $catalog === null ? null : ($catalog === 1 ? 'un curso' : RouteDuration::number($catalog).' cursos'),
         ];
     }
 
