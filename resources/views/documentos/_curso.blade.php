@@ -51,5 +51,8 @@
         @else
             <span class="dur">{{ $curso['horas'] === null ? '—' : $curso['horas'] }}&nbsp;h</span>
         @endif
+        @if (filled($curso['url_detalles'] ?? null))
+            <a class="cu-detalles" href="{{ $curso['url_detalles'] }}" target="_blank" rel="noopener noreferrer" aria-label="Ver detalles del curso: {{ $curso['nombre'] }}">Ver detalles del curso</a>
+        @endif
     </div>
 </div>

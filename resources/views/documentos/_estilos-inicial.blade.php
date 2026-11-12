@@ -10,6 +10,9 @@
   font-weight:400; text-transform:none; letter-spacing:normal; overflow-wrap:anywhere}
 .ruta-inicial-doc .ruta-lista .bloque{margin-bottom:2px}
 .ruta-inicial-doc .curso{padding:6px 0; min-height:39px}
+.ruta-inicial-doc .cu-detalles{display:block; margin-top:4px; font-size:.72rem; line-height:1.3;
+  color:var(--magenta); text-decoration:underline}
+.ruta-inicial-doc .catalogo-completo{color:var(--magenta); font-weight:600; text-decoration:underline}
 .ruta-inicial-doc .curso-refuerzo{align-items:flex-start; margin:8px 0; padding:12px;
   border:1px solid var(--borde); border-radius:10px; background:var(--crema); break-inside:avoid}
 .ruta-inicial-doc .curso-refuerzo .cu-n{background:var(--crema)}

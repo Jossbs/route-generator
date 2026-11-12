@@ -40,5 +40,8 @@
                 {{ $copy->body('conteo.contencion') }}
             </div>
         @endif
+        @if ($enlaceCatalogo ?? null)
+            <div class="chips-pie"><a class="catalogo-completo" href="{{ $enlaceCatalogo }}" target="_blank" rel="noopener noreferrer">Ver catálogo completo</a></div>
+        @endif
     </div>
 @endif

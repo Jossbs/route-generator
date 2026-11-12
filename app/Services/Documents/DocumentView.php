@@ -9,6 +9,7 @@ use App\Models\LearningRoute;
 use Database\Seeders\DocumentTypeSeeder;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 /**
@@ -139,9 +140,15 @@ final class DocumentView
 
         if (! $anual) {
             $reasons = new RecommendationReason;
+            $enlacesCursos = array_column(
+                File::json(database_path('seeders/data/catalog_publication_2026_11_09.json'))['courses'],
+                'url',
+                'slug',
+            );
             $hasContext = filled($doc['lead']['contexto'] ?? null);
             $itinerario = array_map(fn (array $course): array => [
                 ...$course,
+                'url_detalles' => $enlacesCursos[$course['slug'] ?? ''] ?? null,
                 'motivo_recomendacion' => ($course['rol'] ?? null) === 'complementaria'
                     ? $reasons->for($course)
                     : null,

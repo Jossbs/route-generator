@@ -158,7 +158,7 @@
                 </div>
             @endif
 
-            @include('documentos._alcance')
+            @include('documentos._alcance', ['enlaceCatalogo' => 'https://academy.dpsys.com.mx/mapa/5146'])
 
             {{-- Dos intenciones, dos enlaces, cada uno con su mensaje precargado.
                  Ninguno imprime precio (docs/ARQUITECTURA.md §4.5). --}}
