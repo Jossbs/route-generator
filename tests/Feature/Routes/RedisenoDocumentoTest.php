@@ -149,7 +149,7 @@ it('cierra con el acceso anual, igual que el audio', function () {
     [$ruta, $html] = redisenoGancho(redisenoCaptura());
 
     expect($html)->toContain('el tiempo que te quede de tus 12 meses de acceso');
-    expect(json_encode($ruta->snapshot['guion'], JSON_UNESCAPED_UNICODE))->toContain('todo el año');
+    expect($ruta->snapshot['guion']['texto'])->toContain('durante 12 meses');
 });
 
 // ------------------------------------------------------------------ ruta final
